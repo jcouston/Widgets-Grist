@@ -1,0 +1,50 @@
+[
+  {
+    "widgetId": "taskflow-kanban",
+    "name": "TaskFlow Kanban",
+    "url": "https://nic01asfr.github.io/Widgets-Grist/taskflow/kanban/",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true,
+    "description": "Tableau Kanban avec drag & drop pour la gestion de tâches",
+    "lastUpdatedAt": "2026-02-11T14:43:35.849Z",
+    "authors": [
+      {
+        "name": "nic01asfr",
+        "url": "https://github.com/nic01asfr"
+      }
+    ]
+  },
+  {
+    "widgetId": "taskflow-gantt",
+    "name": "TaskFlow Gantt",
+    "url": "https://nic01asfr.github.io/Widgets-Grist/taskflow/gantt/",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true,
+    "description": "Diagramme de Gantt interactif pour la planification",
+    "lastUpdatedAt": "2026-02-11T14:43:35.850Z",
+    "authors": [
+      {
+        "name": "nic01asfr",
+        "url": "https://github.com/nic01asfr"
+      }
+    ]
+  },
+  {
+    "widgetId": "taskflow-calendar",
+    "name": "TaskFlow Calendar",
+    "url": "https://nic01asfr.github.io/Widgets-Grist/taskflow/calendar/",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true,
+    "description": "Calendrier interactif avec vue mois/semaine/jour",
+    "lastUpdatedAt": "2026-02-11T14:43:35.850Z",
+    "authors": [
+      {
+        "name": "nic01asfr",
+        "url": "https://github.com/nic01asfr"
+      }
+    ]
+  }
+]
