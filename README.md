@@ -24,36 +24,6 @@ Les 3 widgets se synchronisent automatiquement quand ils sont dans le même docu
 
 ---
 
-## Projets en développement
-
-Ces projets sont en cours de développement. **Votez** pour ceux qui vous intéressent en ajoutant une reaction sur l'issue correspondante !
-
-### Artefactory — IDE no-code pour Grist
-
-> **Statut** : En développement actif
-
-Artefactory permet de **composer des applications complètes** directement dans Grist, sans coder :
-- Éditeur visuel de composants
-- Système de templates réutilisables
-- Runtime pour exécuter les applications créées
-- Intégration IA pour générer du code
-
-[Voir le projet](projects/widget_app/) · [Voter / Suivre](../../issues/1)
-
-### TaskFlow v7 — Améliorations
-
-> **Statut** : Planifié
-
-Améliorations prévues pour TaskFlow :
-- Dépendances entre tâches dans le Gantt
-- Vue timeline
-- Export PDF/image
-- Thèmes personnalisables
-
-[Voter / Suivre](../../issues/2)
-
----
-
 ## Utilisation
 
 ### Option 1 : URL directe
