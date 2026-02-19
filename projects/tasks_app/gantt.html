@@ -2382,21 +2382,21 @@
                 grist.ready({
                     requiredAccess: 'full',
                     columns: [
-                        { name: 'titre',        title: 'Titre',            type: 'Text',    optional: false, description: 'Nom de la tâche, affiché sur la barre Gantt' },
+                        { name: 'titre',        title: 'Titre',            type: 'Ref',    optional: false, description: 'Nom de la tâche, affiché sur la barre Gantt' },
                         { name: 'dateDebut',    title: 'Date de début',    type: 'Date',    optional: false, description: 'Date de début de la tâche' },
                         { name: 'dateEcheance', title: "Date d’échéance",  type: 'Date',    optional: false, description: 'Date de fin de la tâche' },
                         { name: 'priorite',     title: 'Priorité',         type: 'Any',     optional: true,  description: 'Valeur entière : 1 (Critique) à 4 (Basse)' },
-                        { name: 'statut',       title: 'Statut',           type: 'Text',    optional: true,  description: 'todo / inprogress / review / done' },
+                        { name: 'statut',       title: 'Statut',           type: 'Choice',    optional: true,  description: 'todo / inprogress / review / done' },
                         { name: 'progression',  title: 'Progression (%)',  type: 'Numeric', optional: true,  description: 'Avancement de 0 à 100' },
-                        { name: 'type',         title: 'Type',             type: 'Text',    optional: true,  description: 'jalon pour afficher un losange' },
-                        { name: 'projet',       title: 'Projet',           type: 'Any',     optional: true,  description: 'Nom ou Ref du projet (utilisé pour les filtres)' },
-                        { name: 'assignees',    title: 'Assignés',         type: 'Any',     optional: true,  description: 'RefList vers la table équipe' },
-                        { name: 'dependDe',     title: 'Dépend de',        type: 'Any',     optional: true,  description: 'RefList vers les tâches prédécesseurs' },
+                        { name: 'type',         title: 'Type',             type: 'Choice',    optional: true,  description: 'jalon pour afficher un losange' },
+                        { name: 'projet',       title: 'Projet',           type: 'Ref',     optional: true,  description: 'Nom ou Ref du projet (utilisé pour les filtres)' },
+                        { name: 'assignees',    title: 'Assignés',         type: 'RefList',     optional: true,  description: 'RefList vers la table équipe' },
+                        { name: 'dependDe',     title: 'Dépend de',        type: 'RefList',     optional: true,  description: 'RefList vers les tâches prédécesseurs' },
                         { name: 'description',  title: 'Description',      type: 'Text',    optional: true },
                         { name: 'estimationH',  title: 'Estimation (h)',   type: 'Numeric', optional: true },
                         { name: 'tempsPasse',   title: 'Temps passé (h)',  type: 'Numeric', optional: true },
-                        { name: 'tags',         title: 'Tags',             type: 'Any',     optional: true },
-                        { name: 'couleur',      title: 'Couleur',          type: 'Text',    optional: true }
+                        { name: 'tags',         title: 'Tags',             type: 'ChoiceList',     optional: true },
+                        { name: 'couleur',      title: 'Couleur',          type: 'Ref',    optional: true }
                     ]
                 });
 
