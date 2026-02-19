@@ -815,6 +815,135 @@
         .alert-box.warning { background: #fef3c7; color: #92400e; }
         .alert-box.info { background: #dbeafe; color: #1e40af; }
 
+        /* === PANNEAU DE CONFIGURATION === */
+        .config-panel {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: 360px;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border);
+            box-shadow: -4px 0 20px rgba(0,0,0,0.12);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+        }
+
+        .config-panel.open { transform: translateX(0); }
+
+        .config-panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .config-panel-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .config-panel-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+
+        .config-section {
+            margin-bottom: 20px;
+        }
+
+        .config-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .config-field {
+            margin-bottom: 10px;
+        }
+
+        .config-field label {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .config-field input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.15s;
+        }
+
+        .config-field input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .config-field input.changed {
+            border-color: var(--warning);
+            background: #fffbeb;
+        }
+
+        .config-info {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .config-info strong { color: var(--primary); }
+
+        .config-reset-link {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .config-reset-link:hover { color: var(--danger); }
+
+        .config-panel-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 499;
+            display: none;
+        }
+
+        .config-panel.open ~ .config-panel-overlay,
+        .config-panel-overlay.visible { display: block; }
+
         /* === TOAST === */
         .toast-container {
             position: fixed;
@@ -910,8 +1039,140 @@
                 </svg>
                 Tâche
             </button>
+            <button class="btn" id="configBtn" onclick="openConfigPanel()" title="Configuration des tables et colonnes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Tables
+            </button>
         </div>
     </div>
+
+    <!-- Panneau de configuration des tables/colonnes -->
+    <aside class="config-panel" id="configPanel">
+        <div class="config-panel-header">
+            <div class="config-panel-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Configuration des tables
+            </div>
+            <button class="modal-close" onclick="closeConfigPanel()">×</button>
+        </div>
+
+        <div class="config-panel-body">
+            <div class="config-info">
+                Ces paramètres sont <strong>persistés dans le document Grist</strong>
+                via <code>grist.setOptions()</code>. Ils s'appliquent à tous les
+                utilisateurs du document.<br><br>
+                Les colonnes de la table <strong>Tasks</strong> se configurent via
+                le panneau <strong>"Colonnes"</strong> intégré à Grist (icône
+                de mappage en haut à droite du widget).
+            </div>
+
+            <!-- Table principale Tasks -->
+            <div class="config-section">
+                <div class="config-section-title">📋 Table des tâches</div>
+                <div class="config-field">
+                    <label>Nom de la table</label>
+                    <input type="text" id="cfg-tableTasks" placeholder="Tasks"
+                           oninput="markChanged(this)" />
+                </div>
+            </div>
+
+            <!-- Table Team -->
+            <div class="config-section">
+                <div class="config-section-title">👥 Table équipe (Team)</div>
+                <div class="config-field">
+                    <label>Nom de la table</label>
+                    <input type="text" id="cfg-tableTeam" placeholder="Team"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Nom</label>
+                    <input type="text" id="cfg-colTeamNom" placeholder="nom"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Email</label>
+                    <input type="text" id="cfg-colTeamEmail" placeholder="email"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Rôle</label>
+                    <input type="text" id="cfg-colTeamRole" placeholder="role"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Avatar</label>
+                    <input type="text" id="cfg-colTeamAvatar" placeholder="avatar"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Actif</label>
+                    <input type="text" id="cfg-colTeamActif" placeholder="actif"
+                           oninput="markChanged(this)" />
+                </div>
+            </div>
+
+            <!-- Table Projects -->
+            <div class="config-section">
+                <div class="config-section-title">📁 Table projets (Projects)</div>
+                <div class="config-field">
+                    <label>Nom de la table</label>
+                    <input type="text" id="cfg-tableProjects" placeholder="Projects"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Nom</label>
+                    <input type="text" id="cfg-colProjectsNom" placeholder="nom"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Couleur</label>
+                    <input type="text" id="cfg-colProjectsCouleur" placeholder="couleur"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Date début</label>
+                    <input type="text" id="cfg-colProjectsDateDebut" placeholder="dateDebut"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Date fin</label>
+                    <input type="text" id="cfg-colProjectsDateFin" placeholder="dateFin"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Responsable</label>
+                    <input type="text" id="cfg-colProjectsResponsable" placeholder="responsable"
+                           oninput="markChanged(this)" />
+                </div>
+                <div class="config-field">
+                    <label>Colonne — Actif</label>
+                    <input type="text" id="cfg-colProjectsActif" placeholder="actif"
+                           oninput="markChanged(this)" />
+                </div>
+            </div>
+
+            <span class="config-reset-link" onclick="resetConfigToDefaults()">
+                ↺ Rétablir les valeurs par défaut
+            </span>
+        </div>
+
+        <div class="config-panel-footer">
+            <button class="btn" onclick="closeConfigPanel()">Annuler</button>
+            <button class="btn primary" onclick="saveConfig()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Enregistrer
+            </button>
+        </div>
+    </aside>
+    <div class="config-panel-overlay" id="configOverlay" onclick="closeConfigPanel()"></div>
 
     <div class="filter-bar">
         <div class="filter-dropdown" id="filterProject">
@@ -986,7 +1247,75 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script>
         // ═══════════════════════════════════════════════════════════════════════
-        // CONFIGURATION
+        // CONFIGURATION GRIST
+        // Noms de tables et colonnes par défaut.
+        // • Les colonnes Tasks sont mappables via le panneau "Colonnes" de Grist
+        //   (déclarées dans grist.ready({ columns })).
+        // • Les noms des tables secondaires (Team, Projects) sont configurables
+        //   via le panneau "Options du widget" de Grist (grist.setOptions /
+        //   grist.onOptions). Les valeurs ci-dessous sont les défauts utilisés
+        //   si aucune option n'a encore été enregistrée.
+        // ═══════════════════════════════════════════════════════════════════════
+        const GRIST_CONFIG = {
+            // Noms des tables Grist — défauts modifiables via Widget Options
+            tables: {
+                tasks:    'Tasks',
+                team:     'Team',
+                projects: 'Projects'
+            },
+            // Noms des colonnes par défaut (écrasés par le mappage Grist)
+            columns: {
+                tasks: {
+                    titre:       'titre',
+                    description: 'description',
+                    dateDebut:   'dateDebut',
+                    dateEcheance:'dateEcheance',
+                    priorite:    'priorite',
+                    statut:      'statut',
+                    progression: 'progression',
+                    projet:      'projet',
+                    assignees:   'assignees',
+                    type:        'type',
+                    dependDe:    'dependDe',
+                    tags:        'tags',
+                    estimationH: 'estimationH',
+                    tempsPasse:  'tempsPasse',
+                    couleur:     'couleur'
+                },
+                team: {
+                    nom:    'nom',
+                    email:  'email',
+                    avatar: 'avatar',
+                    role:   'role',
+                    actif:  'actif'
+                },
+                projects: {
+                    nom:         'nom',
+                    couleur:     'couleur',
+                    dateDebut:   'dateDebut',
+                    dateFin:     'dateFin',
+                    responsable: 'responsable',
+                    actif:       'actif'
+                }
+            }
+        };
+
+        // COL — noms physiques réels des colonnes Tasks.
+        // Initialisé avec les défauts, mis à jour dynamiquement par onRecords(mappings).
+        // Usage dans le code : t[COL.titre], t[COL.dateDebut], etc.
+        let COL = { ...GRIST_CONFIG.columns.tasks };
+
+        // COL_TEAM / COL_PROJECTS — noms des colonnes des tables secondaires.
+        let COL_TEAM     = { ...GRIST_CONFIG.columns.team };
+        let COL_PROJECTS = { ...GRIST_CONFIG.columns.projects };
+
+        // TABLE — noms physiques des tables.
+        // Mis à jour via grist.onOptions() quand l'utilisateur configure le widget.
+        // Usage : TABLE.tasks, TABLE.team, TABLE.projects
+        let TABLE = { ...GRIST_CONFIG.tables };
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // CONFIGURATION VUE
         // ═══════════════════════════════════════════════════════════════════════
         const VIEW_CONFIG = {
             week: { label: 'Semaine', unit: 'day', days: 7, cellWidth: 70, navStep: 7 },
@@ -1033,12 +1362,13 @@
         const isSameDay = (a, b) => a.toDateString() === b.toDateString();
         const getDaysDiff = (a, b) => Math.round((b - a) / 86400000);
         const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
-        const getTaskPriority = (t) => (t?.priorite >= 1 && t?.priorite <= 4) ? t.priorite : 3;
-        const isJalon = (t) => t?.type === 'jalon' || (gristToDate(t?.dateDebut)?.toDateString() === gristToDate(t?.dateEcheance)?.toDateString());
+        const getTaskPriority = (t) => { const p = Number(t?.[COL.priorite]); return (p >= 1 && p <= 4) ? p : 3; };
+        const isJalon = (t) => t?.[COL.type] === 'jalon' || (gristToDate(t?.[COL.dateDebut])?.toDateString() === gristToDate(t?.[COL.dateEcheance])?.toDateString());
 
         function getAssigneesArray(t) {
-            if (!t?.assignees) return [];
-            if (Array.isArray(t.assignees)) return t.assignees[0] === 'L' ? t.assignees.slice(1).map(Number) : t.assignees.map(Number);
+            const val = t?.[COL.assignees];
+            if (!val) return [];
+            if (Array.isArray(val)) return val[0] === 'L' ? val.slice(1).map(Number) : val.map(Number);
             return [];
         }
 
@@ -1167,10 +1497,10 @@
             if (sortMode === 'priority') {
                 tasks.sort((a, b) => {
                     const pa = getTaskPriority(a), pb = getTaskPriority(b);
-                    return pa !== pb ? pa - pb : (a.dateDebut || 0) - (b.dateDebut || 0);
+                    return pa !== pb ? pa - pb : (a[COL.dateDebut] || 0) - (b[COL.dateDebut] || 0);
                 });
             } else if (sortMode === 'date') {
-                tasks.sort((a, b) => (a.dateDebut || 0) - (b.dateDebut || 0));
+                tasks.sort((a, b) => (a[COL.dateDebut] || 0) - (b[COL.dateDebut] || 0));
             }
         }
 
@@ -1201,7 +1531,7 @@
         }
 
         function updateFilterMenus() {
-            const projs = [...new Set(tasks.map(t => t.projet).filter(Boolean))].sort();
+            const projs = [...new Set(tasks.map(t => t[COL.projet]).filter(Boolean))].map(String).sort();
             document.getElementById('filterProjectMenu').innerHTML = `
                 <div class="filter-option ${!filters.project ? 'active' : ''}" onclick="setFilter('project', null)">Tous</div>
                 ${projs.map(p => `<div class="filter-option ${filters.project === p ? 'active' : ''}" onclick="setFilter('project', '${escapeHtml(p)}')">${escapeHtml(p)}</div>`).join('')}
@@ -1209,7 +1539,7 @@
 
             document.getElementById('filterAssigneeMenu').innerHTML = `
                 <div class="filter-option ${!filters.assignee ? 'active' : ''}" onclick="setFilter('assignee', null)">Tous</div>
-                ${team.map(m => `<div class="filter-option ${filters.assignee == m.id ? 'active' : ''}" onclick="setFilter('assignee', ${m.id})">${escapeHtml(m.nom)}</div>`).join('')}
+                ${team.map(m => `<div class="filter-option ${filters.assignee == m.id ? 'active' : ''}" onclick="setFilter('assignee', ${m.id})">${escapeHtml(m[COL_TEAM.nom])}</div>`).join('')}
             `;
 
             updateFilterUI();
@@ -1222,16 +1552,16 @@
             assBtn.className = 'filter-btn' + (filters.assignee ? ' active' : '');
             document.getElementById('filterProjectLabel').textContent = filters.project || 'Projet ▾';
             const mem = team.find(m => m.id == filters.assignee);
-            document.getElementById('filterAssigneeLabel').textContent = mem ? mem.nom : 'Assigné ▾';
+            document.getElementById('filterAssigneeLabel').textContent = mem ? mem[COL_TEAM.nom] : 'Assigné ▾';
 
             const chips = [];
             if (filters.project) chips.push(`<span class="filter-chip">${escapeHtml(filters.project)}<button onclick="setFilter('project',null)">×</button></span>`);
-            if (mem) chips.push(`<span class="filter-chip">${escapeHtml(mem.nom)}<button onclick="setFilter('assignee',null)">×</button></span>`);
+            if (mem) chips.push(`<span class="filter-chip">${escapeHtml(mem[COL_TEAM.nom])}<button onclick="setFilter('assignee',null)">×</button></span>`);
             document.getElementById('activeFilters').innerHTML = chips.join('');
         }
 
         function taskMatchesFilters(t) {
-            if (filters.project && t.projet !== filters.project) return false;
+            if (filters.project && String(t[COL.projet]) !== filters.project) return false;
             if (filters.assignee && !getAssigneesArray(t).includes(Number(filters.assignee))) return false;
             return true;
         }
@@ -1325,8 +1655,8 @@
             filtered.forEach((t, i) => {
                 const p = getTaskPriority(t);
                 const sel = t.id === selectedTaskId ? ' selected' : '';
-                const start = gristToDate(t.dateDebut);
-                const end = gristToDate(t.dateEcheance);
+                const start = gristToDate(t[COL.dateDebut]);
+                const end = gristToDate(t[COL.dateEcheance]);
                 const jalon = isJalon(t);
 
                 html += `
@@ -1334,10 +1664,10 @@
                         <span class="drag-handle">⋮⋮</span>
                         <div class="task-priority-bar p${p}"></div>
                         <div class="task-info">
-                            <div class="task-name">${jalon ? '<span class="milestone-icon">◆</span> ' : ''}${escapeHtml(t.titre)}</div>
+                            <div class="task-name">${jalon ? '<span class="milestone-icon">◆</span> ' : ''}${escapeHtml(t[COL.titre])}</div>
                             <div class="task-dates">${formatDateShort(start)} → ${formatDateShort(end)}</div>
                         </div>
-                        <span class="task-progress-badge">${t.progression || 0}%</span>
+                        <span class="task-progress-badge">${t[COL.progression] || 0}%</span>
                     </div>
                 `;
             });
@@ -1426,8 +1756,8 @@
 
             // Bars & Milestones
             filtered.forEach((t, i) => {
-                const taskStart = gristToDate(t.dateDebut);
-                const taskEnd = gristToDate(t.dateEcheance);
+                const taskStart = gristToDate(t[COL.dateDebut]);
+                const taskEnd = gristToDate(t[COL.dateEcheance]);
                 if (!taskStart || !taskEnd) return;
 
                 const startOff = getDaysDiff(start, taskStart);
@@ -1440,6 +1770,7 @@
                 const p = getTaskPriority(t);
                 const sel = t.id === selectedTaskId ? ' selected' : '';
                 const top = i * 44 + 11;
+                const titre = escapeHtml(t[COL.titre] || '');
 
                 if (isJalon(t)) {
                     const left = startOff * pxPerDay;
@@ -1447,7 +1778,7 @@
                         html += `
                             <div class="gantt-milestone p${p}${sel}" style="left: ${left}px; top: ${top}px;" data-id="${t.id}">
                                 <div class="milestone-diamond"></div>
-                                <span class="milestone-label">${escapeHtml(t.titre)}</span>
+                                <span class="milestone-label">${titre}</span>
                             </div>
                         `;
                     }
@@ -1456,15 +1787,15 @@
                     let width = (visEnd - visStart + 1) * pxPerDay;
                     if (width < 4) width = 4;
 
-                    const prog = t.progression || 0;
+                    const prog = t[COL.progression] || 0;
                     const showExt = width < 60;
 
                     html += `
                         <div class="gantt-bar p${p}${sel}" style="left: ${left}px; width: ${width}px; top: ${top}px;" 
-                             data-id="${t.id}" data-title="${escapeHtml(t.titre)}" data-start="${formatDate(taskStart)}" data-end="${formatDate(taskEnd)}" data-progress="${prog}">
+                             data-id="${t.id}" data-title="${titre}" data-start="${formatDate(taskStart)}" data-end="${formatDate(taskEnd)}" data-progress="${prog}">
                             <div class="resize-handle left" data-resize="left"></div>
                             <div class="gantt-bar-progress" style="width: ${prog}%"></div>
-                            ${showExt ? '<span class="bar-label"></span><span class="bar-label-external">' + escapeHtml(t.titre) + '</span>' : '<span class="bar-label">' + escapeHtml(t.titre) + '</span>'}
+                            ${showExt ? '<span class="bar-label"></span><span class="bar-label-external">' + titre + '</span>' : '<span class="bar-label">' + titre + '</span>'}
                             <div class="resize-handle right" data-resize="right"></div>
                         </div>
                     `;
@@ -1513,13 +1844,14 @@
             let paths = '';
 
             filtered.forEach((t, i) => {
-                if (!t.dependDe) return;
+                const dependDe = t[COL.dependDe];
+                if (!dependDe) return;
 
                 let depIds = [];
-                if (Array.isArray(t.dependDe)) {
-                    depIds = t.dependDe[0] === 'L' ? t.dependDe.slice(1) : t.dependDe;
-                } else if (typeof t.dependDe === 'number') {
-                    depIds = [t.dependDe];
+                if (Array.isArray(dependDe)) {
+                    depIds = dependDe[0] === 'L' ? dependDe.slice(1) : dependDe;
+                } else if (typeof dependDe === 'number') {
+                    depIds = [dependDe];
                 }
 
                 depIds.forEach(depId => {
@@ -1527,8 +1859,8 @@
                     if (!depTask) return;
 
                     const depIdx = filtered.indexOf(depTask);
-                    const depEnd = gristToDate(depTask.dateEcheance);
-                    const taskStart = gristToDate(t.dateDebut);
+                    const depEnd = gristToDate(depTask[COL.dateEcheance]);
+                    const taskStart = gristToDate(t[COL.dateDebut]);
                     if (!depEnd || !taskStart) return;
 
                     const x1 = (getDaysDiff(start, depEnd) + 1) * pxPerDay;
@@ -1592,14 +1924,17 @@
             const task = tasks.find(t => t.id === taskId);
             if (!task) return;
 
-            const start = gristToDate(task.dateDebut);
-            const end = gristToDate(task.dateEcheance);
-            const p = getTaskPriority(task);
-            const jalon = isJalon(task);
+            const start    = gristToDate(task[COL.dateDebut]);
+            const end      = gristToDate(task[COL.dateEcheance]);
+            const p        = getTaskPriority(task);
+            const jalon    = isJalon(task);
             const assignees = getAssigneesArray(task);
-            const progress = task.progression || 0;
+            const progress  = task[COL.progression] || 0;
+            const taskTitre = task[COL.titre] || '';
+            const taskProjet = task[COL.projet];
+            const taskDependDe = task[COL.dependDe];
 
-            // Check for issues
+            // Alerte retard
             let alerts = '';
             const today = new Date();
             if (end && end < today && progress < 100) {
@@ -1607,41 +1942,40 @@
                 alerts += `<div class="alert-box warning">⚠️ En retard de ${daysLate} jour${daysLate > 1 ? 's' : ''}</div>`;
             }
 
-            // Dependencies
+            // Dépendances amont (tâches dont cette tâche dépend)
             let depsHtml = '';
-            if (task.dependDe) {
-                let depIds = Array.isArray(task.dependDe) ? (task.dependDe[0] === 'L' ? task.dependDe.slice(1) : task.dependDe) : [task.dependDe];
-                if (depIds.length) {
+            if (taskDependDe) {
+                const rawIds = Array.isArray(taskDependDe)
+                    ? (taskDependDe[0] === 'L' ? taskDependDe.slice(1) : taskDependDe)
+                    : [taskDependDe];
+                if (rawIds.length) {
                     depsHtml = '<div class="dependency-list">';
-                    depIds.forEach(id => {
+                    rawIds.forEach(id => {
                         const dep = tasks.find(t => t.id === id);
-                        if (dep) {
-                            depsHtml += `<div class="dependency-item"><span class="arrow">←</span> ${escapeHtml(dep.titre)}</div>`;
-                        }
+                        if (dep) depsHtml += `<div class="dependency-item"><span class="arrow">←</span> ${escapeHtml(dep[COL.titre])}</div>`;
                     });
                     depsHtml += '</div>';
                 }
             }
 
-            // Dependents
+            // Dépendances aval (tâches qui dépendent de celle-ci)
             const dependents = tasks.filter(t => {
-                if (!t.dependDe) return false;
-                let ids = Array.isArray(t.dependDe) ? (t.dependDe[0] === 'L' ? t.dependDe.slice(1) : t.dependDe) : [t.dependDe];
+                const dd = t[COL.dependDe];
+                if (!dd) return false;
+                const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
                 return ids.includes(task.id);
             });
-
             if (dependents.length) {
                 if (!depsHtml) depsHtml = '<div class="dependency-list">';
                 else depsHtml = depsHtml.replace('</div>', '');
                 dependents.forEach(dep => {
-                    depsHtml += `<div class="dependency-item"><span class="arrow">→</span> ${escapeHtml(dep.titre)}</div>`;
+                    depsHtml += `<div class="dependency-item"><span class="arrow">→</span> ${escapeHtml(dep[COL.titre])}</div>`;
                 });
                 depsHtml += '</div>';
             }
 
             const html = `
                 ${alerts}
-                
                 <div class="detail-section">
                     <div class="detail-section-title">📋 Informations</div>
                     <div class="detail-grid">
@@ -1661,7 +1995,7 @@
                             <div class="detail-label">Échéance</div>
                             <div class="detail-value">${formatDate(end)}</div>
                         </div>
-                        ${task.projet ? `<div class="detail-item" style="grid-column: span 2;"><div class="detail-label">Projet</div><div class="detail-value">${escapeHtml(task.projet)}</div></div>` : ''}
+                        ${taskProjet ? `<div class="detail-item" style="grid-column: span 2;"><div class="detail-label">Projet</div><div class="detail-value">${escapeHtml(String(taskProjet))}</div></div>` : ''}
                     </div>
                 </div>
 
@@ -1683,7 +2017,7 @@
                     <div class="dependency-list">
                         ${assignees.map(id => {
                             const m = team.find(x => x.id === id);
-                            return m ? `<div class="dependency-item">${escapeHtml(m.nom)}</div>` : '';
+                            return m ? `<div class="dependency-item">${escapeHtml(m[COL_TEAM.nom])}</div>` : '';
                         }).join('')}
                     </div>
                 </div>
@@ -1697,7 +2031,7 @@
                 ` : ''}
             `;
 
-            document.getElementById('modalTitle').innerHTML = `📊 ${escapeHtml(task.titre)}`;
+            document.getElementById('modalTitle').innerHTML = `📊 ${escapeHtml(taskTitre)}`;
             document.getElementById('modalBody').innerHTML = html;
             document.getElementById('taskModal').classList.add('open');
             document.getElementById('taskModal').dataset.taskId = taskId;
@@ -1747,8 +2081,8 @@
                 startX: e.clientX,
                 originalLeft: parseFloat(bar.style.left),
                 originalWidth: parseFloat(bar.style.width),
-                originalStart: gristToDate(task.dateDebut),
-                originalEnd: gristToDate(task.dateEcheance)
+                originalStart: gristToDate(task[COL.dateDebut]),
+                originalEnd: gristToDate(task[COL.dateEcheance])
             };
 
             bar.classList.add('dragging');
@@ -1814,13 +2148,16 @@
                 newStart = addDays(dragState.originalStart, daysDelta);
             }
 
-            task.dateDebut = dateToGrist(newStart);
-            task.dateEcheance = dateToGrist(newEnd);
+            task[COL.dateDebut]    = dateToGrist(newStart);
+            task[COL.dateEcheance] = dateToGrist(newEnd);
 
             if (gristReady) {
                 try {
                     await grist.docApi.applyUserActions([
-                        ['UpdateRecord', 'Tasks', task.id, { dateDebut: task.dateDebut, dateEcheance: task.dateEcheance }]
+                        ['UpdateRecord', TABLE.tasks, task.id, {
+                            [COL.dateDebut]:    task[COL.dateDebut],
+                            [COL.dateEcheance]: task[COL.dateEcheance]
+                        }]
                     ]);
                     showToast('Dates mises à jour', 'success');
                 } catch (err) {
@@ -1854,47 +2191,51 @@
         // SCHEMA AUTO-INITIALISATION
         // ═══════════════════════════════════════════════════════════════════════
 
-        const TASKFLOW_SCHEMA = {
-            Team: [
-                { id: 'nom', type: 'Text' },
-                { id: 'email', type: 'Text' },
-                { id: 'avatar', type: 'Text' },
-                { id: 'role', type: 'Choice' },
-                { id: 'actif', type: 'Bool' }
-            ],
-            Projects: [
-                { id: 'nom', type: 'Text' },
-                { id: 'couleur', type: 'Text' },
-                { id: 'dateDebut', type: 'Date' },
-                { id: 'dateFin', type: 'Date' },
-                { id: 'responsable', type: 'Ref:Team' },
-                { id: 'actif', type: 'Bool' }
-            ],
-            Tasks: [
-                { id: 'titre', type: 'Text' },
-                { id: 'description', type: 'Text' },
-                { id: 'dateDebut', type: 'Date' },
-                { id: 'dateEcheance', type: 'Date' },
-                { id: 'priorite', type: 'Choice' },
-                { id: 'statut', type: 'Choice' },
-                { id: 'progression', type: 'Numeric' },
-                { id: 'projet', type: 'Ref:Projects' },
-                { id: 'assignees', type: 'RefList:Team' },
-                { id: 'type', type: 'Choice' },
-                { id: 'dependDe', type: 'RefList:Tasks' },
-                { id: 'tags', type: 'ChoiceList' },
-                { id: 'estimationH', type: 'Numeric' },
-                { id: 'tempsPasse', type: 'Numeric' },
-                { id: 'couleur', type: 'Text' }
-            ]
-        };
+        // getTaskflowSchema() — construit le schéma en utilisant les noms dynamiques
+        // de TABLE et COL/COL_TEAM/COL_PROJECTS au moment de l'appel.
+        function getTaskflowSchema() {
+            return {
+                [TABLE.team]: [
+                    { id: COL_TEAM.nom,    type: 'Text' },
+                    { id: COL_TEAM.email,  type: 'Text' },
+                    { id: COL_TEAM.avatar, type: 'Text' },
+                    { id: COL_TEAM.role,   type: 'Choice' },
+                    { id: COL_TEAM.actif,  type: 'Bool' }
+                ],
+                [TABLE.projects]: [
+                    { id: COL_PROJECTS.nom,         type: 'Text' },
+                    { id: COL_PROJECTS.couleur,      type: 'Text' },
+                    { id: COL_PROJECTS.dateDebut,    type: 'Date' },
+                    { id: COL_PROJECTS.dateFin,      type: 'Date' },
+                    { id: COL_PROJECTS.responsable,  type: `Ref:${TABLE.team}` },
+                    { id: COL_PROJECTS.actif,        type: 'Bool' }
+                ],
+                [TABLE.tasks]: [
+                    { id: COL.titre,        type: 'Text' },
+                    { id: COL.description,  type: 'Text' },
+                    { id: COL.dateDebut,    type: 'Date' },
+                    { id: COL.dateEcheance, type: 'Date' },
+                    { id: COL.priorite,     type: 'Choice' },
+                    { id: COL.statut,       type: 'Choice' },
+                    { id: COL.progression,  type: 'Numeric' },
+                    { id: COL.projet,       type: `Ref:${TABLE.projects}` },
+                    { id: COL.assignees,    type: `RefList:${TABLE.team}` },
+                    { id: COL.type,         type: 'Choice' },
+                    { id: COL.dependDe,     type: `RefList:${TABLE.tasks}` },
+                    { id: COL.tags,         type: 'ChoiceList' },
+                    { id: COL.estimationH,  type: 'Numeric' },
+                    { id: COL.tempsPasse,   type: 'Numeric' },
+                    { id: COL.couleur,      type: 'Text' }
+                ]
+            };
+        }
 
         async function ensureSchema() {
             const log = (msg) => console.log(`[TaskFlow Schema] ${msg}`);
             let created = 0, added = 0;
             const tablesCreated = [];
 
-            for (const [tableName, columns] of Object.entries(TASKFLOW_SCHEMA)) {
+            for (const [tableName, columns] of Object.entries(getTaskflowSchema())) {
                 let existingCols = [];
                 let tableExists = false;
 
@@ -1934,7 +2275,7 @@
                 }
             }
 
-            if (tablesCreated.includes('Tasks')) {
+            if (tablesCreated.includes(TABLE.tasks)) {
                 await seedData();
             }
 
@@ -1954,37 +2295,54 @@
                 return dt.getTime() / 1000;
             };
 
+            // Helper : construit un enregistrement Task avec les noms de colonnes dynamiques
+            const mkTask = (d) => ({
+                [COL.titre]:        d.titre,
+                [COL.description]:  d.description || '',
+                [COL.dateDebut]:    d.dateDebut,
+                [COL.dateEcheance]: d.dateEcheance,
+                [COL.priorite]:     d.priorite,
+                [COL.statut]:       d.statut,
+                [COL.progression]:  d.progression,
+                [COL.type]:         d.type,
+                ...(d.projet      !== undefined ? { [COL.projet]:      d.projet      } : {}),
+                ...(d.assignees   !== undefined ? { [COL.assignees]:   d.assignees   } : {}),
+                ...(d.dependDe    !== undefined ? { [COL.dependDe]:    d.dependDe    } : {}),
+                ...(d.estimationH !== undefined ? { [COL.estimationH]: d.estimationH } : {}),
+                ...(d.tempsPasse  !== undefined ? { [COL.tempsPasse]:  d.tempsPasse  } : {})
+            });
+
             try {
                 await grist.docApi.applyUserActions([
-                    ['AddRecord', 'Team', null, { nom: 'Alice Martin', email: 'alice.martin@cerema.fr', role: 'Chef de projet', actif: true }],
-                    ['AddRecord', 'Team', null, { nom: 'Bob Durant', email: 'bob.durant@cerema.fr', role: 'Développeur', actif: true }],
-                    ['AddRecord', 'Team', null, { nom: 'Claire Bernard', email: 'claire.bernard@cerema.fr', role: 'Designer', actif: true }],
-                    ['AddRecord', 'Team', null, { nom: 'David Petit', email: 'david.petit@cerema.fr', role: 'Data analyst', actif: true }]
+                    ['AddRecord', TABLE.team, null, { [COL_TEAM.nom]: 'Alice Martin',    [COL_TEAM.email]: 'alice.martin@cerema.fr',   [COL_TEAM.role]: 'Chef de projet', [COL_TEAM.actif]: true }],
+                    ['AddRecord', TABLE.team, null, { [COL_TEAM.nom]: 'Bob Durant',      [COL_TEAM.email]: 'bob.durant@cerema.fr',     [COL_TEAM.role]: 'Développeur',    [COL_TEAM.actif]: true }],
+                    ['AddRecord', TABLE.team, null, { [COL_TEAM.nom]: 'Claire Bernard',  [COL_TEAM.email]: 'claire.bernard@cerema.fr', [COL_TEAM.role]: 'Designer',       [COL_TEAM.actif]: true }],
+                    ['AddRecord', TABLE.team, null, { [COL_TEAM.nom]: 'David Petit',     [COL_TEAM.email]: 'david.petit@cerema.fr',    [COL_TEAM.role]: 'Data analyst',   [COL_TEAM.actif]: true }]
                 ]);
-                log('✅ 4 membres ajoutés à Team');
+                log(`✅ 4 membres ajoutés à ${TABLE.team}`);
 
                 await grist.docApi.applyUserActions([
-                    ['AddRecord', 'Projects', null, { nom: 'Refonte Portail', couleur: '#4f46e5', dateDebut: day(-15), dateFin: day(45), responsable: 1, actif: true }],
-                    ['AddRecord', 'Projects', null, { nom: 'App Mobile Terrain', couleur: '#10b981', dateDebut: day(-5), dateFin: day(60), responsable: 2, actif: true }],
-                    ['AddRecord', 'Projects', null, { nom: 'Dashboard IA', couleur: '#f59e0b', dateDebut: day(0), dateFin: day(30), responsable: 4, actif: true }]
+                    ['AddRecord', TABLE.projects, null, { [COL_PROJECTS.nom]: 'Refonte Portail',    [COL_PROJECTS.couleur]: '#4f46e5', [COL_PROJECTS.dateDebut]: day(-15), [COL_PROJECTS.dateFin]: day(45),  [COL_PROJECTS.responsable]: 1, [COL_PROJECTS.actif]: true }],
+                    ['AddRecord', TABLE.projects, null, { [COL_PROJECTS.nom]: 'App Mobile Terrain', [COL_PROJECTS.couleur]: '#10b981', [COL_PROJECTS.dateDebut]: day(-5),  [COL_PROJECTS.dateFin]: day(60),  [COL_PROJECTS.responsable]: 2, [COL_PROJECTS.actif]: true }],
+                    ['AddRecord', TABLE.projects, null, { [COL_PROJECTS.nom]: 'Dashboard IA',       [COL_PROJECTS.couleur]: '#f59e0b', [COL_PROJECTS.dateDebut]: day(0),   [COL_PROJECTS.dateFin]: day(30),  [COL_PROJECTS.responsable]: 4, [COL_PROJECTS.actif]: true }]
                 ]);
-                log('✅ 3 projets ajoutés à Projects');
+                log(`✅ 3 projets ajoutés à ${TABLE.projects}`);
 
                 await grist.docApi.applyUserActions([
-                    ['AddRecord', 'Tasks', null, { titre: 'Cahier des charges', description: 'Rédiger le CDC complet avec specs fonctionnelles', dateDebut: day(-15), dateEcheance: day(-8), priorite: '1', statut: 'done', progression: 100, projet: 1, type: 'tache', assignees: ['L', 1], estimationH: 16 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Maquettes UI/UX', description: 'Wireframes et prototypes Figma', dateDebut: day(-10), dateEcheance: day(-2), priorite: '2', statut: 'done', progression: 100, projet: 1, type: 'tache', assignees: ['L', 3], estimationH: 24 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Développement frontend', description: 'Intégration HTML/CSS/JS du nouveau portail', dateDebut: day(-3), dateEcheance: day(12), priorite: '1', statut: 'inprogress', progression: 35, projet: 1, type: 'tache', assignees: ['L', 2, 3], dependDe: ['L', 2], estimationH: 40 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Validation design', description: 'Point de validation des maquettes', dateDebut: day(-2), dateEcheance: day(-2), priorite: '2', statut: 'done', progression: 100, projet: 1, type: 'jalon' }],
-                    ['AddRecord', 'Tasks', null, { titre: 'API backend', description: 'Développement des endpoints REST', dateDebut: day(-5), dateEcheance: day(10), priorite: '1', statut: 'inprogress', progression: 55, projet: 1, type: 'tache', assignees: ['L', 2], estimationH: 32, tempsPasse: 18 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Étude terrain', description: 'Analyse des besoins agents terrain', dateDebut: day(-5), dateEcheance: day(0), priorite: '2', statut: 'review', progression: 90, projet: 2, type: 'tache', assignees: ['L', 1, 4], estimationH: 12 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Proto mobile v1', description: 'Premier prototype fonctionnel React Native', dateDebut: day(1), dateEcheance: day(20), priorite: '2', statut: 'todo', progression: 0, projet: 2, type: 'tache', assignees: ['L', 2], dependDe: ['L', 6], estimationH: 48 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Réunion lancement mobile', description: 'Kick-off avec les parties prenantes', dateDebut: day(2), dateEcheance: day(2), priorite: '3', statut: 'todo', progression: 0, projet: 2, type: 'reunion', assignees: ['L', 1, 2, 3, 4] }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Collecte des sources de données', description: 'Identifier et connecter les flux de données', dateDebut: day(0), dateEcheance: day(7), priorite: '2', statut: 'inprogress', progression: 20, projet: 3, type: 'tache', assignees: ['L', 4], estimationH: 16 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Modèle de scoring IA', description: 'Entraîner le modèle de classification Albert API', dateDebut: day(5), dateEcheance: day(18), priorite: '1', statut: 'todo', progression: 0, projet: 3, type: 'tache', assignees: ['L', 4], dependDe: ['L', 9], estimationH: 30 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Widget dashboard Grist', description: 'Interface de visualisation des indicateurs', dateDebut: day(10), dateEcheance: day(25), priorite: '3', statut: 'todo', progression: 0, projet: 3, type: 'tache', assignees: ['L', 2, 3], estimationH: 24 }],
-                    ['AddRecord', 'Tasks', null, { titre: 'Livraison MVP Dashboard', description: 'Version minimale fonctionnelle', dateDebut: day(28), dateEcheance: day(28), priorite: '1', statut: 'todo', progression: 0, projet: 3, type: 'jalon', dependDe: ['L', 10, 11] }]
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Cahier des charges',          description: 'Rédiger le CDC complet',                dateDebut: day(-15), dateEcheance: day(-8),  priorite: '1', statut: 'done',       progression: 100, projet: 1, type: 'tache',  assignees: ['L', 1],       estimationH: 16 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Maquettes UI/UX',             description: 'Wireframes et prototypes Figma',         dateDebut: day(-10), dateEcheance: day(-2),  priorite: '2', statut: 'done',       progression: 100, projet: 1, type: 'tache',  assignees: ['L', 3],       estimationH: 24 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Développement frontend',      description: 'Intégration HTML/CSS/JS du portail',     dateDebut: day(-3),  dateEcheance: day(12),  priorite: '1', statut: 'inprogress', progression: 35,  projet: 1, type: 'tache',  assignees: ['L', 2, 3],    dependDe: ['L', 2],     estimationH: 40 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Validation design',           description: 'Point de validation des maquettes',      dateDebut: day(-2),  dateEcheance: day(-2),  priorite: '2', statut: 'done',       progression: 100, projet: 1, type: 'jalon' })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'API backend',                 description: 'Développement des endpoints REST',       dateDebut: day(-5),  dateEcheance: day(10),  priorite: '1', statut: 'inprogress', progression: 55,  projet: 1, type: 'tache',  assignees: ['L', 2],       estimationH: 32, tempsPasse: 18 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Étude terrain',              description: 'Analyse des besoins agents terrain',     dateDebut: day(-5),  dateEcheance: day(0),   priorite: '2', statut: 'review',     progression: 90,  projet: 2, type: 'tache',  assignees: ['L', 1, 4],    estimationH: 12 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Proto mobile v1',            description: 'Premier prototype React Native',         dateDebut: day(1),   dateEcheance: day(20),  priorite: '2', statut: 'todo',       progression: 0,   projet: 2, type: 'tache',  assignees: ['L', 2],       dependDe: ['L', 6],     estimationH: 48 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Réunion lancement mobile',  description: 'Kick-off parties prenantes',             dateDebut: day(2),   dateEcheance: day(2),   priorite: '3', statut: 'todo',       progression: 0,   projet: 2, type: 'reunion', assignees: ['L', 1, 2, 3, 4] })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Collecte des sources',       description: 'Identifier et connecter les données',    dateDebut: day(0),   dateEcheance: day(7),   priorite: '2', statut: 'inprogress', progression: 20,  projet: 3, type: 'tache',  assignees: ['L', 4],       estimationH: 16 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Modèle de scoring IA',      description: 'Entraîner le modèle Albert API',         dateDebut: day(5),   dateEcheance: day(18),  priorite: '1', statut: 'todo',       progression: 0,   projet: 3, type: 'tache',  assignees: ['L', 4],       dependDe: ['L', 9],     estimationH: 30 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Widget dashboard Grist',     description: 'Interface de visualisation indicateurs', dateDebut: day(10),  dateEcheance: day(25),  priorite: '3', statut: 'todo',       progression: 0,   projet: 3, type: 'tache',  assignees: ['L', 2, 3],    estimationH: 24 })],
+                    ['AddRecord', TABLE.tasks, null, mkTask({ titre: 'Livraison MVP Dashboard',    description: 'Version minimale fonctionnelle',         dateDebut: day(28),  dateEcheance: day(28),  priorite: '1', statut: 'todo',       progression: 0,   projet: 3, type: 'jalon',  dependDe: ['L', 10, 11] })]
                 ]);
-                log('✅ 12 tâches ajoutées à Tasks');
+                log(`✅ 12 tâches ajoutées à ${TABLE.tasks}`);
 
             } catch (e) {
                 log(`⚠️ Erreur seed: ${e.message || e}`);
@@ -1993,22 +2351,22 @@
 
         async function loadAllData() {
             try {
-                const taskData = await grist.docApi.fetchTable('Tasks');
+                const taskData = await grist.docApi.fetchTable(TABLE.tasks);
                 tasks = convert(taskData);
             } catch (e) {
-                console.log('Tasks table not available:', e);
+                console.log(`Table ${TABLE.tasks} non disponible:`, e);
                 tasks = [];
             }
 
             try {
-                const td = await grist.docApi.fetchTable('Team');
+                const td = await grist.docApi.fetchTable(TABLE.team);
                 team = convert(td);
-            } catch (e) {}
+            } catch (e) { team = []; }
 
             try {
-                const pd = await grist.docApi.fetchTable('Projects');
+                const pd = await grist.docApi.fetchTable(TABLE.projects);
                 projects = convert(pd);
-            } catch (e) {}
+            } catch (e) { projects = []; }
 
             gristReady = true;
             sortTasks();
@@ -2018,19 +2376,79 @@
 
         async function initGrist() {
             try {
-                grist.ready({ requiredAccess: 'full' });
+                // ── Déclaration des colonnes mappables (panneau "Colonnes" de Grist) ──────
+                // L'utilisateur peut associer chaque champ logique à n'importe quelle
+                // colonne de sa table. Les 3 premiers champs sont obligatoires.
+                grist.ready({
+                    requiredAccess: 'full',
+                    columns: [
+                        { name: 'titre',        title: 'Titre',            type: 'Text',    optional: false, description: 'Nom de la tâche, affiché sur la barre Gantt' },
+                        { name: 'dateDebut',    title: 'Date de début',    type: 'Date',    optional: false, description: 'Date de début de la tâche' },
+                        { name: 'dateEcheance', title: "Date d’échéance",  type: 'Date',    optional: false, description: 'Date de fin de la tâche' },
+                        { name: 'priorite',     title: 'Priorité',         type: 'Any',     optional: true,  description: 'Valeur entière : 1 (Critique) à 4 (Basse)' },
+                        { name: 'statut',       title: 'Statut',           type: 'Text',    optional: true,  description: 'todo / inprogress / review / done' },
+                        { name: 'progression',  title: 'Progression (%)',  type: 'Numeric', optional: true,  description: 'Avancement de 0 à 100' },
+                        { name: 'type',         title: 'Type',             type: 'Text',    optional: true,  description: 'jalon pour afficher un losange' },
+                        { name: 'projet',       title: 'Projet',           type: 'Any',     optional: true,  description: 'Nom ou Ref du projet (utilisé pour les filtres)' },
+                        { name: 'assignees',    title: 'Assignés',         type: 'Any',     optional: true,  description: 'RefList vers la table équipe' },
+                        { name: 'dependDe',     title: 'Dépend de',        type: 'Any',     optional: true,  description: 'RefList vers les tâches prédécesseurs' },
+                        { name: 'description',  title: 'Description',      type: 'Text',    optional: true },
+                        { name: 'estimationH',  title: 'Estimation (h)',   type: 'Numeric', optional: true },
+                        { name: 'tempsPasse',   title: 'Temps passé (h)',  type: 'Numeric', optional: true },
+                        { name: 'tags',         title: 'Tags',             type: 'Any',     optional: true },
+                        { name: 'couleur',      title: 'Couleur',          type: 'Text',    optional: true }
+                    ]
+                });
 
-                // Auto-init du schéma complet
+                // ── Options du widget (panneau "Options" de Grist) ───────────────────────
+                // Permet à l'utilisateur de configurer les noms des tables secondaires
+                // (Team, Projects) sans modifier le code.
+                // Format des options : { tableTeam: 'NomTable', tableProjects: 'NomTable',
+                //                       colTeamNom: 'nom', colProjectsNom: 'nom', ... }
+                grist.onOptions((options) => {
+                    if (!options) return;
+                    // Noms de tables secondaires
+                    if (options.tableTeam)     TABLE.team     = options.tableTeam;
+                    if (options.tableProjects) TABLE.projects = options.tableProjects;
+                    // Colonnes de la table Team
+                    if (options.colTeamNom)    COL_TEAM.nom    = options.colTeamNom;
+                    if (options.colTeamEmail)  COL_TEAM.email  = options.colTeamEmail;
+                    if (options.colTeamAvatar) COL_TEAM.avatar = options.colTeamAvatar;
+                    if (options.colTeamRole)   COL_TEAM.role   = options.colTeamRole;
+                    if (options.colTeamActif)  COL_TEAM.actif  = options.colTeamActif;
+                    // Colonnes de la table Projects
+                    if (options.colProjectsNom)        COL_PROJECTS.nom         = options.colProjectsNom;
+                    if (options.colProjectsCouleur)    COL_PROJECTS.couleur      = options.colProjectsCouleur;
+                    if (options.colProjectsDateDebut)  COL_PROJECTS.dateDebut    = options.colProjectsDateDebut;
+                    if (options.colProjectsDateFin)    COL_PROJECTS.dateFin      = options.colProjectsDateFin;
+                    if (options.colProjectsResponsable)COL_PROJECTS.responsable  = options.colProjectsResponsable;
+                    if (options.colProjectsActif)      COL_PROJECTS.actif        = options.colProjectsActif;
+                    // Recharger après changement d'options
+                    loadAllData();
+                });
+
+                // Auto-init du schéma complet (crée les tables/colonnes si absentes)
                 await ensureSchema();
 
-                // Chargement initial direct
+                // Chargement initial
                 await loadAllData();
 
-                // Live updates
-                grist.onRecords(async () => {
+                // ── Live updates avec mappage de colonnes ────────────────────────────────
+                // mappings = { nomLogique: 'nomPhysiqueRéel' } fourni par Grist
+                // quand l'utilisateur a utilisé le panneau "Colonnes" pour mapper les champs.
+                grist.onRecords(async (rawData, mappings) => {
+                    if (mappings) {
+                        // Mettre à jour COL avec les noms physiques réels
+                        Object.keys(GRIST_CONFIG.columns.tasks).forEach(logicalName => {
+                            if (mappings[logicalName]) {
+                                COL[logicalName] = mappings[logicalName];
+                            }
+                        });
+                    }
                     await loadAllData();
                 });
 
+                // ── Sync de sélection inter-widgets ─────────────────────────────────────
                 grist.onRecord((rec) => {
                     if (rec?.id && rec.id !== selectedTaskId) {
                         selectedTaskId = rec.id;
@@ -2049,31 +2467,175 @@
         function useDemoMode() {
             document.body.insertAdjacentHTML('beforeend', '<div class="demo-badge">Démo</div>');
 
-            team = [
-                { id: 1, nom: 'Alice Martin' },
-                { id: 2, nom: 'Bob Durant' },
-                { id: 3, nom: 'Claire Bernard' }
-            ];
-
             const today = new Date();
             const day = (d) => dateToGrist(new Date(today.getFullYear(), today.getMonth(), today.getDate() + d));
 
+            // Helper : construit un enregistrement task avec les noms de colonnes dynamiques
+            const mk = (d) => {
+                const rec = { id: d.id };
+                rec[COL.titre]        = d.titre;
+                rec[COL.priorite]     = d.priorite;
+                rec[COL.projet]       = d.projet || null;
+                rec[COL.dateDebut]    = d.dateDebut;
+                rec[COL.dateEcheance] = d.dateEcheance;
+                rec[COL.progression]  = d.progression || 0;
+                rec[COL.type]         = d.type || 'tache';
+                if (d.assignees) rec[COL.assignees] = d.assignees;
+                if (d.dependDe)  rec[COL.dependDe]  = d.dependDe;
+                return rec;
+            };
+
+            team = [
+                { id: 1, [COL_TEAM.nom]: 'Alice Martin' },
+                { id: 2, [COL_TEAM.nom]: 'Bob Durant' },
+                { id: 3, [COL_TEAM.nom]: 'Claire Bernard' }
+            ];
+
             tasks = [
-                { id: 1, titre: 'Analyse', priorite: 1, projet: 'Backend', dateDebut: day(-10), dateEcheance: day(-5), progression: 100, assignees: ['L', 1] },
-                { id: 2, titre: 'Dev Backend', priorite: 1, projet: 'Backend', dateDebut: day(-4), dateEcheance: day(10), progression: 40, dependDe: ['L', 1], assignees: ['L', 1, 3] },
-                { id: 3, titre: 'Prod', type: 'jalon', priorite: 1, projet: 'Backend', dateDebut: day(20), dateEcheance: day(20), progression: 0 },
-                { id: 4, titre: 'Design UI', priorite: 2, projet: 'Frontend', dateDebut: day(-5), dateEcheance: day(2), progression: 80, assignees: ['L', 2] },
-                { id: 5, titre: 'Dev Frontend', priorite: 2, projet: 'Frontend', dateDebut: day(0), dateEcheance: day(15), progression: 20, dependDe: ['L', 4], assignees: ['L', 2] },
-                { id: 6, titre: 'Review', type: 'jalon', priorite: 2, projet: 'QA', dateDebut: day(10), dateEcheance: day(10), progression: 0, dependDe: ['L', 5] },
-                { id: 7, titre: 'Tests QA', priorite: 3, projet: 'QA', dateDebut: day(5), dateEcheance: day(12), progression: 0, assignees: ['L', 3] },
-                { id: 8, titre: 'Intégration', priorite: 3, projet: 'Backend', dateDebut: day(10), dateEcheance: day(18), progression: 0, dependDe: ['L', 7], assignees: ['L', 1] },
-                { id: 9, titre: 'Formation', priorite: 4, projet: 'Docs', dateDebut: day(22), dateEcheance: day(30), progression: 0 },
-                { id: 10, titre: 'Documentation', priorite: 4, projet: 'Docs', dateDebut: day(12), dateEcheance: day(20), progression: 0, assignees: ['L', 3] }
+                mk({ id: 1,  titre: 'Analyse',       priorite: 1, projet: 'Backend',  dateDebut: day(-10), dateEcheance: day(-5),  progression: 100, assignees: ['L', 1] }),
+                mk({ id: 2,  titre: 'Dev Backend',   priorite: 1, projet: 'Backend',  dateDebut: day(-4),  dateEcheance: day(10),  progression: 40,  dependDe: ['L', 1], assignees: ['L', 1, 3] }),
+                mk({ id: 3,  titre: 'Prod',          priorite: 1, projet: 'Backend',  dateDebut: day(20),  dateEcheance: day(20),  progression: 0,   type: 'jalon' }),
+                mk({ id: 4,  titre: 'Design UI',     priorite: 2, projet: 'Frontend', dateDebut: day(-5),  dateEcheance: day(2),   progression: 80,  assignees: ['L', 2] }),
+                mk({ id: 5,  titre: 'Dev Frontend',  priorite: 2, projet: 'Frontend', dateDebut: day(0),   dateEcheance: day(15),  progression: 20,  dependDe: ['L', 4], assignees: ['L', 2] }),
+                mk({ id: 6,  titre: 'Review',        priorite: 2, projet: 'QA',       dateDebut: day(10),  dateEcheance: day(10),  progression: 0,   type: 'jalon', dependDe: ['L', 5] }),
+                mk({ id: 7,  titre: 'Tests QA',      priorite: 3, projet: 'QA',       dateDebut: day(5),   dateEcheance: day(12),  progression: 0,   assignees: ['L', 3] }),
+                mk({ id: 8,  titre: 'Intégration',   priorite: 3, projet: 'Backend',  dateDebut: day(10),  dateEcheance: day(18),  progression: 0,   dependDe: ['L', 7], assignees: ['L', 1] }),
+                mk({ id: 9,  titre: 'Formation',     priorite: 4, projet: 'Docs',     dateDebut: day(22),  dateEcheance: day(30),  progression: 0 }),
+                mk({ id: 10, titre: 'Documentation', priorite: 4, projet: 'Docs',     dateDebut: day(12),  dateEcheance: day(20),  progression: 0,   assignees: ['L', 3] })
             ];
 
             sortTasks();
             updateFilterMenus();
             render();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PANNEAU DE CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Mapping entre les IDs des champs du panneau et les clés d'options Grist
+        const CONFIG_FIELDS = [
+            { id: 'cfg-tableTasks',            optionKey: 'tableTasks',            default: () => GRIST_CONFIG.tables.tasks },
+            { id: 'cfg-tableTeam',             optionKey: 'tableTeam',             default: () => GRIST_CONFIG.tables.team },
+            { id: 'cfg-tableProjects',         optionKey: 'tableProjects',         default: () => GRIST_CONFIG.tables.projects },
+            { id: 'cfg-colTeamNom',            optionKey: 'colTeamNom',            default: () => GRIST_CONFIG.columns.team.nom },
+            { id: 'cfg-colTeamEmail',          optionKey: 'colTeamEmail',          default: () => GRIST_CONFIG.columns.team.email },
+            { id: 'cfg-colTeamRole',           optionKey: 'colTeamRole',           default: () => GRIST_CONFIG.columns.team.role },
+            { id: 'cfg-colTeamAvatar',         optionKey: 'colTeamAvatar',         default: () => GRIST_CONFIG.columns.team.avatar },
+            { id: 'cfg-colTeamActif',          optionKey: 'colTeamActif',          default: () => GRIST_CONFIG.columns.team.actif },
+            { id: 'cfg-colProjectsNom',        optionKey: 'colProjectsNom',        default: () => GRIST_CONFIG.columns.projects.nom },
+            { id: 'cfg-colProjectsCouleur',    optionKey: 'colProjectsCouleur',    default: () => GRIST_CONFIG.columns.projects.couleur },
+            { id: 'cfg-colProjectsDateDebut',  optionKey: 'colProjectsDateDebut',  default: () => GRIST_CONFIG.columns.projects.dateDebut },
+            { id: 'cfg-colProjectsDateFin',    optionKey: 'colProjectsDateFin',    default: () => GRIST_CONFIG.columns.projects.dateFin },
+            { id: 'cfg-colProjectsResponsable',optionKey: 'colProjectsResponsable',default: () => GRIST_CONFIG.columns.projects.responsable },
+            { id: 'cfg-colProjectsActif',      optionKey: 'colProjectsActif',      default: () => GRIST_CONFIG.columns.projects.actif },
+        ];
+
+        function openConfigPanel() {
+            // Pré-remplir les champs avec les valeurs actives (TABLE / COL_TEAM / COL_PROJECTS)
+            const current = {
+                tableTasks:             TABLE.tasks,
+                tableTeam:              TABLE.team,
+                tableProjects:          TABLE.projects,
+                colTeamNom:             COL_TEAM.nom,
+                colTeamEmail:           COL_TEAM.email,
+                colTeamRole:            COL_TEAM.role,
+                colTeamAvatar:          COL_TEAM.avatar,
+                colTeamActif:           COL_TEAM.actif,
+                colProjectsNom:         COL_PROJECTS.nom,
+                colProjectsCouleur:     COL_PROJECTS.couleur,
+                colProjectsDateDebut:   COL_PROJECTS.dateDebut,
+                colProjectsDateFin:     COL_PROJECTS.dateFin,
+                colProjectsResponsable: COL_PROJECTS.responsable,
+                colProjectsActif:       COL_PROJECTS.actif,
+            };
+
+            CONFIG_FIELDS.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (!el) return;
+                el.value = current[f.optionKey] || '';
+                el.placeholder = f.default();
+                el.classList.remove('changed');
+            });
+
+            document.getElementById('configPanel').classList.add('open');
+            document.getElementById('configOverlay').classList.add('visible');
+            document.getElementById('configBtn').classList.add('active');
+        }
+
+        function closeConfigPanel() {
+            document.getElementById('configPanel').classList.remove('open');
+            document.getElementById('configOverlay').classList.remove('visible');
+            document.getElementById('configBtn').classList.remove('active');
+        }
+
+        function markChanged(input) {
+            input.classList.add('changed');
+        }
+
+        function resetConfigToDefaults() {
+            CONFIG_FIELDS.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (!el) return;
+                el.value = f.default();
+                el.classList.add('changed');
+            });
+        }
+
+        async function saveConfig() {
+            // Construire l'objet options à partir des champs du panneau
+            const options = {};
+            CONFIG_FIELDS.forEach(f => {
+                const el = document.getElementById(f.id);
+                if (!el) return;
+                const val = el.value.trim();
+                // N'enregistrer que les valeurs non vides ; si vide → utiliser le défaut
+                options[f.optionKey] = val || f.default();
+            });
+
+            // Appliquer immédiatement les nouvelles valeurs aux variables actives
+            TABLE.tasks    = options.tableTasks;
+            TABLE.team     = options.tableTeam;
+            TABLE.projects = options.tableProjects;
+
+            COL_TEAM.nom    = options.colTeamNom;
+            COL_TEAM.email  = options.colTeamEmail;
+            COL_TEAM.role   = options.colTeamRole;
+            COL_TEAM.avatar = options.colTeamAvatar;
+            COL_TEAM.actif  = options.colTeamActif;
+
+            COL_PROJECTS.nom         = options.colProjectsNom;
+            COL_PROJECTS.couleur     = options.colProjectsCouleur;
+            COL_PROJECTS.dateDebut   = options.colProjectsDateDebut;
+            COL_PROJECTS.dateFin     = options.colProjectsDateFin;
+            COL_PROJECTS.responsable = options.colProjectsResponsable;
+            COL_PROJECTS.actif       = options.colProjectsActif;
+
+            // Persister dans Grist si disponible
+            if (gristReady) {
+                try {
+                    await grist.setOptions(options);
+                    showToast('Configuration enregistrée', 'success');
+                } catch (e) {
+                    console.error('setOptions error:', e);
+                    showToast("Erreur lors de l'enregistrement", 'error');
+                }
+            } else {
+                // Mode démo : appliquer sans persister
+                showToast('Configuration appliquée (mode démo)', 'info');
+            }
+
+            closeConfigPanel();
+
+            // Recharger les données avec les nouveaux noms
+            if (gristReady) {
+                await loadAllData();
+            } else {
+                // En mode démo, recharger les données démo avec les nouveaux noms COL
+                sortTasks();
+                updateFilterMenus();
+                render();
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════════════
