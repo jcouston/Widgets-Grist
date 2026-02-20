@@ -69,6 +69,20 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .current-period-wrap {
+            flex: 1;
+            text-align: center;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .header-right {
@@ -117,8 +131,11 @@
         .current-period {
             font-weight: 600;
             font-size: 0.85rem;
-            min-width: 140px;
             text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
         }
 
         .sort-selector {
@@ -581,9 +598,8 @@
             position: absolute;
             cursor: pointer;
             z-index: 15;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            /* left pointe sur le centre du diamant */
+            transform: translateX(-50%);
         }
 
         .milestone-diamond {
@@ -592,6 +608,7 @@
             transform: rotate(45deg);
             border-radius: 2px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            margin: 0 auto;
         }
 
         .gantt-milestone.p1 .milestone-diamond { background: var(--danger); }
@@ -604,13 +621,18 @@
             outline-offset: 2px;
         }
 
-        .gantt-milestone:hover .milestone-diamond { transform: rotate(45deg) scale(1.15); }
+        .gantt-milestone:hover .milestone-diamond { transform: rotate(45deg) scale(1.2); }
 
         .milestone-label {
             font-size: 0.68rem;
             color: var(--text);
             white-space: nowrap;
             font-weight: 500;
+            position: absolute;
+            left: calc(100% + 4px);
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
         }
 
         .milestone-date {
@@ -618,6 +640,11 @@
             font-weight: 600;
             color: var(--text-muted);
             white-space: nowrap;
+            position: absolute;
+            right: calc(100% + 4px);
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
         }
 
         /* === DEPENDENCIES SVG === */
@@ -1405,16 +1432,20 @@
             </div>
         </div>
         <div class="header-center">
-            <button class="btn btn-nav" onclick="navigate(-1)">◀</button>
-            <button class="btn" onclick="goToToday()">Aujourd'hui</button>
-            <button class="btn btn-nav" onclick="navigate(1)">▶</button>
-            <span class="current-period" id="currentPeriod"></span>
+            <div class="nav-controls">
+                <button class="btn btn-nav" onclick="navigate(-1)">◀</button>
+                <button class="btn" onclick="goToToday()">Auj.</button>
+                <button class="btn btn-nav" onclick="navigate(1)">▶</button>
+            </div>
             <div class="view-controls">
                 <button class="btn" data-view="week" onclick="setView('week')">Sem</button>
                 <button class="btn active" data-view="month" onclick="setView('month')">Mois</button>
-                <button class="btn" data-view="quarter" onclick="setView('quarter')">Trim</button>
+                <button class="btn" data-view="sem6" onclick="setView('sem6')">Sem.</button>
                 <button class="btn" data-view="year" onclick="setView('year')">1 An</button>
                 <button class="btn" data-view="three" onclick="setView('three')">3 Ans</button>
+            </div>
+            <div class="current-period-wrap">
+                <span class="current-period" id="currentPeriod"></span>
             </div>
         </div>
         <div class="header-right">
@@ -1448,48 +1479,31 @@
             <button class="modal-close" onclick="closeConfigPanel()">×</button>
         </div>
 
-        <div class="config-panel-body">
+                <div class="config-panel-body">
             <div class="config-info">
-                Ces paramètres sont <strong>persistés dans le document Grist</strong>
-                via <code>grist.setOptions()</code>. Ils s'appliquent à tous les
-                utilisateurs du document.<br><br>
-                Les colonnes de la table <strong>Tasks</strong> se configurent via
-                le panneau <strong>"Colonnes"</strong> intégré à Grist (icône
-                de mappage en haut à droite du widget).
+                Ces paramètres sont <strong>persistés dans le document Grist</strong>.
+                Les colonnes de <strong>Tasks</strong> se configurent via le panneau
+                <strong>"Colonnes"</strong> du widget (icône en haut à droite).
             </div>
 
-            <!-- Table principale Tasks -->
-            <div class="config-section">
-                <div class="config-section-title">📋 Table des tâches</div>
-                <div class="config-field">
-                    <label>Nom de la table</label>
-                    <input type="text" id="cfg-tableTasks" placeholder="Tasks"
-                           oninput="markChanged(this)" />
-                </div>
-            </div>
-
-            <!-- Table Responsable de Projet -->
+            <!-- Table Responsables -->
             <div class="config-section">
                 <div class="config-section-title">👥 Table responsables</div>
                 <div class="config-field">
-                    <label>Nom de la table</label>
-                    <input type="text" id="cfg-tableChefProjet" placeholder="DPPI_Chef_Projet"
-                           oninput="markChanged(this)" />
+                    <label>Table</label>
+                    <select id="cfg-tableChefProjet" onchange="onTableSelect(this, 'chef')"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Nom complet affiché</label>
-                    <input type="text" id="cfg-colChefNom" placeholder="Prenom_Nom"
-                           oninput="markChanged(this)" />
+                    <label>Nom complet affiché</label>
+                    <select id="cfg-colChefNom" data-group="chef"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Fonction</label>
-                    <input type="text" id="cfg-colChefFonction" placeholder="Fonction"
-                           oninput="markChanged(this)" />
+                    <label>Fonction</label>
+                    <select id="cfg-colChefFonction" data-group="chef"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Actif</label>
-                    <input type="text" id="cfg-colChefActif" placeholder="Actif"
-                           oninput="markChanged(this)" />
+                    <label>Actif (booléen)</label>
+                    <select id="cfg-colChefActif" data-group="chef"></select>
                 </div>
             </div>
 
@@ -1497,54 +1511,45 @@
             <div class="config-section">
                 <div class="config-section-title">📁 Table opérations</div>
                 <div class="config-field">
-                    <label>Nom de la table</label>
-                    <input type="text" id="cfg-tableOperations" placeholder="DPPI_Operations"
-                           oninput="markChanged(this)" />
+                    <label>Table</label>
+                    <select id="cfg-tableOperations" onchange="onTableSelect(this, 'ops')"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Nom opération</label>
-                    <input type="text" id="cfg-colOpsNom" placeholder="Nom_Ope"
-                           oninput="markChanged(this)" />
+                    <label>Nom opération</label>
+                    <select id="cfg-colOpsNom" data-group="ops"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Numéro opération</label>
-                    <input type="text" id="cfg-colOpsNumOpe" placeholder="Num_Ope"
-                           oninput="markChanged(this)" />
+                    <label>Numéro opération</label>
+                    <select id="cfg-colOpsNumOpe" data-group="ops"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Statut</label>
-                    <input type="text" id="cfg-colOpsStatut" placeholder="Statut_Ope"
-                           oninput="markChanged(this)" />
+                    <label>Statut</label>
+                    <select id="cfg-colOpsStatut" data-group="ops"></select>
                 </div>
             </div>
 
-            <!-- Table Phases -->
+            <!-- Table Phases / Catégories -->
             <div class="config-section">
                 <div class="config-section-title">🏷️ Table catégories de phases</div>
                 <div class="config-field">
-                    <label>Nom de la table</label>
-                    <input type="text" id="cfg-tablePhases" placeholder="PL_Liste_Phases"
-                           oninput="markChanged(this)" />
+                    <label>Table</label>
+                    <select id="cfg-tablePhases" onchange="onTableSelect(this, 'phases')"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Nom avec numéro (affiché)</label>
-                    <input type="text" id="cfg-colPhasesNomOrder" placeholder="Nom_Order"
-                           oninput="markChanged(this)" />
+                    <label>Nom avec numéro (affiché sur le gantt)</label>
+                    <select id="cfg-colPhasesNomOrder" data-group="phases"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Nom court</label>
-                    <input type="text" id="cfg-colPhasesNom" placeholder="Nom"
-                           oninput="markChanged(this)" />
+                    <label>Nom court</label>
+                    <select id="cfg-colPhasesNom" data-group="phases"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Couleur (hex)</label>
-                    <input type="text" id="cfg-colPhasesCouleur" placeholder="Couleur"
-                           oninput="markChanged(this)" />
+                    <label>Couleur (hex)</label>
+                    <select id="cfg-colPhasesCouleur" data-group="phases"></select>
                 </div>
                 <div class="config-field">
-                    <label>Colonne — Numéro d'ordre</label>
-                    <input type="text" id="cfg-colPhasesNumOrder" placeholder="Num_Order"
-                           oninput="markChanged(this)" />
+                    <label>Numéro d'ordre</label>
+                    <select id="cfg-colPhasesNumOrder" data-group="phases"></select>
                 </div>
             </div>
 
@@ -1552,7 +1557,6 @@
                 ↺ Rétablir les valeurs par défaut
             </span>
         </div>
-
         <div class="config-panel-footer">
             <button class="btn" onclick="closeConfigPanel()">Annuler</button>
             <button class="btn primary" onclick="saveConfig()">
@@ -1751,24 +1755,27 @@
             // Noms des colonnes par défaut (écrasés par le mappage Grist)
             columns: {
                 tasks: {
-                    titre:       'titre',       // Ref vers phases (PL_Liste_Phases)
-                    description: 'description',
-                    dateDebut:   'dateDebut',
-                    dateEcheance:'dateEcheance',
-                    priorite:    'priorite',
-                    statut:      'statut',
-                    progression: 'progression',
-                    projet:      'projet',      // Ref vers operations (DPPI_Operations)
-                    assignees:   'assignees',   // RefList vers responsableProjet (DPPI_Chef_Projet)
-                    type:        'type',
-                    dependDe:         'dependDe',
-                    tags:             'tags',
-                    estimationH:      'estimationH',
-                    tempsPasse:       'tempsPasse',
-                    couleur:          'couleur',     // Peut être ignoré si on utilise la couleur des phases
-                    duree:            'Duree',
-                    dateDebutCalc:    'Date_Debut_Calculee',
-                    dateFinCalc:      'Date_Fin_Calculee'
+                    // Noms LOGIQUES : correspondent exactement aux 'name' dans grist.ready columns.
+                    // fetchSelectedTable() retourne les données avec ces clés, quel que soit
+                    // le nom physique de la colonne dans Grist.
+                    titre:        'titre',
+                    description:  'description',
+                    dateDebut:    'dateDebut',
+                    dateEcheance: 'dateEcheance',
+                    priorite:     'priorite',
+                    statut:       'statut',
+                    progression:  'progression',
+                    projet:       'projet',
+                    assignees:    'assignees',
+                    type:         'type',
+                    dependDe:     'dependDe',
+                    tags:         'tags',
+                    estimationH:  'estimationH',
+                    tempsPasse:   'tempsPasse',
+                    couleur:      'couleur',
+                    duree:        'duree',
+                    dateDebutCalc:'dateDebutCalc',
+                    dateFinCalc:  'dateFinCalc'
                 },
                 responsableProjet: {
                     nom:      'Prenom_Nom',  // Nom complet affiché
@@ -1847,9 +1854,9 @@
         // Le NOMBRE de cellules est calculé dynamiquement dans getViewCellCount()
         // pour remplir exactement la largeur disponible du conteneur timeline.
         const VIEW_CONFIG = {
-            week:    { label: 'Semaine',   unit: 'week',  cellWidth: 70, navStep: 7,         minCells: 4  },
+            week:    { label: 'Semaine',   unit: 'day',   cellWidth: 80, navStep: 7,         minCells: 7  },
             month:   { label: 'Mois',      unit: 'day',   cellWidth: 28, navStep: 'month',   minCells: 28 },
-            quarter: { label: 'Trimestre', unit: 'week',  cellWidth: 40, navStep: 'quarter', minCells: 13 },
+            sem6:    { label: 'Semestre',  unit: 'sem6',  cellWidth: 90, navStep: 'sem6',    minCells: 6  },
             year:    { label: 'Annee',     unit: 'month', cellWidth: 55, navStep: 'year',    minCells: 12 },
             three:   { label: '3 ans',     unit: 'month', cellWidth: 28, navStep: 'year',    minCells: 36 }
         };
@@ -1858,13 +1865,10 @@
         // en garantissant un minimum de minCells.
         function getViewCellCount() {
             const cfg = VIEW_CONFIG[currentView];
-            // En mode compact, mesurer compactView ; sinon timelineBody
             const containerId = layoutMode === 'compact' ? 'compactView' : 'timelineBody';
             const container = document.getElementById(containerId);
-            if (!container) return cfg.minCells;
-            // En compact, soustraire la largeur du label (LW = 260px)
             const LW = layoutMode === 'compact' ? 260 : 0;
-            const availWidth = (container.clientWidth || 800) - LW;
+            const availWidth = container ? (container.clientWidth || 800) - LW : 800;
             const count = Math.floor(availWidth / cfg.cellWidth);
             return Math.max(count, cfg.minCells);
         }
@@ -2007,14 +2011,13 @@
         // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
         // ou de la colonne couleur directe si présente.
         function getTaskCouleur(t) {
-            // Utiliser _phaseId (stocké au chargement avant résolution des Refs)
+            // La couleur vient de PL_Liste_Phases via la Ref titre → PL_Liste_Phases.Couleur
             const phaseId = t._phaseId ?? (() => {
                 const val = t[COL.titre];
                 return (typeof val === 'number') ? val :
                        (typeof val === 'string' && /^\d+$/.test(val)) ? Number(val) : null;
             })();
-            if (phaseId) return resolvePhaseCouleur(phaseId) || null;
-            return null;
+            return phaseId ? (resolvePhaseCouleur(phaseId) || null) : null;
         }
 
         // Résolution du nom du projet (DPPI_Operations)
@@ -2066,12 +2069,12 @@
 
         function getViewStartDate() {
             switch (currentView) {
-                case 'week':    return getStartOfWeek(viewStartDate);
-                case 'month':   return getStartOfMonth(viewStartDate);
-                case 'quarter': return getStartOfQuarter(viewStartDate);
-                case 'year':    return getStartOfYear(viewStartDate);
-                case 'three':   return getStartOfYear(viewStartDate);
-                default:        return getStartOfMonth(viewStartDate);
+                case 'week':  return getStartOfWeek(viewStartDate);
+                case 'month': return getStartOfMonth(viewStartDate);
+                case 'sem6':  return new Date(viewStartDate.getFullYear(), Math.floor(viewStartDate.getMonth()/6)*6, 1);
+                case 'year':  return getStartOfYear(viewStartDate);
+                case 'three': return getStartOfYear(viewStartDate);
+                default:      return getStartOfMonth(viewStartDate);
             }
         }
 
@@ -2079,7 +2082,7 @@
             const cfg = VIEW_CONFIG[currentView];
             const n = getViewCellCount();
             if (cfg.unit === 'day')   return n;
-            if (cfg.unit === 'week')  return n * 7;
+            if (cfg.unit === 'sem6')  return n * 30; // n = nb mois
             if (cfg.unit === 'month') return n * 30;
             return n;
         }
@@ -2087,7 +2090,7 @@
         function getPixelsPerDay() {
             const cfg = VIEW_CONFIG[currentView];
             if (cfg.unit === 'day')   return cfg.cellWidth;
-            if (cfg.unit === 'week')  return cfg.cellWidth / 7;
+            if (cfg.unit === 'sem6')  return cfg.cellWidth / 30;
             if (cfg.unit === 'month') return cfg.cellWidth / 30;
             return cfg.cellWidth;
         }
@@ -2103,7 +2106,7 @@
             const prevStart = getViewStartDate();
             // Nombre de jours que représente la vue actuelle
             const prevDays  = prevCfg.unit === 'day'   ? getViewCellCount() :
-                               prevCfg.unit === 'week'  ? getViewCellCount() * 7 :
+                               prevCfg.unit === 'sem6'  ? getViewCellCount() * 30 :
                                prevCfg.unit === 'month' ? getViewCellCount() * 30 : 365;
             const centerDate = addDays(prevStart, Math.floor(prevDays / 2));
 
@@ -2118,14 +2121,15 @@
             const newCount = getViewCellCount(); // maintenant basé sur currentView = view
             // Nombre de jours de la nouvelle vue
             const newDays  = newCfg.unit === 'day'   ? newCount :
-                              newCfg.unit === 'week'  ? newCount * 7 :
+                              newCfg.unit === 'sem6'  ? newCount * 30 :
                               newCfg.unit === 'month' ? newCount * 30 : 365;
             const halfDays = Math.floor(newDays / 2);
 
             if (newCfg.unit === 'day') {
                 viewStartDate = addDays(centerDate, -halfDays);
-            } else if (newCfg.unit === 'week') {
-                viewStartDate = getStartOfWeek(addDays(centerDate, -halfDays));
+            } else if (newCfg.unit === 'sem6') {
+                const d = addDays(centerDate, -halfDays);
+                viewStartDate = new Date(d.getFullYear(), Math.floor(d.getMonth()/6)*6, 1);
             } else if (newCfg.unit === 'month') {
                 // Reculer halfDays jours depuis centerDate, puis aller au 1er du mois
                 const d = addDays(centerDate, -halfDays);
@@ -2141,10 +2145,10 @@
                 viewStartDate = addDays(viewStartDate, dir * cfg.navStep);
             } else if (cfg.navStep === 'month') {
                 viewStartDate = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth() + dir, 1);
-            } else if (cfg.navStep === 'quarter') {
-                viewStartDate = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth() + dir * 3, 1);
+            } else if (cfg.navStep === 'sem6') {
+                viewStartDate = new Date(viewStartDate.getFullYear(), viewStartDate.getMonth() + dir * 6, 1);
             } else if (cfg.navStep === 'year') {
-                viewStartDate = new Date(viewStartDate.getFullYear() + dir, viewStartDate.getMonth(), 1);
+                viewStartDate = new Date(viewStartDate.getFullYear() + dir, 0, 1);
             }
             render();
         }
@@ -2153,11 +2157,10 @@
             const today = new Date();
             if (currentView === 'week') {
                 viewStartDate = getStartOfWeek(today);
+            } else if (currentView === 'sem6') {
+                viewStartDate = new Date(today.getFullYear(), Math.floor(today.getMonth()/6)*6, 1);
             } else if (currentView === 'month') {
                 viewStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
-            } else if (currentView === 'quarter') {
-                const q = Math.floor(today.getMonth() / 3);
-                viewStartDate = new Date(today.getFullYear(), q * 3, 1);
             } else {
                 // year, three
                 viewStartDate = new Date(today.getFullYear(), 0, 1);
@@ -2172,7 +2175,12 @@
             switch (currentView) {
                 case 'week': {
                     const end = addDays(start, n - 1);
-                    text = `S${getWeekNumber(start)} · ${formatDateShort(start)} - ${formatDateShort(end)}`;
+                    text = `${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`;
+                    break;
+                }
+                case 'sem6': {
+                    const sem = Math.floor(start.getMonth() / 6) + 1;
+                    text = `S${sem} ${start.getFullYear()}`;
                     break;
                 }
                 case 'month':
@@ -2523,28 +2531,21 @@
             const start = getViewStartDate();
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const n = getViewCellCount();
-
-            let monthsHtml = '';
-            let daysHtml = '';
+            let topHtml = '', botHtml = '';
 
             if (cfg.unit === 'day') {
-                // Ligne du haut : regroupement par mois
-                let currentMonth = -1;
-                let monthDays = 0;
-
+                // ── Semaine & Mois ──────────────────────────────────────────
+                // Haut : "Mois Année" ex: "Fév 2025"
+                // Bas  : numéro du jour ; vue Semaine ajoute le nom du jour abrégé
+                const isWeekView = currentView === 'week';
+                let curLabel = '', curWidth = 0;
                 for (let i = 0; i < n; i++) {
                     const d = addDays(start, i);
-                    const m = d.getMonth();
-
-                    if (m !== currentMonth) {
-                        if (currentMonth !== -1) {
-                            monthsHtml += `<div class="month-cell" style="width: ${monthDays * cfg.cellWidth}px">${MONTHS_SHORT[currentMonth]}</div>`;
-                        }
-                        currentMonth = m;
-                        monthDays = 1;
-                    } else {
-                        monthDays++;
-                    }
+                    const label = `${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+                    if (label !== curLabel) {
+                        if (curLabel) topHtml += `<div class="month-cell" style="width:${curWidth * cfg.cellWidth}px">${curLabel}</div>`;
+                        curLabel = label; curWidth = 1;
+                    } else { curWidth++; }
 
                     const isToday = isSameDay(d, today);
                     const weekend = isWeekend(d);
@@ -2552,51 +2553,58 @@
                     if (weekend) cls += ' weekend';
                     if (isToday) cls += ' today';
                     if (d.getDate() === 1) cls += ' month-start';
-                    daysHtml += `<div class="${cls}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px">${cfg.cellWidth >= 22 ? d.getDate() : ''}</div>`;
+                    // Vue Semaine : nom du jour au-dessus du numéro
+                    const cellText = isWeekView
+                        ? `<span style="font-size:0.6rem;opacity:0.7;display:block">${DAYS_SHORT[d.getDay()]}</span>${d.getDate()}`
+                        : String(d.getDate());
+                    botHtml += `<div class="${cls}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px;line-height:1.3">${cellText}</div>`;
                 }
-                monthsHtml += `<div class="month-cell" style="width: ${monthDays * cfg.cellWidth}px">${MONTHS_SHORT[currentMonth]}</div>`;
+                topHtml += `<div class="month-cell" style="width:${curWidth * cfg.cellWidth}px">${curLabel}</div>`;
 
-            } else if (cfg.unit === 'week') {
-                // Vue semaine : ligne haut = mois/année, ligne bas = S.nr + premiers jours
-                let ws = getStartOfWeek(start);
-                let yearMonthWidth = 0, currentYearMonth = '';
-                for (let i = 0; i < n; i++) {
-                    const y   = ws.getFullYear();
-                    const mo  = ws.getMonth();
-                    const ym  = `${MONTHS_SHORT[mo]} ${y}`;
-                    if (ym !== currentYearMonth) {
-                        if (currentYearMonth) monthsHtml += `<div class="month-cell" style="width:${yearMonthWidth * cfg.cellWidth}px">${currentYearMonth}</div>`;
-                        currentYearMonth = ym; yearMonthWidth = 1;
-                    } else { yearMonthWidth++; }
-                    const wn  = getWeekNumber(ws);
-                    const curr = getWeekNumber(today) === wn && ws.getFullYear() === today.getFullYear();
-                    const dayStr = ws.getDate() + '/' + String(ws.getMonth()+1).padStart(2,'0');
-                    daysHtml += `<div class="day-cell${curr ? ' today' : ''}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px;font-size:0.65rem">S${wn} · ${dayStr}</div>`;
-                    ws = addDays(ws, 7);
-                }
-                monthsHtml += `<div class="month-cell" style="width:${yearMonthWidth * cfg.cellWidth}px">${currentYearMonth}</div>`;
-
-            } else if (cfg.unit === 'month') {
-                // Ligne du haut : années
+            } else if (cfg.unit === 'sem6') {
+                // ── Semestre ────────────────────────────────────────────────
+                // Haut : Année + numéro semestre  ex: "2025 — S1"
+                // Bas  : mois abrégés (Jan Fév … Juin | Juil … Déc)
                 let md = new Date(start.getFullYear(), start.getMonth(), 1);
-                let yearCells = 0, currentYear = -1;
+                let curSem = '', semWidth = 0;
                 for (let i = 0; i < n; i++) {
-                    const y = md.getFullYear();
-                    if (y !== currentYear) {
-                        if (currentYear !== -1) monthsHtml += `<div class="month-cell" style="width:${yearCells * cfg.cellWidth}px">${currentYear}</div>`;
-                        currentYear = y; yearCells = 1;
-                    } else { yearCells++; }
+                    const y  = md.getFullYear();
+                    const s  = Math.floor(md.getMonth() / 6) + 1;
+                    const semLabel = `${y} — S${s}`;
+                    if (semLabel !== curSem) {
+                        if (curSem) topHtml += `<div class="month-cell" style="width:${semWidth * cfg.cellWidth}px">${curSem}</div>`;
+                        curSem = semLabel; semWidth = 1;
+                    } else { semWidth++; }
                     const curr = md.getMonth() === today.getMonth() && md.getFullYear() === today.getFullYear();
-                    daysHtml += `<div class="day-cell${curr ? ' today' : ''}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px">${MONTHS_SHORT[md.getMonth()]}</div>`;
+                    // Début de semestre : séparateur visuel
+                    const isSemStart = md.getMonth() === 0 || md.getMonth() === 6;
+                    botHtml += `<div class="day-cell${curr ? ' today' : ''}${isSemStart ? ' month-start' : ''}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px">${MONTHS_SHORT[md.getMonth()]}</div>`;
                     md = new Date(md.getFullYear(), md.getMonth() + 1, 1);
                 }
-                monthsHtml += `<div class="month-cell" style="width:${yearCells * cfg.cellWidth}px">${currentYear}</div>`;
+                topHtml += `<div class="month-cell" style="width:${semWidth * cfg.cellWidth}px">${curSem}</div>`;
+
+            } else if (cfg.unit === 'month') {
+                // ── 1 An & 3 Ans ────────────────────────────────────────────
+                // Haut : Année
+                // Bas  : mois abrégé
+                let md = new Date(start.getFullYear(), start.getMonth(), 1);
+                let curYear = -1, yearCells = 0;
+                for (let i = 0; i < n; i++) {
+                    const y = md.getFullYear();
+                    if (y !== curYear) {
+                        if (curYear !== -1) topHtml += `<div class="month-cell" style="width:${yearCells * cfg.cellWidth}px">${curYear}</div>`;
+                        curYear = y; yearCells = 1;
+                    } else { yearCells++; }
+                    const curr = md.getMonth() === today.getMonth() && md.getFullYear() === today.getFullYear();
+                    botHtml += `<div class="day-cell${curr ? ' today' : ''}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px">${MONTHS_SHORT[md.getMonth()]}</div>`;
+                    md = new Date(md.getFullYear(), md.getMonth() + 1, 1);
+                }
+                topHtml += `<div class="month-cell" style="width:${yearCells * cfg.cellWidth}px">${curYear}</div>`;
             }
 
-            // Toujours afficher la ligne des annees en haut
-            document.getElementById('timelineMonths').innerHTML = monthsHtml;
+            document.getElementById('timelineMonths').innerHTML = topHtml;
             document.getElementById('timelineMonths').style.display = 'flex';
-            document.getElementById('timelineHeader').innerHTML = daysHtml;
+            document.getElementById('timelineHeader').innerHTML = botHtml;
         }
 
         function renderTaskList() {
@@ -3848,23 +3856,10 @@
                     { id: COL_PHASES.couleur,  type: 'Text' },
                     { id: COL_PHASES.numOrder, type: 'Numeric' }
                 ],
-                [TABLE.tasks]: [
-                    { id: COL.titre,        type: `Ref:${TABLE.phases}` },
-                    { id: COL.description,  type: 'Text' },
-                    { id: COL.dateDebut,    type: 'Date' },
-                    { id: COL.dateEcheance, type: 'Date' },
-                    { id: COL.priorite,     type: 'Choice' },
-                    { id: COL.statut,       type: 'Choice' },
-                    { id: COL.progression,  type: 'Numeric' },
-                    { id: COL.projet,       type: `Ref:${TABLE.operations}` },
-                    { id: COL.assignees,    type: `RefList:${TABLE.responsableProjet}` },
-                    { id: COL.type,         type: 'Choice' },
-                    { id: COL.dependDe,     type: `RefList:${TABLE.tasks}` },
-                    { id: COL.tags,         type: 'ChoiceList' },
-                    { id: COL.estimationH,  type: 'Numeric' },
-                    { id: COL.tempsPasse,   type: 'Numeric' },
-                    { id: COL.couleur,      type: 'Text' }
-                ]
+                // TABLE.tasks n'est PAS dans le schéma ensureSchema :
+                // ses colonnes sont mappables via le panneau widget Grist.
+                // ensureSchema ne doit jamais recréer une colonne que l'utilisateur
+                // a renommée — c'est à lui de mapper la bonne colonne.
             };
         }
 
@@ -3897,20 +3892,9 @@
                     }
                 }
 
-                if (tableExists) {
-                    const missing = columns.filter(c => !existingCols.includes(c.id));
-                    for (const col of missing) {
-                        try {
-                            await grist.docApi.applyUserActions([
-                                ['AddColumn', tableName, col.id, { type: col.type }]
-                            ]);
-                            log(`  + Colonne ${tableName}.${col.id} (${col.type}) ajoutée`);
-                            added++;
-                        } catch (e) {
-                            log(`  ~ Colonne ${tableName}.${col.id} ignorée: ${e.message || e}`);
-                        }
-                    }
-                }
+                // Ne pas créer de colonnes — l'utilisateur configure les noms via le panneau.
+                // On crée uniquement les tables absentes (ci-dessus).
+                _ = tableExists; // tableExists utilisé pour éviter warning
             }
 
             if (tablesCreated.includes(TABLE.tasks)) {
@@ -3997,34 +3981,73 @@
             }
         }
 
-        async function loadAllData() {
-            try {
-                const taskData = await grist.docApi.fetchTable(TABLE.tasks);
-                tasks = convert(taskData);
-                // Stocker l'ID numérique de la phase avant tout mappage
-                tasks.forEach(t => {
-                    const v = t[COL.titre];
-                    t._phaseId = (typeof v === 'number') ? v : (typeof v === 'string' && /^\d+$/.test(v)) ? Number(v) : null;
-                });
-            } catch (e) {
-                tasks = [];
-            }
+        // Charge les tables secondaires (phases, responsables, opérations) via fetchTable.
+        // Appelé une fois au démarrage, et à chaque changement d'options.
+        // Vérifie que les colonnes configurées existent dans les données fetchTable.
+        // Retourne la liste des colonnes manquantes (nom logique + valeur configurée).
+        function checkMissingCols(data, colObj, tableName) {
+            const available = Object.keys(data).filter(c => c !== 'manualSort' && c !== 'id');
+            const missing = [];
+            Object.entries(colObj).forEach(([logicalName, configured]) => {
+                if (!available.includes(configured)) {
+                    missing.push({ table: tableName, col: logicalName, configured });
+                }
+            });
+            return missing;
+        }
+
+        async function loadSecondaryData() {
+            const allMissing = [];
 
             try {
                 const cd = await grist.docApi.fetchTable(TABLE.responsableProjet);
-                team = convert(cd);  // 'team' conservé pour compatibilité avec le reste du code
+                allMissing.push(...checkMissingCols(cd, COL_CHEF, TABLE.responsableProjet));
+                team = convert(cd);
             } catch (e) { team = []; }
 
             try {
                 const od = await grist.docApi.fetchTable(TABLE.operations);
-                projects = convert(od);  // 'projects' conservé pour compatibilité
+                allMissing.push(...checkMissingCols(od, COL_OPS, TABLE.operations));
+                projects = convert(od);
             } catch (e) { projects = []; }
 
             try {
                 const phd = await grist.docApi.fetchTable(TABLE.phases);
+                allMissing.push(...checkMissingCols(phd, COL_PHASES, TABLE.phases));
                 phases = convert(phd);
             } catch (e) { phases = []; }
 
+            // Si des colonnes configurées sont introuvables, avertir et ouvrir le panel
+            if (allMissing.length > 0 && gristReady) {
+                const msg = allMissing.map(m => `${m.table}.${m.configured}`).join(', ');
+                showToast(`⚠ Colonnes introuvables : ${msg} — vérifiez la configuration`, 'error', 8000);
+                // Ouvrir automatiquement le panneau config pour correction
+                setTimeout(() => openConfigPanel(), 500);
+            }
+        }
+
+        // Met à jour COL[] avec les mappings reçus de onRecords.
+        // mappings = { logicalName: physicalColId }
+        // Ex: { titre: 'Categorie', dateDebut: 'Date_Debut', ... }
+        function applyMappings(mappings) {
+            if (!mappings) return;
+            Object.keys(GRIST_CONFIG.columns.tasks).forEach(logicalName => {
+                if (mappings[logicalName]) COL[logicalName] = mappings[logicalName];
+            });
+        }
+
+        async function loadAllData() {
+            try {
+                const taskData = await grist.docApi.fetchTable(TABLE.tasks);
+                tasks = convert(taskData);
+                tasks.forEach(t => {
+                    const v = t[COL.titre];
+                    t._phaseId = (typeof v === 'number') ? v :
+                                 (typeof v === 'string' && /^\d+$/.test(v)) ? Number(v) : null;
+                });
+            } catch(e) { tasks = []; }
+
+            await loadSecondaryData();
             gristReady = true;
             sortTasks();
             updateFilterMenus();
@@ -4039,36 +4062,48 @@
                 grist.ready({
                     requiredAccess: 'full',
                     columns: [
-                        { name: 'titre',          title: 'Phase (Ref)',            type: 'Ref',       optional: false, description: 'Colonne Ref vers la table des categories de phases' },
-                        { name: 'dateDebut',       title: 'Date de debut saisie',   type: 'Date',      optional: false, description: 'Date saisie manuellement (utilisée si pas de prédécesseur)' },
-                        { name: 'duree',           title: 'Duree (jours)',          type: 'Numeric',   optional: false, description: 'Durée de la tâche en jours' },
-                        { name: 'dateDebutCalc',   title: 'Date debut calculee',    type: 'Date',      optional: false, description: 'Date_Debut_Calculee : dateDebut ou max(fin prédécesseurs)+1' },
-                        { name: 'dateFinCalc',     title: 'Date fin calculee',      type: 'Date',      optional: false, description: 'Date_Fin_Calculee : dateDebutCalc + duree' },
-                        { name: 'statut',          title: 'Statut',                 type: 'Choice',    optional: true,  description: 'todo / inprogress / review / done' },
-                        { name: 'progression',     title: 'Progression (%)',        type: 'Numeric',   optional: true },
-                        { name: 'projet',          title: 'Operation (Ref)',        type: 'Ref',       optional: true,  description: 'Colonne Ref vers la table des operations' },
-                        { name: 'assignees',       title: 'Responsables',        type: 'RefList',   optional: true,  description: 'Colonne RefList vers les responsables' },
-                        { name: 'dependDe',        title: 'Depend de',              type: 'RefList',   optional: true,  description: 'Colonne RefList vers les phases predecesseurs' },
-                        { name: 'type',            title: 'Type',                   type: 'Choice',    optional: true,  description: 'jalon pour afficher un losange' },
-                        { name: 'priorite',        title: 'Priorite',               type: 'Choice',    optional: true },
-                        { name: 'tags',            title: 'Tags',                   type: 'ChoiceList',optional: true },
-                        { name: 'couleur',         title: 'Couleur',                type: 'Text',      optional: true },
-                        { name: 'description',     title: 'Description',            type: 'Text',      optional: true },
-                        { name: 'estimationH',     title: 'Estimation (h)',         type: 'Numeric',   optional: true },
-                        { name: 'tempsPasse',      title: 'Temps passe (h)',        type: 'Numeric',   optional: true }
+                        { name: 'titre',         title: 'Catégorie (Ref phases)',  type: 'Ref',        optional: false },
+                        { name: 'dateDebut',     title: 'Date de début',           type: 'Date',       optional: true  },
+                        { name: 'duree',         title: 'Durée (jours)',           type: 'Numeric',    optional: true  },
+                        { name: 'dateDebutCalc', title: 'Date début calculée',     type: 'Date',       optional: true  },
+                        { name: 'dateFinCalc',   title: 'Date fin calculée',       type: 'Date',       optional: true  },
+                        { name: 'projet',        title: 'Opération (Ref)',         type: 'Ref',        optional: true  },
+                        { name: 'assignees',     title: 'Responsables',            type: 'RefList',    optional: true  },
+                        { name: 'dependDe',      title: 'Dépend de',               type: 'RefList',    optional: true  },
+                        { name: 'statut',        title: 'Statut',                  type: 'Choice',     optional: true  },
+                        { name: 'type',          title: 'Type (tache/jalon)',       type: 'Choice',     optional: true  },
+                        { name: 'progression',   title: 'Progression (%)',         type: 'Numeric',    optional: true  },
+                        { name: 'priorite',      title: 'Priorité',                type: 'Choice',     optional: true  },
+                        { name: 'couleur',       title: 'Couleur',                 type: 'Text',       optional: true  },
+                        { name: 'description',   title: 'Description',             type: 'Text',       optional: true  },
+                        { name: 'tags',          title: 'Tags',                    type: 'ChoiceList', optional: true  },
+                        { name: 'estimationH',   title: 'Estimation (h)',          type: 'Numeric',    optional: true  },
+                        { name: 'tempsPasse',    title: 'Temps passé (h)',         type: 'Numeric',    optional: true  }
                     ]
                 });
 
+                // ── IMPORTANT : enregistrer onRecords IMMÉDIATEMENT après grist.ready() ──
+                // Grist envoie onRecords juste après ready(). Si on met un await avant,
+                // l'événement est manqué et les données n'arrivent jamais.
+                grist.onRecords(async (records, mappings) => {
+                    applyMappings(mappings);
+                    await loadAllData();
+                });
+
+                // ── Sync de sélection inter-widgets ─────────────────────────────────────
+                grist.onRecord((rec) => {
+                    if (rec?.id && rec.id !== selectedTaskId) {
+                        selectedTaskId = rec.id;
+                        document.querySelectorAll('.task-row, .gantt-bar, .gantt-milestone').forEach(el => {
+                            el.classList.toggle('selected', parseInt(el.dataset.id) === selectedTaskId);
+                        });
+                    }
+                });
 
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
-                // Permet à l'utilisateur de configurer les noms des tables secondaires
-                // (Team, Projects) sans modifier le code.
-                // Format des options : { tableTeam: 'NomTable', tableProjects: 'NomTable',
-                //                       colTeamNom: 'nom', colProjectsNom: 'nom', ... }
                 grist.onOptions((options) => {
                     if (!options) return;
                     // Noms des tables secondaires
-                    if (options.tableTasks)      TABLE.tasks      = options.tableTasks;
                     if (options.tableChefProjet) TABLE.responsableProjet = options.tableChefProjet;
                     if (options.tableOperations) TABLE.operations = options.tableOperations;
                     if (options.tablePhases)     TABLE.phases     = options.tablePhases;
@@ -4087,39 +4122,11 @@
                     if (options.colPhasesCouleur)  COL_PHASES.couleur  = options.colPhasesCouleur;
                     if (options.colPhasesNumOrder) COL_PHASES.numOrder = options.colPhasesNumOrder;
                     // Recharger après changement d'options
-                    loadAllData();
+                    loadAllData(); // recharge tables secondaires + re-render
                 });
 
-                // Auto-init du schéma complet (crée les tables/colonnes si absentes)
+                // Auto-init du schéma des tables secondaires uniquement
                 await ensureSchema();
-
-                // Chargement initial
-                await loadAllData();
-
-                // ── Live updates avec mappage de colonnes ────────────────────────────────
-                // mappings = { nomLogique: 'nomPhysiqueRéel' } fourni par Grist
-                // quand l'utilisateur a utilisé le panneau "Colonnes" pour mapper les champs.
-                grist.onRecords(async (rawData, mappings) => {
-                    if (mappings) {
-                        // Mettre à jour COL avec les noms physiques réels
-                        Object.keys(GRIST_CONFIG.columns.tasks).forEach(logicalName => {
-                            if (mappings[logicalName]) {
-                                COL[logicalName] = mappings[logicalName];
-                            }
-                        });
-                    }
-                    await loadAllData();
-                });
-
-                // ── Sync de sélection inter-widgets ─────────────────────────────────────
-                grist.onRecord((rec) => {
-                    if (rec?.id && rec.id !== selectedTaskId) {
-                        selectedTaskId = rec.id;
-                        document.querySelectorAll('.task-row, .gantt-bar, .gantt-milestone').forEach(el => {
-                            el.classList.toggle('selected', parseInt(el.dataset.id) === selectedTaskId);
-                        });
-                    }
-                });
 
             } catch (e) {
                 useDemoMode();
@@ -4197,55 +4204,29 @@
         // PANNEAU DE CONFIGURATION
         // ═══════════════════════════════════════════════════════════════════════
 
-        // Mapping entre les IDs des champs du panneau et les clés d'options Grist
+        // Mapping champs config → clés options Grist
         const CONFIG_FIELDS = [
-            { id: 'cfg-tableTasks',            optionKey: 'tableTasks',            default: () => GRIST_CONFIG.tables.tasks },
-            { id: 'cfg-tableChefProjet',       optionKey: 'tableChefProjet',       default: () => GRIST_CONFIG.tables.responsableProjet },
-            { id: 'cfg-tableOperations',       optionKey: 'tableOperations',       default: () => GRIST_CONFIG.tables.operations },
-            { id: 'cfg-tablePhases',           optionKey: 'tablePhases',           default: () => GRIST_CONFIG.tables.phases },
-            { id: 'cfg-colChefNom',            optionKey: 'colChefNom',            default: () => GRIST_CONFIG.columns.responsableProjet.nom },
-            { id: 'cfg-colChefFonction',       optionKey: 'colChefFonction',       default: () => GRIST_CONFIG.columns.responsableProjet.fonction },
-            { id: 'cfg-colChefActif',          optionKey: 'colChefActif',          default: () => GRIST_CONFIG.columns.responsableProjet.actif },
-            { id: 'cfg-colOpsNom',             optionKey: 'colOpsNom',             default: () => GRIST_CONFIG.columns.operations.nom },
-            { id: 'cfg-colOpsNumOpe',          optionKey: 'colOpsNumOpe',          default: () => GRIST_CONFIG.columns.operations.numOpe },
-            { id: 'cfg-colOpsStatut',          optionKey: 'colOpsStatut',          default: () => GRIST_CONFIG.columns.operations.statut },
-            { id: 'cfg-colPhasesNom',          optionKey: 'colPhasesNom',          default: () => GRIST_CONFIG.columns.phases.nom },
-            { id: 'cfg-colPhasesNomOrder',     optionKey: 'colPhasesNomOrder',     default: () => GRIST_CONFIG.columns.phases.nomOrder },
-            { id: 'cfg-colPhasesCouleur',      optionKey: 'colPhasesCouleur',      default: () => GRIST_CONFIG.columns.phases.couleur },
-            { id: 'cfg-colPhasesNumOrder',     optionKey: 'colPhasesNumOrder',     default: () => GRIST_CONFIG.columns.phases.numOrder },
+            { id: 'cfg-tableChefProjet',   optionKey: 'tableChefProjet',   default: () => GRIST_CONFIG.tables.responsableProjet },
+            { id: 'cfg-tableOperations',   optionKey: 'tableOperations',   default: () => GRIST_CONFIG.tables.operations },
+            { id: 'cfg-tablePhases',       optionKey: 'tablePhases',       default: () => GRIST_CONFIG.tables.phases },
+            { id: 'cfg-colChefNom',        optionKey: 'colChefNom',        default: () => GRIST_CONFIG.columns.responsableProjet.nom },
+            { id: 'cfg-colChefFonction',   optionKey: 'colChefFonction',   default: () => GRIST_CONFIG.columns.responsableProjet.fonction },
+            { id: 'cfg-colChefActif',      optionKey: 'colChefActif',      default: () => GRIST_CONFIG.columns.responsableProjet.actif },
+            { id: 'cfg-colOpsNom',         optionKey: 'colOpsNom',         default: () => GRIST_CONFIG.columns.operations.nom },
+            { id: 'cfg-colOpsNumOpe',      optionKey: 'colOpsNumOpe',      default: () => GRIST_CONFIG.columns.operations.numOpe },
+            { id: 'cfg-colOpsStatut',      optionKey: 'colOpsStatut',      default: () => GRIST_CONFIG.columns.operations.statut },
+            { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => GRIST_CONFIG.columns.phases.nom },
+            { id: 'cfg-colPhasesNomOrder', optionKey: 'colPhasesNomOrder', default: () => GRIST_CONFIG.columns.phases.nomOrder },
+            { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => GRIST_CONFIG.columns.phases.couleur },
+            { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => GRIST_CONFIG.columns.phases.numOrder },
         ];
 
-        function openConfigPanel() {
-            // Pré-remplir les champs avec les valeurs actives (TABLE / COL_CHEF / COL_PROJECTS)
-            const current = {
-                tableTasks:        TABLE.tasks,
-                tableChefProjet:   TABLE.responsableProjet,
-                tableOperations:   TABLE.operations,
-                tablePhases:       TABLE.phases,
-                colChefNom:        COL_CHEF.nom,
-                colChefFonction:   COL_CHEF.fonction,
-                colChefActif:      COL_CHEF.actif,
-                colOpsNom:         COL_OPS.nom,
-                colOpsNumOpe:      COL_OPS.numOpe,
-                colOpsStatut:      COL_OPS.statut,
-                colPhasesNom:      COL_PHASES.nom,
-                colPhasesNomOrder: COL_PHASES.nomOrder,
-                colPhasesCouleur:  COL_PHASES.couleur,
-                colPhasesNumOrder: COL_PHASES.numOrder,
-            };
-
-            CONFIG_FIELDS.forEach(f => {
-                const el = document.getElementById(f.id);
-                if (!el) return;
-                el.value = current[f.optionKey] || '';
-                el.placeholder = f.default();
-                el.classList.remove('changed');
-            });
-
-            document.getElementById('configPanel').classList.add('open');
-            document.getElementById('configOverlay').classList.add('visible');
-            document.getElementById('configBtn').classList.add('active');
-        }
+        // Groupes : associe chaque groupe à son select de table et ses selects de colonnes
+        const CONFIG_GROUPS = {
+            chef:   { tableId: 'cfg-tableChefProjet',  curTable: () => TABLE.responsableProjet },
+            ops:    { tableId: 'cfg-tableOperations',  curTable: () => TABLE.operations },
+            phases: { tableId: 'cfg-tablePhases',      curTable: () => TABLE.phases },
+        };
 
         function closeConfigPanel() {
             document.getElementById('configPanel').classList.remove('open');
@@ -4253,32 +4234,85 @@
             document.getElementById('configBtn').classList.remove('active');
         }
 
-        function markChanged(input) {
-            input.classList.add('changed');
+        async function openConfigPanel() {
+            document.getElementById('configPanel').classList.add('open');
+            document.getElementById('configOverlay').classList.add('visible');
+            document.getElementById('configBtn').classList.add('active');
+            await populateConfigSelects();
         }
 
-        function resetConfigToDefaults() {
+        async function populateConfigSelects() {
+            // Récupérer toutes les tables du document
+            let allTables = [];
+            try { allTables = await grist.docApi.listTables(); } catch(e) {}
+
+            // Valeurs courantes sauvegardées
+            const current = {};
             CONFIG_FIELDS.forEach(f => {
                 const el = document.getElementById(f.id);
-                if (!el) return;
-                el.value = f.default();
-                el.classList.add('changed');
+                current[f.optionKey] = el?.value || f.default();
+            });
+
+            // Peupler les selects de tables et déclencher le chargement des colonnes
+            for (const [group, cfg] of Object.entries(CONFIG_GROUPS)) {
+                const tableSel = document.getElementById(cfg.tableId);
+                if (!tableSel) continue;
+                const curTable = cfg.curTable();
+                tableSel.innerHTML = allTables.map(t =>
+                    `<option value="${t}"${t === curTable ? ' selected' : ''}>${t}</option>`
+                ).join('');
+                await loadColumnsForGroup(group, curTable, current);
+            }
+        }
+
+        async function loadColumnsForGroup(group, tableName, current) {
+            if (!tableName) return;
+            let cols = [];
+            try {
+                const data = await grist.docApi.fetchTable(tableName);
+                cols = Object.keys(data).filter(c => c !== 'manualSort' && c !== 'id');
+            } catch(e) { return; }
+
+            document.querySelectorAll(`[data-group="${group}"]`).forEach(sel => {
+                const field = CONFIG_FIELDS.find(f => f.id === sel.id);
+                const curVal = current ? (current[field?.optionKey] || field?.default()) : sel.value;
+                // Si la colonne configurée n'existe plus dans la table, ajouter une option
+                // marquée pour alerter l'utilisateur
+                const colExists = cols.includes(curVal);
+                sel.innerHTML = cols.map(c =>
+                    `<option value="${c}"${c === curVal ? ' selected' : ''}>${c}</option>`
+                ).join('');
+                if (!colExists && curVal) {
+                    sel.insertAdjacentHTML('afterbegin',
+                        `<option value="${curVal}" selected style="color:var(--danger)">⚠ ${curVal} (introuvable)</option>`);
+                }
             });
         }
 
-        async function saveConfig() {
-            // Construire l'objet options à partir des champs du panneau
+        async function onTableSelect(tableSelectEl, group) {
+            await loadColumnsForGroup(group, tableSelectEl.value, null);
+        }
+
+        async function resetConfigToDefaults() {
+            // Réinitialiser TABLE/COL aux défauts GRIST_CONFIG
+            TABLE.responsableProjet = GRIST_CONFIG.tables.responsableProjet;
+            TABLE.operations        = GRIST_CONFIG.tables.operations;
+            TABLE.phases            = GRIST_CONFIG.tables.phases;
+            COL_CHEF   = { ...GRIST_CONFIG.columns.responsableProjet };
+            COL_OPS    = { ...GRIST_CONFIG.columns.operations };
+            COL_PHASES = { ...GRIST_CONFIG.columns.phases };
+            await populateConfigSelects();
+        }
+
+                async function saveConfig() {
             const options = {};
             CONFIG_FIELDS.forEach(f => {
                 const el = document.getElementById(f.id);
                 if (!el) return;
-                const val = el.value.trim();
-                // N'enregistrer que les valeurs non vides ; si vide → utiliser le défaut
-                options[f.optionKey] = val || f.default();
+                options[f.optionKey] = el.value || f.default();
             });
 
             // Appliquer immédiatement les nouvelles valeurs aux variables actives
-            TABLE.tasks      = options.tableTasks;
             TABLE.responsableProjet = options.tableChefProjet;
             TABLE.operations = options.tableOperations;
             TABLE.phases     = options.tablePhases;
