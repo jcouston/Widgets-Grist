@@ -234,6 +234,7 @@
             user-select: none;
         }
         .filter-option * { pointer-events: none; }
+        .filter-option.filter-inactive { color: var(--text-muted); font-style: italic; }
         .filter-option:hover { background: var(--bg); }
         .filter-checkbox {
             width: 14px;
@@ -551,6 +552,18 @@
             font-size: 0.68rem;
             color: var(--text);
             white-space: nowrap;
+        }
+        /* Nom après la date de fin (barres courtes) */
+        .bar-label-after-end {
+            position: absolute;
+            /* date-end fait ~28px → décaler de ~34px */
+            left: calc(100% + 34px);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.68rem;
+            color: var(--text);
+            white-space: nowrap;
+            pointer-events: none;
         }
 
         .gantt-bar-progress {
@@ -989,6 +1002,59 @@
         }
         .field-group textarea { resize: vertical; min-height: 60px; }
         .assignee-list { display: flex; flex-direction: column; gap: 5px; }
+        /* Widget filtre panel (responsables + dépendances) */
+        .panel-filter-widget {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .panel-filter-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px 8px;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.72rem;
+            outline: none;
+        }
+        .panel-filter-list {
+            max-height: 140px;
+            overflow-y: auto;
+        }
+        .panel-filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-light, var(--border));
+        }
+        .panel-filter-item:last-child { border-bottom: none; }
+        .panel-filter-item:hover { background: var(--hover); }
+        .panel-filter-item input[type=checkbox] { cursor: pointer; flex-shrink: 0; }
+        .panel-filter-item.inactive { color: var(--text-muted); font-style: italic; }
+
+        .dep-pred-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dep-remove-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 0 2px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .dep-remove-btn:hover { opacity: 0.7; }
+
         .assignee-item {
             display: flex; align-items: center; gap: 8px;
             padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
@@ -1402,9 +1468,9 @@
                 </div>
             </div>
 
-            <!-- Table Chef de Projet -->
+            <!-- Table Responsable de Projet -->
             <div class="config-section">
-                <div class="config-section-title">👥 Table chefs de projet</div>
+                <div class="config-section-title">👥 Table responsables</div>
                 <div class="config-field">
                     <label>Nom de la table</label>
                     <input type="text" id="cfg-tableChefProjet" placeholder="DPPI_Chef_Projet"
@@ -1516,7 +1582,7 @@
         </div>
         <div class="filter-dropdown" id="filterAssignee">
             <button class="filter-btn" id="filterAssigneeBtn" data-filter-toggle="filterAssignee">
-                <span id="filterAssigneeLabel">Chef projet ▾</span>
+                <span id="filterAssigneeLabel">Responsable ▾</span>
             </button>
             <div class="filter-menu" id="filterAssigneeMenu">
                 <div class="filter-search"><input type="text" placeholder="Rechercher..." id="filterAssigneeSearch"></div>
@@ -1566,6 +1632,7 @@
         <div class="tooltip-title"></div>
         <div class="tooltip-row"><span>Début:</span><span class="tooltip-start"></span></div>
         <div class="tooltip-row"><span>Échéance:</span><span class="tooltip-end"></span></div>
+        <div class="tooltip-row tt-duree-row" style="display:none"><span>Durée:</span><span class="tooltip-duree"></span></div>
         <div class="tooltip-row"><span>Progression:</span><span class="tooltip-progress"></span></div>
     </div>
 
@@ -1589,57 +1656,72 @@
 
     <!-- Modal creation tache -->
     <div class="modal-overlay" id="createModal">
-        <div class="modal" style="max-width:480px">
+        <div class="modal" style="max-width:520px">
             <div class="modal-header">
                 <div class="modal-title">+ Nouvelle phase</div>
                 <button class="modal-close" onclick="closeCreateModal()">×</button>
             </div>
-            <div class="modal-body">
-                <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+                <div style="display:flex;flex-direction:column;gap:14px;">
                     <div class="field-group">
                         <label>Phase *</label>
-                        <select id="create-titre">
-                            <option value="">— Choisir une phase —</option>
-                        </select>
+                        <select id="create-titre"></select>
                     </div>
-                    <div class="field-group">
-                        <label>Operation</label>
-                        <select id="create-projet">
-                            <option value="">— Choisir une operation —</option>
-                        </select>
+                    <div class="field-group" id="create-projet-wrap">
+                        <label>Opération</label>
+                        <div id="create-projet-label" style="font-size:0.8rem;padding:4px 0;color:var(--text);"></div>
                     </div>
                     <div class="date-fields">
                         <div class="field-group">
-                            <label>Date debut *</label>
+                            <label>Date début</label>
                             <input type="date" id="create-dateDebut" />
                         </div>
                         <div class="field-group">
-                            <label>Date echeance *</label>
-                            <input type="date" id="create-dateEcheance" />
+                            <label>Durée</label>
+                            <input type="text" id="create-duree" placeholder="ex: 3m, 45j, 1a 6m" style="width:130px;">
+                        </div>
+                    </div>
+                    <div class="date-fields">
+                        <div class="field-group">
+                            <label>Type</label>
+                            <select id="create-type" onchange="onCreateTypeChange(this.value)">
+                                <option value="tache">Tâche</option>
+                                <option value="jalon">Jalon ◆</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Statut</label>
+                            <select id="create-statut">
+                                <option value="todo">A faire</option>
+                                <option value="inprogress">En cours</option>
+                                <option value="review">En revue</option>
+                                <option value="done">Terminé</option>
+                            </select>
                         </div>
                     </div>
                     <div class="field-group">
-                        <label>Statut</label>
-                        <select id="create-statut">
-                            <option value="todo">A faire</option>
-                            <option value="inprogress">En cours</option>
-                            <option value="review">En revue</option>
-                            <option value="done">Termine</option>
-                        </select>
+                        <label>Responsables</label>
+                        <div class="panel-filter-widget" id="create-chef-widget">
+                            <input class="panel-filter-search" id="create-chef-search" placeholder="Rechercher…">
+                            <div class="panel-filter-list" id="create-chef-list"></div>
+                        </div>
                     </div>
                     <div class="field-group">
-                        <label>Chefs de projet</label>
-                        <div class="assignee-list" id="create-assignees"></div>
+                        <label>Prédécesseurs</label>
+                        <div class="panel-filter-widget" id="create-pred-widget">
+                            <input class="panel-filter-search" id="create-pred-search" placeholder="Rechercher…">
+                            <div class="panel-filter-list" id="create-pred-list"></div>
+                        </div>
                     </div>
                     <div class="field-group">
                         <label>Description</label>
-                        <textarea id="create-description" rows="3"></textarea>
+                        <textarea id="create-description" rows="2" style="resize:vertical;"></textarea>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeCreateModal()">Annuler</button>
-                <button class="btn primary" onclick="submitCreateTask()">Creer la phase</button>
+                <button class="btn primary" onclick="submitCreateTask()">Créer la phase</button>
             </div>
         </div>
     </div>
@@ -1662,7 +1744,7 @@
             // Noms des tables Grist — défauts modifiables via Widget Options
             tables: {
                 tasks:      'Tasks',
-                chefProjet: 'DPPI_Chef_Projet',
+                responsableProjet: 'DPPI_Chef_Projet',
                 operations: 'DPPI_Operations',
                 phases:     'PL_Liste_Phases'
             },
@@ -1677,15 +1759,18 @@
                     statut:      'statut',
                     progression: 'progression',
                     projet:      'projet',      // Ref vers operations (DPPI_Operations)
-                    assignees:   'assignees',   // RefList vers chefProjet (DPPI_Chef_Projet)
+                    assignees:   'assignees',   // RefList vers responsableProjet (DPPI_Chef_Projet)
                     type:        'type',
-                    dependDe:    'dependDe',
-                    tags:        'tags',
-                    estimationH: 'estimationH',
-                    tempsPasse:  'tempsPasse',
-                    couleur:     'couleur'      // Peut être ignoré si on utilise la couleur des phases
+                    dependDe:         'dependDe',
+                    tags:             'tags',
+                    estimationH:      'estimationH',
+                    tempsPasse:       'tempsPasse',
+                    couleur:          'couleur',     // Peut être ignoré si on utilise la couleur des phases
+                    duree:            'Duree',
+                    dateDebutCalc:    'Date_Debut_Calculee',
+                    dateFinCalc:      'Date_Fin_Calculee'
                 },
-                chefProjet: {
+                responsableProjet: {
                     nom:      'Prenom_Nom',  // Nom complet affiché
                     prenom:   'Prenom',
                     nomFamille:'Nom',
@@ -1713,7 +1798,7 @@
         let COL = { ...GRIST_CONFIG.columns.tasks };
 
         // Noms des colonnes des tables secondaires.
-        let COL_CHEF     = { ...GRIST_CONFIG.columns.chefProjet };
+        let COL_CHEF     = { ...GRIST_CONFIG.columns.responsableProjet };
         let COL_OPS      = { ...GRIST_CONFIG.columns.operations };
         let COL_PHASES   = { ...GRIST_CONFIG.columns.phases };
 
@@ -1728,10 +1813,32 @@
         // fetchTable() retourne l'ID numérique pour les colonnes Ref.
         // Ces fonctions font la résolution ID → valeur affichable.
         const resolvePhaseNom      = (id) => phases.find(x => x.id === id)?.[COL_PHASES.nomOrder] || String(id || '');
+
+        // Retourne true si la tâche a au moins un prédécesseur (dependDe non vide)
+        function hasPredecesseurs(t) {
+            const dd = t?.[COL.dependDe];
+            if (!dd) return false;
+            if (Array.isArray(dd)) return dd.length > 0 && !(dd.length === 1 && dd[0] === 'L');
+            return true;
+        }
+
+        // Date de début effective : Date_Debut_Calculee si prédécesseurs, sinon dateDebut
+        function getEffectiveStart(t) {
+            if (hasPredecesseurs(t) && t[COL.dateDebutCalc]) {
+                return gristToDate(t[COL.dateDebutCalc]);
+            }
+            return gristToDate(t[COL.dateDebut]);
+        }
+
+        // Date de fin effective : Date_Fin_Calculee si disponible, sinon dateEcheance
+        function getEffectiveEnd(t) {
+            if (t[COL.dateFinCalc]) return gristToDate(t[COL.dateFinCalc]);
+            return gristToDate(t[COL.dateEcheance]);
+        }
         const resolvePhaseNomCourt = (id) => phases.find(x => x.id === id)?.[COL_PHASES.nom]      || resolvePhaseNom(id);
         const resolvePhaseCouleur = (id) => phases.find(x => x.id === id)?.[COL_PHASES.couleur]  || null;
         const resolveOpsNom       = (id, ops) => ops.find(x => x.id === id)?.[COL_OPS.nom]       || String(id || '');
-        const resolveChefNom      = (id, team) => team.find(x => x.id === id)?.[COL_CHEF.nom]    || String(id || '');
+        const resolveResponsableNom      = (id, team) => team.find(x => x.id === id)?.[COL_CHEF.nom]    || String(id || '');
 
         // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION VUE
@@ -1740,7 +1847,7 @@
         // Le NOMBRE de cellules est calculé dynamiquement dans getViewCellCount()
         // pour remplir exactement la largeur disponible du conteneur timeline.
         const VIEW_CONFIG = {
-            week:    { label: 'Semaine',   unit: 'day',   cellWidth: 70, navStep: 7,         minCells: 7  },
+            week:    { label: 'Semaine',   unit: 'week',  cellWidth: 70, navStep: 7,         minCells: 4  },
             month:   { label: 'Mois',      unit: 'day',   cellWidth: 28, navStep: 'month',   minCells: 28 },
             quarter: { label: 'Trimestre', unit: 'week',  cellWidth: 40, navStep: 'quarter', minCells: 13 },
             year:    { label: 'Annee',     unit: 'month', cellWidth: 55, navStep: 'year',    minCells: 12 },
@@ -1783,9 +1890,10 @@
         let currentView = 'month';
         let viewStartDate = new Date();
         let selectedTaskId = null;
+        let lastRenderedRows = null; // dernière allRows passée à renderTimeline
         let sortMode = 'date';
         let sortableInstance = null;
-        let filters = { projects: [], assignees: [] }; // multi-selection
+        let filters = { projects: null, assignees: null }; // null=tout, []=aucun, [ids]=filtre
 
         let dragState = {
             active: false, type: null, taskId: null,
@@ -1802,12 +1910,69 @@
         const formatDate = (d) => d ? new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(d) : '-';
         const formatDateShort = (d) => d ? new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(d) : '-';
         const formatDateBar   = (d) => d ? String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') : '';
+
+        // Parse une saisie libre de durée → jours
+        // Ex: "3,5 ans" → 1278, "18 mois" → 547, "2a 3m" → 821
+        function parseDureeInput(str) {
+            if (!str) return null;
+            str = str.toString().trim().replace(',', '.').toLowerCase();
+            // Essai direct : nombre seul → jours
+            if (/^\d+(\.\d+)?$/.test(str)) return Math.round(parseFloat(str));
+            let jours = 0;
+            // Patterns : (nombre)(unité)
+            const patterns = [
+                { re: /(\d+(?:\.\d+)?)\s*(?:a(?:n(?:s|née?s?)?)?|y(?:ears?)?)/, mult: 365 },
+                { re: /(\d+(?:\.\d+)?)\s*(?:m(?:ois|o(?:nths?)?)?)/, mult: 30 },
+                { re: /(\d+(?:\.\d+)?)\s*(?:s(?:em(?:aines?)?|em)?|w(?:eeks?)?)/, mult: 7 },
+                { re: /(\d+(?:\.\d+)?)\s*(?:j(?:ours?)?|d(?:ays?)?)/, mult: 1 },
+            ];
+            let matched = false;
+            patterns.forEach(({ re, mult }) => {
+                const m = str.match(re);
+                if (m) { jours += Math.round(parseFloat(m[1]) * mult); matched = true; }
+            });
+            return matched ? Math.max(1, jours) : null;
+        }
+
+        // Formate des jours en texte lisible : "1a 6m", "3m 2s", "5j"
+        function formatDureeTexte(jours) {
+            if (!jours || jours <= 0) return '';
+            const ans  = Math.floor(jours / 365);
+            let reste  = jours - ans * 365;
+            const mois = Math.floor(reste / 30);
+            reste     -= mois * 30;
+            const sem  = Math.floor(reste / 7);
+            const j    = reste % 7;
+            const parts = [];
+            if (ans  > 0) parts.push(ans  + ' an'  + (ans  > 1 ? 's' : ''));
+            if (mois > 0) parts.push(mois + ' mois');
+            if (sem  > 0) parts.push(sem  + ' sem');
+            if (j    > 0) parts.push(j    + ' j');
+            return parts.slice(0, 3).join(' ');
+        }
+
+        function formatDureeBar(jours) {
+            if (!jours || jours <= 0) return '';
+            const ans   = Math.floor(jours / 365);
+            const reste = jours % 365;
+            const mois  = Math.floor(reste / 30);
+            const r2    = reste % 30;
+            const sem   = Math.floor(r2 / 7);
+            const j     = r2 % 7;
+            const parts = [];
+            if (ans > 0)  parts.push(ans  + 'a');
+            if (mois > 0) parts.push(mois + 'm');
+            if (sem > 0)  parts.push(sem  + 's');
+            if (j > 0)    parts.push(j    + 'j');
+            // N'afficher que les 2 premières unités significatives
+            return parts.slice(0, 2).join(' ');
+        }
         const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
         const isSameDay = (a, b) => a.toDateString() === b.toDateString();
         const getDaysDiff = (a, b) => Math.round((b - a) / 86400000);
         const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
         const getTaskPriority = (t) => { const p = Number(t?.[COL.priorite]); return (p >= 1 && p <= 4) ? p : 3; };
-        const isJalon = (t) => t?.[COL.type] === 'jalon' || (gristToDate(t?.[COL.dateDebut])?.toDateString() === gristToDate(t?.[COL.dateEcheance])?.toDateString());
+        const isJalon = (t) => t?.[COL.type] === 'jalon' || t?.[COL.duree] === 0 || (getEffectiveStart(t)?.toDateString() === getEffectiveEnd(t)?.toDateString());
 
         function getAssigneesArray(t) {
             const val = t?.[COL.assignees];
@@ -1842,11 +2007,13 @@
         // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
         // ou de la colonne couleur directe si présente.
         function getTaskCouleur(t) {
-            const direct = t[COL.couleur];
-            const val = t[COL.titre];
-            if (typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val))) {
-                return resolvePhaseCouleur(Number(val)) || null;
-            }
+            // Utiliser _phaseId (stocké au chargement avant résolution des Refs)
+            const phaseId = t._phaseId ?? (() => {
+                const val = t[COL.titre];
+                return (typeof val === 'number') ? val :
+                       (typeof val === 'string' && /^\d+$/.test(val)) ? Number(val) : null;
+            })();
+            if (phaseId) return resolvePhaseCouleur(phaseId) || null;
             return null;
         }
 
@@ -1860,9 +2027,9 @@
             return String(val);
         }
 
-        // Résolution des noms des chefs de projet (RefList → DPPI_Chef_Projet)
+        // Résolution des noms des responsables (RefList → DPPI_Chef_Projet)
         function getTaskAssigneesNoms(t) {
-            return getAssigneesArray(t).map(id => resolveChefNom(id, team)).filter(Boolean);
+            return getAssigneesArray(t).map(id => resolveResponsableNom(id, team)).filter(Boolean);
         }
 
         function showToast(msg, type = 'info') {
@@ -1929,10 +2096,42 @@
         // VIEW & NAVIGATION
         // ═══════════════════════════════════════════════════════════════════════
         function setView(view) {
+            if (view === currentView) return;
+
+            // 1. Calculer la date centrale de la vue ACTUELLE avant tout changement
+            const prevCfg   = VIEW_CONFIG[currentView];
+            const prevStart = getViewStartDate();
+            // Nombre de jours que représente la vue actuelle
+            const prevDays  = prevCfg.unit === 'day'   ? getViewCellCount() :
+                               prevCfg.unit === 'week'  ? getViewCellCount() * 7 :
+                               prevCfg.unit === 'month' ? getViewCellCount() * 30 : 365;
+            const centerDate = addDays(prevStart, Math.floor(prevDays / 2));
+
+            // 2. Changer la vue
             currentView = view;
             document.querySelectorAll('.view-controls .btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
             document.documentElement.style.setProperty('--cell-width', VIEW_CONFIG[view].cellWidth + 'px');
             localStorage.setItem('taskflow_gantt_view', view);
+
+            // 3. Calculer viewStartDate pour centrer sur centerDate dans la NOUVELLE vue
+            const newCfg   = VIEW_CONFIG[view];
+            const newCount = getViewCellCount(); // maintenant basé sur currentView = view
+            // Nombre de jours de la nouvelle vue
+            const newDays  = newCfg.unit === 'day'   ? newCount :
+                              newCfg.unit === 'week'  ? newCount * 7 :
+                              newCfg.unit === 'month' ? newCount * 30 : 365;
+            const halfDays = Math.floor(newDays / 2);
+
+            if (newCfg.unit === 'day') {
+                viewStartDate = addDays(centerDate, -halfDays);
+            } else if (newCfg.unit === 'week') {
+                viewStartDate = getStartOfWeek(addDays(centerDate, -halfDays));
+            } else if (newCfg.unit === 'month') {
+                // Reculer halfDays jours depuis centerDate, puis aller au 1er du mois
+                const d = addDays(centerDate, -halfDays);
+                viewStartDate = new Date(d.getFullYear(), d.getMonth(), 1);
+            }
+
             render();
         }
 
@@ -1992,10 +2191,10 @@
                 }
             }
             // En mode single avec filtre projet unique, afficher le nom
-            if (layoutMode === 'single' && filters.projects.length === 1) {
+            if (layoutMode === 'single' && filters.projects !== null && filters.projects.length === 1) {
                 const proj = projects.find(p => String(p.id) === String(filters.projects[0]));
                 if (proj) text = (proj[COL_OPS.nom] || '') + (text ? ' · ' + text : '');
-            } else if (layoutMode === 'single' && filters.projects.length > 1) {
+            } else if (layoutMode === 'single' && filters.projects !== null && filters.projects.length > 1) {
                 text = filters.projects.length + ' opérations · ' + text;
             }
             document.getElementById('currentPeriod').textContent = text;
@@ -2015,10 +2214,10 @@
             if (sortMode === 'priority') {
                 tasks.sort((a, b) => {
                     const pa = getTaskPriority(a), pb = getTaskPriority(b);
-                    return pa !== pb ? pa - pb : (a[COL.dateDebut] || 0) - (b[COL.dateDebut] || 0);
+                    return pa !== pb ? pa - pb : (getEffectiveStart(a)?.getTime()||0) - (getEffectiveStart(b)?.getTime()||0);
                 });
             } else if (sortMode === 'date') {
-                tasks.sort((a, b) => (a[COL.dateDebut] || 0) - (b[COL.dateDebut] || 0));
+                tasks.sort((a, b) => { const sa = getEffectiveStart(a); const sb = getEffectiveStart(b); return (sa?.getTime()||0) - (sb?.getTime()||0); });
             }
         }
 
@@ -2029,8 +2228,8 @@
             try {
                 const s = localStorage.getItem('taskflow_gantt_filters');
                 try { const saved = JSON.parse(s); if (saved && typeof saved === 'object') {
-                    if (Array.isArray(saved.projects)) filters.projects = saved.projects;
-                    if (Array.isArray(saved.assignees)) filters.assignees = saved.assignees;
+                    filters.projects = Array.isArray(saved.projects) ? saved.projects : null;
+                    filters.assignees = Array.isArray(saved.assignees) ? saved.assignees : null;
                 }} catch(e) {}
                 const v = localStorage.getItem('taskflow_gantt_view');
                 if (v && VIEW_CONFIG[v]) currentView = v;
@@ -2086,8 +2285,12 @@
             })).sort((a, b) => a.nom.localeCompare(b.nom));
             filterData.assignees = team.map(m => ({
                 id: m.id,
-                nom: m[COL_CHEF.nom]
-            })).sort((a, b) => a.nom.localeCompare(b.nom));
+                nom: m[COL_CHEF.nom],
+                actif: m[COL_CHEF.actif] !== false
+            })).sort((a, b) => {
+                if (a.actif !== b.actif) return a.actif ? -1 : 1;
+                return a.nom.localeCompare(b.nom);
+            });
         }
 
         function renderFilterList(type, search) {
@@ -2097,14 +2300,14 @@
             const items = filterData[type] || [];
             const q = (search || '').toLowerCase();
             const visible = items.filter(it => !q || it.nom.toLowerCase().includes(q));
-            const noFilter = filters[type].length === 0;
+            const noFilter = filters[type] === null;
 
             // Stocker les items visibles sur le conteneur pour la délégation
             listEl._visibleItems = visible;
             listEl._filterType = type;
 
             listEl.innerHTML = visible.length ? visible.map((it, idx) => {
-                const sel = noFilter || filters[type].map(String).includes(String(it.id));
+                const sel = noFilter || (filters[type] !== null && filters[type].map(String).includes(String(it.id)));
                 return `<div class="filter-option" data-filter-idx="${idx}">
                     <div class="filter-checkbox${sel ? ' checked' : ''}"></div>
                     <span>${escapeHtml(it.nom)}</span>
@@ -2126,31 +2329,31 @@
         }
 
         function updateFilterUI() {
-            const hasProj = filters.projects.length > 0;
-            const hasAss  = filters.assignees.length > 0;
+            const hasProj = filters.projects !== null;
+            const hasAss  = filters.assignees !== null;
             document.getElementById('filterProjectBtn').className  = 'filter-btn' + (hasProj ? ' active' : '');
             document.getElementById('filterAssigneeBtn').className = 'filter-btn' + (hasAss  ? ' active' : '');
 
             if (!hasProj) {
                 document.getElementById('filterProjectLabel').textContent = 'Projet ▾';
-            } else if (filters.projects.length === 1) {
+            } else if (filters.projects !== null && filters.projects.length === 1) {
                 const p = filterData.projects.find(p => p.id === filters.projects[0]);
                 document.getElementById('filterProjectLabel').textContent = (p ? p.nom : '?') + ' ▾';
             } else {
-                document.getElementById('filterProjectLabel').textContent = filters.projects.length + ' projets ▾';
+                document.getElementById('filterProjectLabel').textContent = (filters.projects.length === 0 ? 'Aucun' : filters.projects.length + ' projets') + ' ▾';
             }
             if (!hasAss) {
-                document.getElementById('filterAssigneeLabel').textContent = 'Chef projet ▾';
-            } else if (filters.assignees.length === 1) {
+                document.getElementById('filterAssigneeLabel').textContent = 'Responsable ▾';
+            } else if (filters.assignees !== null && filters.assignees.length === 1) {
                 const m = filterData.assignees.find(m => String(m.id) === String(filters.assignees[0]));
                 document.getElementById('filterAssigneeLabel').textContent = (m ? m.nom : '?') + ' ▾';
             } else {
-                document.getElementById('filterAssigneeLabel').textContent = filters.assignees.length + ' chefs ▾';
+                document.getElementById('filterAssigneeLabel').textContent = (filters.assignees.length === 0 ? 'Aucun' : filters.assignees.length + ' responsables') + ' ▾';
             }
         }
 
         function selectAllFilter(type) {
-            filters[type] = [];
+            filters[type] = null; // null = pas de filtre = tout visible
             renderFilterList(type, filterSearch[type]);
             updateFilterUI();
             render();
@@ -2160,7 +2363,7 @@
             if (type === 'assignees') val = Number(val);
             else val = String(val);
             // Si pas de filtre actif ([] = tout coché), initialiser avec tous sauf le cliqué
-            if (filters[type].length === 0) {
+            if (filters[type] === null) {
                 buildFilterData();
                 filters[type] = filterData[type]
                     .map(it => type === 'assignees' ? Number(it.id) : String(it.id))
@@ -2170,11 +2373,11 @@
                 if (idx >= 0) {
                     filters[type].splice(idx, 1);
                     buildFilterData();
-                    if (filters[type].length === filterData[type].length) filters[type] = [];
+                    if (filters[type].length === filterData[type].length) filters[type] = null;
                 } else {
                     filters[type].push(val);
                     buildFilterData();
-                    if (filters[type].length === filterData[type].length) filters[type] = [];
+                    if (filters[type].length === filterData[type].length) filters[type] = null;
                 }
             }
             renderFilterList(type, filterSearch[type]);
@@ -2183,18 +2386,20 @@
         }
 
         function clearFilter(type) {
-            filters[type] = [];
+            filters[type] = []; // [] = aucun sélectionné
             renderFilterList(type, filterSearch[type]);
             updateFilterUI();
             render();
         }
 
         function taskMatchesFilters(t) {
-            // [] = pas de filtre actif (tout passe)
-            if (filters.projects.length > 0) {
+            // null = pas de filtre (tout passe), [] = aucun (tout bloqué)
+            if (filters.projects !== null) {
+                if (filters.projects.length === 0) return false;
                 if (!filters.projects.map(String).includes(String(t[COL.projet]))) return false;
             }
-            if (filters.assignees.length > 0) {
+            if (filters.assignees !== null) {
+                if (filters.assignees.length === 0) return false;
                 if (!filters.assignees.some(id => getAssigneesArray(t).includes(Number(id)))) return false;
             }
             return true;
@@ -2276,8 +2481,8 @@
             }
             // Reset filtres quand on revient en compact
             if (isCompact) {
-                filters.projects = [];
-                filters.assignees = [];
+                filters.projects = null;
+                filters.assignees = null;
             }
 
             // Tri visible seulement en mode multi/single
@@ -2292,19 +2497,19 @@
             if (mode === 'single' && pid !== undefined) {
                 // Depuis compact : filtre projet = ce projet uniquement
                 filters.projects = [String(pid)];
-                // Filtre chefs = les chefs qui ont des tâches dans ce projet
+                // Filtre responsables = les responsables qui ont des tâches dans ce projet
                 buildFilterData();
                 const projTasks = tasks.filter(t => String(t[COL.projet]) === String(pid));
-                const chefIds = new Set();
-                projTasks.forEach(t => getAssigneesArray(t).forEach(id => chefIds.add(Number(id))));
-                // N'inclure que les chefs qui existent dans filterData
+                const responsableIds = new Set();
+                projTasks.forEach(t => getAssigneesArray(t).forEach(id => responsableIds.add(Number(id))));
+                // N'inclure que les responsables qui existent dans filterData
                 filters.assignees = filterData.assignees
                     .map(m => Number(m.id))
-                    .filter(id => chefIds.has(id));
+                    .filter(id => responsableIds.has(id));
             } else if (mode === 'single' && pid === undefined) {
                 // Bouton direct : tout afficher (pas de filtre)
-                filters.projects  = [];
-                filters.assignees = [];
+                filters.projects  = null;
+                filters.assignees = null;
             }
 
             // Mettre à jour les menus de filtre pour refléter la sélection courante
@@ -2352,23 +2557,24 @@
                 monthsHtml += `<div class="month-cell" style="width: ${monthDays * cfg.cellWidth}px">${MONTHS_SHORT[currentMonth]}</div>`;
 
             } else if (cfg.unit === 'week') {
-                // Ligne du haut : années
+                // Vue semaine : ligne haut = mois/année, ligne bas = S.nr + premiers jours
                 let ws = getStartOfWeek(start);
-                let yearDays = 0, currentYear = -1;
+                let yearMonthWidth = 0, currentYearMonth = '';
                 for (let i = 0; i < n; i++) {
-                    const y = ws.getFullYear();
-                    if (y !== currentYear) {
-                        if (currentYear !== -1) monthsHtml += `<div class="month-cell" style="width:${yearDays * cfg.cellWidth}px">${currentYear}</div>`;
-                        currentYear = y; yearDays = 1;
-                    } else { yearDays++; }
-                    const wn = getWeekNumber(ws);
+                    const y   = ws.getFullYear();
+                    const mo  = ws.getMonth();
+                    const ym  = `${MONTHS_SHORT[mo]} ${y}`;
+                    if (ym !== currentYearMonth) {
+                        if (currentYearMonth) monthsHtml += `<div class="month-cell" style="width:${yearMonthWidth * cfg.cellWidth}px">${currentYearMonth}</div>`;
+                        currentYearMonth = ym; yearMonthWidth = 1;
+                    } else { yearMonthWidth++; }
+                    const wn  = getWeekNumber(ws);
                     const curr = getWeekNumber(today) === wn && ws.getFullYear() === today.getFullYear();
-                    // Afficher le mois au debut de chaque mois, sinon le n de semaine
-                    const isMonthStart = ws.getDate() <= 7;
-                    daysHtml += `<div class="day-cell${curr ? ' today' : ''}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px">${isMonthStart ? MONTHS_SHORT[ws.getMonth()] : 'S'+wn}</div>`;
+                    const dayStr = ws.getDate() + '/' + String(ws.getMonth()+1).padStart(2,'0');
+                    daysHtml += `<div class="day-cell${curr ? ' today' : ''}" style="width:${cfg.cellWidth}px;min-width:${cfg.cellWidth}px;font-size:0.65rem">S${wn} · ${dayStr}</div>`;
                     ws = addDays(ws, 7);
                 }
-                monthsHtml += `<div class="month-cell" style="width:${yearDays * cfg.cellWidth}px">${currentYear}</div>`;
+                monthsHtml += `<div class="month-cell" style="width:${yearMonthWidth * cfg.cellWidth}px">${currentYearMonth}</div>`;
 
             } else if (cfg.unit === 'month') {
                 // Ligne du haut : années
@@ -2421,8 +2627,8 @@
                     const t = row.task;
                     const p = getTaskPriority(t);
                     const sel = t.id === selectedTaskId ? ' selected' : '';
-                    const tStart = gristToDate(t[COL.dateDebut]);
-                    const tEnd = gristToDate(t[COL.dateEcheance]);
+                    const tStart = getEffectiveStart(t);
+                    const tEnd = getEffectiveEnd(t);
                     const jalon = isJalon(t);
                     const titre      = getTaskTitre(t);       // Nom court (barres)
                     const titreOrder = getTaskTitreOrder(t); // Nom_Order (liste)
@@ -2529,8 +2735,8 @@
             function makeBars(pts) {
                 let bars = '';
                 pts.forEach(t => {
-                    const tStart = gristToDate(t[COL.dateDebut]);
-                    const tEnd   = gristToDate(t[COL.dateEcheance]);
+                    const tStart = getEffectiveStart(t);
+                    const tEnd   = getEffectiveEnd(t);
                     if (!tStart || !tEnd) return;
                     const s0 = getDaysDiff(start, tStart);
                     const e0 = getDaysDiff(start, tEnd);
@@ -2542,15 +2748,22 @@
                     const titre  = escapeHtml(getTaskTitre(t));
                     const prog   = t[COL.progression] || 0;
                     if (isJalon(t)) {
+                        // colour est déjà calculé correctement via getTaskCouleur(t) juste au-dessus
                         bars += `<div title="${titre}" onclick="showDetailPanel(${t.id})"
+                            onmouseenter="showTooltip(event)" onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)"
+                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(tStart)}" data-progress="${t[COL.progression]||0}" data-duree="${t[COL.duree]||0}"
                             style="position:absolute;left:${left}px;top:50%;transform:translateY(-50%) rotate(45deg);
-                            width:10px;height:10px;background:${colour};opacity:0.85;cursor:pointer;z-index:2;"></div>`;
+                            width:12px;height:12px;background:${colour};cursor:pointer;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`;
                     } else {
+                        const dureeStrC = formatDureeBar(t[COL.duree]);
+                        // Compact : nom+durée si ≥100px, nom seul si ≥30px, rien si < 30px
+                        const cLabel = width < 30 ? '' :
+                                       (dureeStrC && width >= 100) ? titre + ' - ' + dureeStrC : titre;
                         bars += `<div class="compact-bar" onclick="showDetailPanel(${t.id})"
                             onmouseenter="showTooltip(event)" onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)"
-                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(tEnd)}" data-progress="${t[COL.progression] || 0}"
+                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(tEnd)}" data-progress="${t[COL.progression] || 0}" data-duree="${t[COL.duree]||0}"
                             style="left:${left}px;width:${width}px;background:${colour};">
-                            <div class="compact-bar-label">${titre}</div>
+                            <div class="compact-bar-label">${escapeHtml(cLabel)}</div>
                         </div>`;
                     }
                 });
@@ -2706,8 +2919,8 @@
             rows.forEach((row, i) => {
                 if (row.type !== 'task') return;
                 const t = row.task;
-                const taskStart = gristToDate(t[COL.dateDebut]);
-                const taskEnd = gristToDate(t[COL.dateEcheance]);
+                const taskStart = getEffectiveStart(t);
+                const taskEnd = getEffectiveEnd(t);
                 if (!taskStart || !taskEnd) return;
 
                 const startOff = getDaysDiff(start, taskStart);
@@ -2727,10 +2940,11 @@
                 if (isJalon(t)) {
                     const left = startOff * pxPerDay;
                     if (startOff >= 0 && startOff < totalDays) {
+                        const diamondStyle = barColor ? `background:${barColor};` : '';
                         html += `
                             <div class="gantt-milestone p${p}${sel}" style="left: ${left}px; top: ${top}px;" data-id="${t.id}">
                                 <span class="milestone-date">${formatDateBar(taskStart)}</span>
-                                <div class="milestone-diamond"></div>
+                                <div class="milestone-diamond" style="${diamondStyle}"></div>
                                 <span class="milestone-label">${titre}</span>
                             </div>
                         `;
@@ -2741,18 +2955,34 @@
                     if (width < 4) width = 4;
 
                     const prog = t[COL.progression] || 0;
-                    const showExt = width < 60;
                     const dStart = formatDateBar(taskStart);
                     const dEnd   = formatDateBar(taskEnd);
-                    // Seuil : afficher les dates si la barre est assez large
+                    const dureeStr = formatDureeBar(t[COL.duree]);
+                    // Décision d'affichage selon largeur
+                    let barInner;
+                    if (width >= 120 && dureeStr) {
+                        // Barre large : nom + durée à l'intérieur
+                        barInner = `<span class="bar-date bar-date-start">${dStart}</span>
+                            <span class="bar-label">${escapeHtml(titre + ' - ' + dureeStr)}</span>
+                            <span class="bar-date bar-date-end">${dEnd}</span>`;
+                    } else if (width >= 60) {
+                        // Barre moyenne : nom seul à l'intérieur
+                        barInner = `<span class="bar-date bar-date-start">${dStart}</span>
+                            <span class="bar-label">${escapeHtml(titre)}</span>
+                            <span class="bar-date bar-date-end">${dEnd}</span>`;
+                    } else {
+                        // Barre courte : date fin puis nom à l'extérieur (après la date)
+                        barInner = `<span class="bar-date bar-date-start">${dStart}</span>
+                            <span class="bar-label"></span>
+                            <span class="bar-date bar-date-end">${dEnd}</span>
+                            <span class="bar-label-after-end">${escapeHtml(titre)}</span>`;
+                    }
                     html += `
                         <div class="gantt-bar p${p}${sel}" style="left: ${left}px; width: ${width}px; top: ${top}px; ${barStyle}" 
-                             data-id="${t.id}" data-title="${titre}" data-start="${formatDate(taskStart)}" data-end="${formatDate(taskEnd)}" data-progress="${prog}">
+                             data-id="${t.id}" data-title="${titre}" data-start="${formatDate(taskStart)}" data-end="${formatDate(taskEnd)}" data-progress="${prog}" data-duree="${t[COL.duree]||0}">
                             <div class="resize-handle left" data-resize="left"></div>
                             <div class="gantt-bar-progress" style="width: ${prog}%"></div>
-                            <span class="bar-date bar-date-start">${dStart}</span>
-                            ${showExt ? '<span class="bar-label"></span><span class="bar-label-external">' + titre + '</span>' : '<span class="bar-label">' + titre + '</span>'}
-                            <span class="bar-date bar-date-end">${dEnd}</span>
+                            ${barInner}
                             <div class="resize-handle right" data-resize="right"></div>
                         </div>
                     `;
@@ -2766,6 +2996,7 @@
             }
 
             grid.innerHTML = html;
+            lastRenderedRows = rows;
             renderDependencies(taskRows.map(r => r.task), start, rows);
 
             // Event handlers
@@ -2828,8 +3059,8 @@
 
                     const depIdx = rowIndexOf[depTask.id] ?? -1;
                     if (depIdx < 0) return;
-                    const depEnd = gristToDate(depTask[COL.dateEcheance]);
-                    const taskStart = gristToDate(t[COL.dateDebut]);
+                    const depEnd   = getEffectiveEnd(depTask);
+                    const taskStart = getEffectiveStart(t);
                     if (!depEnd || !taskStart) return;
 
                     const x1 = (getDaysDiff(start, depEnd) + 1) * pxPerDay;
@@ -2879,6 +3110,14 @@
             tt.querySelector('.tooltip-start').textContent = bar.dataset.start;
             tt.querySelector('.tooltip-end').textContent = bar.dataset.end;
             tt.querySelector('.tooltip-progress').textContent = bar.dataset.progress + '%';
+            const dureeRow = tt.querySelector('.tt-duree-row');
+            const dureeVal = bar.dataset.duree;
+            if (dureeVal && dureeVal !== '0') {
+                tt.querySelector('.tooltip-duree').textContent = formatDureeTexte(parseInt(dureeVal));
+                dureeRow.style.display = '';
+            } else {
+                dureeRow.style.display = 'none';
+            }
             tt.classList.add('visible');
             moveTooltip(e);
         }
@@ -2930,18 +3169,59 @@
                 const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
                 return ids.includes(task.id);
             });
-            let depsHtml = '';
-            if (depIds.length || dependents.length) {
-                depsHtml = '<div class="panel-section-title">Dependances</div><div class="assignee-list">';
-                depIds.forEach(id => {
-                    const dep = tasks.find(t => t.id === id);
-                    if (dep) depsHtml += `<div class="assignee-item">← ${escapeHtml(getTaskTitre(dep))}</div>`;
+
+            // Liste des tâches pouvant être prédécesseurs (toutes sauf cette tâche et ses successeurs)
+            const successorIds = new Set();
+            const collectSuccessors = (id) => {
+                tasks.forEach(t => {
+                    const dd = t[COL.dependDe];
+                    if (!dd) return;
+                    const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                    if (ids.includes(id) && !successorIds.has(t.id)) {
+                        successorIds.add(t.id);
+                        collectSuccessors(t.id);
+                    }
                 });
-                dependents.forEach(dep => {
-                    depsHtml += `<div class="assignee-item">→ ${escapeHtml(getTaskTitre(dep))}</div>`;
-                });
-                depsHtml += '</div>';
-            }
+            };
+            collectSuccessors(task.id);
+
+            const candidats = tasks.filter(t =>
+                t.id !== task.id &&                          // pas elle-même
+                String(t[COL.projet]) === String(task[COL.projet]) && // même projet
+                !successorIds.has(t.id) &&                  // pas un successeur
+                !depIds.includes(t.id)                      // pas déjà prédécesseur
+            );
+
+            // Prédécesseurs — widget filtre avec recherche + cases cochées
+            // candidats déjà triés par projet, on les affiche tous cochables
+            const allPredCandidats = [...candidats];
+            // Ajouter les déjà-prédécesseurs en tête (cochés)
+            const allPredItems = [
+                ...depIds.map(id => tasks.find(t => t.id === id)).filter(Boolean),
+                ...allPredCandidats
+            ];
+
+            const predsWidgetHtml = `<div class="panel-filter-widget" id="dp-pred-widget">
+                <input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-pred-list">
+                    ${allPredItems.map(t => {
+                        const checked = depIds.includes(t.id);
+                        return `<label class="panel-filter-item" data-pred-id="${t.id}" data-pred-nom="${escapeHtml(getTaskTitreOrder(t)).toLowerCase()}">
+                            <input type="checkbox" value="${t.id}" ${checked ? 'checked' : ''}>
+                            ${escapeHtml(getTaskTitreOrder(t))}
+                        </label>`;
+                    }).join('')}
+                </div>
+            </div>`;
+
+            // Successeurs (lecture seule)
+            const succsHtml = dependents.map(dep =>
+                `<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ${escapeHtml(getTaskTitre(dep))}</div>`
+            ).join('');
+
+            let depsHtml = `<div class="panel-section-title">Prédécesseurs</div>
+                ${allPredItems.length ? predsWidgetHtml : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>'}
+                ${succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div><div class="assignee-list">'+succsHtml+'</div>' : ''}`;
 
             // Statut labels
             const statuts = [
@@ -2951,16 +3231,30 @@
                 { v: 'done',       l: 'Termine',  cls: 's-done' }
             ];
 
-            // Assignés checkboxes
+            // Assignés — widget filtre avec recherche, actifs d'abord
             const assigneeIds = getAssigneesArray(task);
-            const assigneesHtml = team.map(m =>
-                `<label class="assignee-item">
-                    <input type="checkbox" value="${m.id}" ${assigneeIds.includes(m.id) ? 'checked' : ''} onchange="updateAssignee(${task.id}, this)">
-                    ${escapeHtml(m[COL_CHEF.nom])}
-                </label>`
-            ).join('');
+            const teamSorted = [...team].sort((a, b) => {
+                const aActif = a[COL_CHEF.actif] !== false;
+                const bActif = b[COL_CHEF.actif] !== false;
+                if (aActif !== bActif) return aActif ? -1 : 1;
+                return String(a[COL_CHEF.nom]).localeCompare(String(b[COL_CHEF.nom]));
+            });
+            const assigneesHtml = `<div class="panel-filter-widget" id="dp-chef-widget">
+                <input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-chef-list">
+                    ${teamSorted.map(m => {
+                        const actif = m[COL_CHEF.actif] !== false;
+                        const checked = assigneeIds.includes(m.id);
+                        return `<label class="panel-filter-item${actif ? '' : ' inactive'}" data-responsable-id="${m.id}" data-responsable-nom="${escapeHtml(m[COL_CHEF.nom]).toLowerCase()}">
+                            <input type="checkbox" value="${m.id}" ${checked ? 'checked' : ''}>
+                            ${escapeHtml(m[COL_CHEF.nom])}${actif ? '' : ' (inactif)'}
+                        </label>`;
+                    }).join('')}
+                </div>
+            </div>`;
 
             const toDateInput = (d) => d ? d.toISOString().slice(0, 10) : '';
+            const hasPreds = hasPredecesseurs(task);
 
             document.getElementById('dp-body').innerHTML = `
                 ${retardHtml}
@@ -2985,18 +3279,32 @@
 
                 <div class="date-fields">
                     <div class="field-group">
-                        <label>Date debut</label>
-                        <input type="date" id="dp-dateDebut" value="${toDateInput(start)}">
+                        <label>Date début saisie ${hasPreds ? '<span style="color:var(--text-muted);font-size:0.65rem">(ignorée)</span>' : ''}</label>
+                        <input type="date" id="dp-dateDebut" value="${toDateInput(gristToDate(task[COL.dateDebut]))}"
+                            ${hasPreds ? 'disabled title="Cette tâche a des prédécesseurs — modifiez la date de fin du prédécesseur"' : ''}>
+                        ${hasPreds ? '<div style="font-size:0.65rem;color:var(--warning);margin-top:2px;">⚠ Pour modifier la date de début, modifiez la date de fin du prédécesseur.</div>' : ''}
                     </div>
                     <div class="field-group">
-                        <label>Date echeance</label>
-                        <input type="date" id="dp-dateEcheance" value="${toDateInput(end)}">
+                        <label>Date début calculée</label>
+                        <input type="date" id="dp-dateDebutCalc" value="${toDateInput(getEffectiveStart(task))}" disabled>
+                    </div>
+                    <div class="field-group">
+                        <label>Durée</label>
+                        <input type="text" id="dp-duree" placeholder="ex: 3m, 1a 6m, 45j"
+                            value="${formatDureeTexte(task[COL.duree])}"
+                            title="Saisir: 3,5 ans | 18 mois | 2 semaines | 45j | combinaisons: 1a 3m"
+                            style="width:140px;">
+                        <div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;">${task[COL.duree] ? task[COL.duree] + ' jours' : ''}</div>
+                    </div>
+                    <div class="field-group">
+                        <label>Date fin calculée</label>
+                        <input type="date" id="dp-dateFinCalc" value="${toDateInput(getEffectiveEnd(task))}" disabled>
                     </div>
                 </div>
 
                 ${team.length ? `<div>
-                    <div class="panel-section-title">Chefs de projet</div>
-                    <div class="assignee-list">${assigneesHtml}</div>
+                    <div class="panel-section-title">Responsables</div>
+                    ${assigneesHtml}
                 </div>` : ''}
 
                 ${depsHtml}
@@ -3008,6 +3316,41 @@
                     <div class="info-row"><span class="lbl">Temps passe</span><span>${task[COL.tempsPasse] || 0} h</span></div>
                 </div>
             `;
+
+            // Attacher événements — widget responsables
+            const responsableSearchEl = document.getElementById('dp-chef-search');
+            if (responsableSearchEl) {
+                responsableSearchEl.addEventListener('input', () => {
+                    const q = responsableSearchEl.value.toLowerCase();
+                    document.querySelectorAll('#dp-chef-list .panel-filter-item').forEach(el => {
+                        el.style.display = !q || el.dataset.responsableNom.includes(q) ? '' : 'none';
+                    });
+                });
+            }
+            document.querySelectorAll('#dp-chef-list input[type=checkbox]').forEach(cb => {
+                cb.addEventListener('change', () => updateAssignee(task.id, cb));
+            });
+
+            // Widget prédécesseurs
+            const predSearchEl = document.getElementById('dp-pred-search');
+            if (predSearchEl) {
+                predSearchEl.addEventListener('input', () => {
+                    const q = predSearchEl.value.toLowerCase();
+                    document.querySelectorAll('#dp-pred-list .panel-filter-item').forEach(el => {
+                        el.style.display = !q || el.dataset.predNom.includes(q) ? '' : 'none';
+                    });
+                });
+            }
+            document.querySelectorAll('#dp-pred-list input[type=checkbox]').forEach(cb => {
+                cb.addEventListener('change', async () => {
+                    const predId = parseInt(cb.value);
+                    if (cb.checked) {
+                        await addPredecesseur(task.id, predId);
+                    } else {
+                        await removePredecesseur(task.id, predId);
+                    }
+                });
+            });
 
             document.getElementById('detailPanel').classList.add('open');
 
@@ -3021,6 +3364,66 @@
         }
 
         // Changement de statut immédiat (sans "Enregistrer")
+        // ─── Gestion des dépendances depuis le panel ──────────────────────────────
+
+        function getDepIds(task) {
+            const dd = task[COL.dependDe];
+            if (!dd) return [];
+            return Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+        }
+
+        function buildDepGristValue(ids) {
+            // Grist RefList = ['L', id1, id2, ...]
+            return ids.length ? ['L', ...ids] : null;
+        }
+
+        async function addPredecesseur(taskId, predId) {
+            predId = parseInt(predId);
+            if (!predId) return;
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const ids = getDepIds(task);
+            if (ids.includes(predId)) return;
+            ids.push(predId);
+            const newVal = buildDepGristValue(ids);
+            task[COL.dependDe] = newVal;
+            if (gristReady) {
+                try {
+                    await grist.docApi.applyUserActions([
+                        ['UpdateRecord', TABLE.tasks, taskId, { [COL.dependDe]: newVal }]
+                    ]);
+                    showToast('Prédécesseur ajouté', 'success');
+                    await loadAllData();
+                    showDetailPanel(taskId);
+                } catch(e) { showToast('Erreur', 'error'); }
+            } else {
+                render();
+                showDetailPanel(taskId);
+            }
+        }
+
+        async function removePredecesseur(taskId, predId) {
+            predId = parseInt(predId);
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const ids = getDepIds(task).filter(id => id !== predId);
+            const newVal = buildDepGristValue(ids);
+            task[COL.dependDe] = newVal;
+            if (gristReady) {
+                try {
+                    await grist.docApi.applyUserActions([
+                        ['UpdateRecord', TABLE.tasks, taskId, { [COL.dependDe]: newVal }]
+                    ]);
+                    showToast('Prédécesseur supprimé', 'success');
+                    await loadAllData();
+                    showDetailPanel(taskId);
+                } catch(e) { showToast('Erreur', 'error'); }
+            } else {
+                render();
+                showDetailPanel(taskId);
+            }
+        }
+
         async function setTaskStatut(taskId, newStatut, el) {
             // Mettre à jour l'UI
             el.closest('.status-pills').querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
@@ -3039,7 +3442,7 @@
             }
         }
 
-        // Mise à jour d'un chef de projet (checkbox)
+        // Mise à jour d'un responsable (checkbox)
         async function updateAssignee(taskId, checkbox) {
             const task = tasks.find(t => t.id === taskId);
             if (!task) return;
@@ -3065,19 +3468,24 @@
             const task = tasks.find(t => t.id === detailPanelTaskId);
             if (!task) return;
 
+            const toGrist = (s) => s ? Math.floor(new Date(s + 'T00:00:00').getTime() / 1000) : null;
+            const hasPreds = hasPredecesseurs(task);
+
             const prog  = parseInt(document.getElementById('dp-prog-slider')?.value || 0);
-            const dDebut = document.getElementById('dp-dateDebut')?.value;
-            const dEch   = document.getElementById('dp-dateEcheance')?.value;
+            const dureeRaw = document.getElementById('dp-duree')?.value || '';
+            const duree = parseDureeInput(dureeRaw);
 
-            const toGrist = (s) => s ? Math.floor(new Date(s).getTime() / 1000) : null;
+            // Colonnes à mettre à jour dans Grist
+            const updates = { [COL.progression]: prog };
 
-            const updates = {
-                [COL.progression]:  prog,
-                [COL.dateDebut]:    toGrist(dDebut),
-                [COL.dateEcheance]: toGrist(dEch)
-            };
+            if (!hasPreds) {
+                // Pas de prédécesseur : dateDebut saisie manuellement
+                const dDebut = document.getElementById('dp-dateDebut')?.value;
+                if (dDebut) updates[COL.dateDebut] = toGrist(dDebut);
+            }
+            if (duree) updates[COL.duree] = duree;
 
-            // Mise à jour en mémoire
+            // Mise à jour en mémoire (les dates calculées seront rafraîchies depuis Grist)
             Object.assign(task, updates);
 
             if (gristReady) {
@@ -3086,39 +3494,87 @@
                         ['UpdateRecord', TABLE.tasks, detailPanelTaskId, updates]
                     ]);
                     showToast('Sauvegarde OK', 'success');
-                    render();
+                    // Recharger les données pour récupérer les dates calculées
+                    await loadAllData();
+                    // Rouvrir le panel pour afficher les dates mises à jour
+                    if (detailPanelTaskId) showDetailPanel(detailPanelTaskId);
                 } catch(e) { showToast('Erreur sauvegarde', 'error'); }
             } else {
                 showToast('Sauvegarde (demo)', 'info');
                 render();
+                if (detailPanelTaskId) showDetailPanel(detailPanelTaskId);
             }
         }
 
         // ─── Modal création ────────────────────────────────────────────────────────
         function openCreateModal() {
-            // Remplir les selects avec phases et opérations disponibles
+            // Vérification : uniquement en vue Projet avec 1 projet sélectionné
+            if (layoutMode !== 'single') {
+                showToast('La création de tâche est disponible uniquement en vue Projet.', 'warning', 4000);
+                return;
+            }
+            if (!filters.projects || filters.projects.length !== 1) {
+                showToast('Sélectionnez un seul projet en vue Projet pour créer une tâche.', 'warning', 4000);
+                return;
+            }
+
+            const projetId = parseInt(filters.projects[0]);
+            const projet = projects.find(p => p.id === projetId);
+
+            // Phases
             const phasesSorted = [...phases].sort((a, b) => (a[COL_PHASES.numOrder] || 0) - (b[COL_PHASES.numOrder] || 0));
             document.getElementById('create-titre').innerHTML =
                 '<option value="">— Choisir une phase —</option>' +
                 phasesSorted.map(p => `<option value="${p.id}">${escapeHtml(p[COL_PHASES.nomOrder] || p[COL_PHASES.nom])}</option>`).join('');
 
-            const opsSorted = [...projects].sort((a, b) => String(a[COL_OPS.nom]).localeCompare(String(b[COL_OPS.nom])));
-            document.getElementById('create-projet').innerHTML =
-                '<option value="">— Choisir une operation —</option>' +
-                opsSorted.map(o => `<option value="${o.id}">${escapeHtml(o[COL_OPS.nom])}</option>`).join('');
+            // Opération pré-sélectionnée (lecture seule)
+            document.getElementById('create-projet-label').textContent = projet ? (projet[COL_OPS.nom] || '') : '';
 
-            document.getElementById('create-assignees').innerHTML =
-                team.map(m => `<label class="assignee-item">
+            // Responsables (actifs d'abord)
+            const teamSorted = [...team].sort((a, b) => {
+                const aA = a[COL_CHEF.actif] !== false, bA = b[COL_CHEF.actif] !== false;
+                if (aA !== bA) return aA ? -1 : 1;
+                return String(a[COL_CHEF.nom]).localeCompare(String(b[COL_CHEF.nom]));
+            });
+            document.getElementById('create-chef-list').innerHTML = teamSorted.map(m => {
+                const actif = m[COL_CHEF.actif] !== false;
+                return `<label class="panel-filter-item${actif ? '' : ' inactive'}" data-chef-nom="${String(m[COL_CHEF.nom]).toLowerCase()}">
                     <input type="checkbox" value="${m.id}">
-                    ${escapeHtml(m[COL_CHEF.nom])}
-                </label>`).join('');
+                    ${escapeHtml(m[COL_CHEF.nom])}${actif ? '' : ' (inactif)'}
+                </label>`;
+            }).join('');
 
-            // Date par défaut = aujourd'hui
+            // Prédécesseurs — tâches du même projet
+            const projTasks = tasks.filter(t => String(t[COL.projet]) === String(projetId));
+            document.getElementById('create-pred-list').innerHTML = projTasks.length
+                ? projTasks.map(t => `<label class="panel-filter-item" data-pred-nom="${escapeHtml(getTaskTitreOrder(t)).toLowerCase()}">
+                    <input type="checkbox" value="${t.id}">
+                    ${escapeHtml(getTaskTitreOrder(t))}
+                </label>`).join('')
+                : '<div style="padding:6px 8px;font-size:0.7rem;color:var(--text-muted);">Aucune tâche dans ce projet</div>';
+
+            // Recherche responsables
+            document.getElementById('create-chef-search').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                document.querySelectorAll('#create-chef-list .panel-filter-item').forEach(el => {
+                    el.style.display = !q || el.dataset.chefNom.includes(q) ? '' : 'none';
+                });
+            });
+            document.getElementById('create-pred-search').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                document.querySelectorAll('#create-pred-list .panel-filter-item').forEach(el => {
+                    el.style.display = !q || el.dataset.predNom.includes(q) ? '' : 'none';
+                });
+            });
+
+            // Valeurs par défaut
             const today = new Date().toISOString().slice(0, 10);
             document.getElementById('create-dateDebut').value = today;
-            document.getElementById('create-dateEcheance').value = today;
+            document.getElementById('create-duree').value = '';
             document.getElementById('create-description').value = '';
             document.getElementById('create-statut').value = 'todo';
+            document.getElementById('create-type').value = 'tache';
+            onCreateTypeChange('tache');
 
             document.getElementById('createModal').classList.add('open');
         }
@@ -3127,57 +3583,81 @@
             document.getElementById('createModal').classList.remove('open');
         }
 
+        function onCreateTypeChange(type) {
+            const dureeWrap = document.getElementById('create-duree').closest('.field-group');
+            if (type === 'jalon') {
+                dureeWrap.style.opacity = '0.4';
+                dureeWrap.style.pointerEvents = 'none';
+                document.getElementById('create-duree').value = '0';
+            } else {
+                dureeWrap.style.opacity = '';
+                dureeWrap.style.pointerEvents = '';
+                if (document.getElementById('create-duree').value === '0') {
+                    document.getElementById('create-duree').value = '';
+                }
+            }
+        }
+
         async function submitCreateTask() {
             const titreId  = parseInt(document.getElementById('create-titre').value);
-            const projetId = parseInt(document.getElementById('create-projet').value) || null;
             const dDebut   = document.getElementById('create-dateDebut').value;
-            const dEch     = document.getElementById('create-dateEcheance').value;
+            const dureeRaw = document.getElementById('create-duree').value;
+            const duree    = parseDureeInput(dureeRaw);
             const statut   = document.getElementById('create-statut').value;
             const desc     = document.getElementById('create-description').value.trim();
 
-            if (!titreId || !dDebut || !dEch) {
-                showToast('Phase et dates obligatoires', 'error');
-                return;
-            }
+            const typeVal  = document.getElementById('create-type').value;
+            const isJalonCreate = typeVal === 'jalon';
 
-            const toGrist = (s) => s ? Math.floor(new Date(s).getTime() / 1000) : null;
+            if (!titreId) { showToast('Choisissez une phase', 'error'); return; }
+            if (!dDebut)  { showToast('Date de début obligatoire', 'error'); return; }
+            if (!isJalonCreate && duree === null) { showToast('Durée obligatoire (ex: 3m, 45j)', 'error'); return; }
 
-            const assigneeChecks = document.querySelectorAll('#create-assignees input:checked');
-            const assigneeIds = [...assigneeChecks].map(c => parseInt(c.value));
+            const projetId = filters.projects?.length === 1 ? parseInt(filters.projects[0]) : null;
+            const toGrist  = (s) => s ? Math.floor(new Date(s + 'T00:00:00').getTime() / 1000) : null;
+
+            const assigneeIds = [...document.querySelectorAll('#create-chef-list input:checked')].map(c => parseInt(c.value));
             const assigneesVal = assigneeIds.length ? ['L', ...assigneeIds] : null;
 
+            const predIds = [...document.querySelectorAll('#create-pred-list input:checked')].map(c => parseInt(c.value));
+            const dependDeVal = predIds.length ? ['L', ...predIds] : null;
+
             const record = {
-                [COL.titre]:        titreId,
-                [COL.dateDebut]:    toGrist(dDebut),
-                [COL.dateEcheance]: toGrist(dEch),
-                [COL.statut]:       statut,
-                [COL.progression]:  0,
-                [COL.type]:         'tache',
+                [COL.titre]:       titreId,
+                [COL.dateDebut]:   toGrist(dDebut),
+                [COL.duree]:       isJalonCreate ? 0 : duree,
+                [COL.statut]:      statut,
+                [COL.progression]: 0,
+                [COL.type]:        typeVal,
             };
-            if (projetId)     record[COL.projet]    = projetId;
-            if (assigneesVal) record[COL.assignees] = assigneesVal;
+            if (projetId)     record[COL.projet]      = projetId;
+            if (assigneesVal) record[COL.assignees]   = assigneesVal;
+            if (dependDeVal)  record[COL.dependDe]    = dependDeVal;
             if (desc)         record[COL.description] = desc;
 
             if (gristReady) {
                 try {
-                    await grist.docApi.applyUserActions([
+                    const result = await grist.docApi.applyUserActions([
                         ['AddRecord', TABLE.tasks, null, record]
                     ]);
-                    showToast('Phase creee', 'success');
+                    showToast('Phase créée', 'success');
                     closeCreateModal();
                     await loadAllData();
+                    // Ouvrir le panel de détail sur la nouvelle tâche
+                    const newId = result?.retValues?.[0];
+                    if (newId) showDetailPanel(newId);
                 } catch(e) {
-                    console.error(e);
-                    showToast('Erreur creation: ' + (e.message || e), 'error');
+                    showToast('Erreur création: ' + (e.message || e), 'error');
                 }
             } else {
-                // Mode demo
                 const newId = Math.max(0, ...tasks.map(t => t.id)) + 1;
                 record.id = newId;
+                record._phaseId = titreId || null;
                 tasks.push(record);
-                showToast('Phase creee (demo)', 'info');
+                showToast('Phase créée (demo)', 'info');
                 closeCreateModal();
                 sortTasks(); updateFilterMenus(); render();
+                showDetailPanel(newId);
             }
         }
 
@@ -3196,7 +3676,7 @@
             document.querySelectorAll('.task-row, .gantt-bar, .gantt-milestone').forEach(el => {
                 el.classList.toggle('selected', parseInt(el.dataset.id) === id);
             });
-            renderDependencies(getFilteredTasks(), getViewStartDate());
+            renderDependencies(getFilteredTasks(), getViewStartDate(), lastRenderedRows);
             if (gristReady && id) grist.setSelectedRows([id]);
         }
 
@@ -3215,8 +3695,8 @@
                 startX: e.clientX,
                 originalLeft: parseFloat(bar.style.left),
                 originalWidth: parseFloat(bar.style.width),
-                originalStart: gristToDate(task[COL.dateDebut]),
-                originalEnd: gristToDate(task[COL.dateEcheance])
+                originalStart: getEffectiveStart(task),
+                originalEnd:   getEffectiveEnd(task)
             };
 
             bar.classList.add('dragging');
@@ -3270,41 +3750,58 @@
             const task = tasks.find(t => t.id === dragState.taskId);
             if (!task) { dragState.active = false; return; }
 
+            const hasPreds = hasPredecesseurs(task);
+
+            // Si la tâche a des prédécesseurs et qu'on tente de déplacer sa date de début
+            if (hasPreds && (dragState.type === 'move' || dragState.type === 'resize-left')) {
+                dragState.active = false;
+                showToast('Pour modifier la date de début de cette tâche, vous devez modifier la date de fin du prédécesseur.', 'warning', 5000);
+                render();
+                return;
+            }
+
             let newStart = dragState.originalStart;
-            let newEnd = dragState.originalEnd;
+            let newEnd   = dragState.originalEnd;
 
             if (dragState.type === 'move') {
                 newStart = addDays(dragState.originalStart, daysDelta);
-                newEnd = addDays(dragState.originalEnd, daysDelta);
+                newEnd   = addDays(dragState.originalEnd,   daysDelta);
             } else if (dragState.type === 'resize-right') {
                 newEnd = addDays(dragState.originalEnd, daysDelta);
             } else if (dragState.type === 'resize-left') {
                 newStart = addDays(dragState.originalStart, daysDelta);
             }
 
-            task[COL.dateDebut]    = dateToGrist(newStart);
-            task[COL.dateEcheance] = dateToGrist(newEnd);
+            // Calcul de la durée en jours
+            const newDuree = Math.max(1, Math.round((newEnd - newStart) / 86400000) + 1);
+
+            // Colonnes à mettre à jour
+            const dragUpdates = { [COL.duree]: newDuree };
+            if (!hasPreds) dragUpdates[COL.dateDebut] = dateToGrist(newStart);
+
+            // Mise à jour optimiste en mémoire (dates calculées incluses)
+            Object.assign(task, dragUpdates);
+            // Mise à jour optimiste des dates calculées pour éviter le flash
+            if (!hasPreds && dragUpdates[COL.dateDebut]) {
+                task[COL.dateDebutCalc] = dragUpdates[COL.dateDebut];
+            }
+            task[COL.dateFinCalc] = dateToGrist(newEnd);
+
+            dragState.active = false;
+            render();
+            if (detailPanelTaskId === dragState.taskId) showDetailPanel(detailPanelTaskId);
 
             if (gristReady) {
                 try {
                     await grist.docApi.applyUserActions([
-                        ['UpdateRecord', TABLE.tasks, task.id, {
-                            [COL.dateDebut]:    task[COL.dateDebut],
-                            [COL.dateEcheance]: task[COL.dateEcheance]
-                        }]
+                        ['UpdateRecord', TABLE.tasks, task.id, dragUpdates]
                     ]);
-                    showToast('Dates mises à jour', 'success');
+                    showToast('Tâche mise à jour', 'success');
+                    // Recharger pour récupérer les vraies dates calculées par Grist
+                    await loadAllData();
                 } catch (err) {
-                    console.error(err);
                     showToast('Erreur de mise à jour', 'error');
                 }
-            }
-
-            dragState.active = false;
-            render();
-            // Si le panneau de détail est ouvert sur cette tâche, le rafraîchir
-            if (detailPanelTaskId === dragState.taskId) {
-                showDetailPanel(detailPanelTaskId);
             }
         }
 
@@ -3333,7 +3830,7 @@
         // de TABLE et COL/COL_CHEF/COL_PROJECTS au moment de l'appel.
         function getTaskflowSchema() {
             return {
-                [TABLE.chefProjet]: [
+                [TABLE.responsableProjet]: [
                     { id: COL_CHEF.nom,      type: 'Text' },
                     { id: COL_CHEF.prenom,   type: 'Text' },
                     { id: COL_CHEF.fonction, type: 'Text' },
@@ -3360,7 +3857,7 @@
                     { id: COL.statut,       type: 'Choice' },
                     { id: COL.progression,  type: 'Numeric' },
                     { id: COL.projet,       type: `Ref:${TABLE.operations}` },
-                    { id: COL.assignees,    type: `RefList:${TABLE.chefProjet}` },
+                    { id: COL.assignees,    type: `RefList:${TABLE.responsableProjet}` },
                     { id: COL.type,         type: 'Choice' },
                     { id: COL.dependDe,     type: `RefList:${TABLE.tasks}` },
                     { id: COL.tags,         type: 'ChoiceList' },
@@ -3455,11 +3952,11 @@
 
             try {
                 await grist.docApi.applyUserActions([
-                    ['AddRecord', TABLE.chefProjet, null, { [COL_CHEF.nom]: 'Cynthia Chaudron',  [COL_CHEF.prenom]: 'Cynthia',  [COL_CHEF.nomFamille]: 'Chaudron',  [COL_CHEF.fonction]: "Chargée d'opération", [COL_CHEF.actif]: true }],
-                    ['AddRecord', TABLE.chefProjet, null, { [COL_CHEF.nom]: 'Nathalie Gaillard', [COL_CHEF.prenom]: 'Nathalie', [COL_CHEF.nomFamille]: 'Gaillard',  [COL_CHEF.fonction]: "Chargée d'opération", [COL_CHEF.actif]: true }],
-                    ['AddRecord', TABLE.chefProjet, null, { [COL_CHEF.nom]: 'Anne Blanchon',     [COL_CHEF.prenom]: 'Anne',     [COL_CHEF.nomFamille]: 'Blanchon',  [COL_CHEF.fonction]: "Chargée d'opération", [COL_CHEF.actif]: true }]
+                    ['AddRecord', TABLE.responsableProjet, null, { [COL_CHEF.nom]: 'Cynthia Chaudron',  [COL_CHEF.prenom]: 'Cynthia',  [COL_CHEF.nomFamille]: 'Chaudron',  [COL_CHEF.fonction]: "Chargée d'opération", [COL_CHEF.actif]: true }],
+                    ['AddRecord', TABLE.responsableProjet, null, { [COL_CHEF.nom]: 'Nathalie Gaillard', [COL_CHEF.prenom]: 'Nathalie', [COL_CHEF.nomFamille]: 'Gaillard',  [COL_CHEF.fonction]: "Chargée d'opération", [COL_CHEF.actif]: true }],
+                    ['AddRecord', TABLE.responsableProjet, null, { [COL_CHEF.nom]: 'Anne Blanchon',     [COL_CHEF.prenom]: 'Anne',     [COL_CHEF.nomFamille]: 'Blanchon',  [COL_CHEF.fonction]: "Chargée d'opération", [COL_CHEF.actif]: true }]
                 ]);
-                log(`✅ 3 chefs de projet ajoutés à ${TABLE.chefProjet}`);
+                log(`✅ 3 responsables ajoutés à ${TABLE.responsableProjet}`);
 
                 await grist.docApi.applyUserActions([
                     ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Faisabilité',      [COL_PHASES.nomOrder]: '101 - Faisabilité',      [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 }],
@@ -3504,12 +4001,17 @@
             try {
                 const taskData = await grist.docApi.fetchTable(TABLE.tasks);
                 tasks = convert(taskData);
+                // Stocker l'ID numérique de la phase avant tout mappage
+                tasks.forEach(t => {
+                    const v = t[COL.titre];
+                    t._phaseId = (typeof v === 'number') ? v : (typeof v === 'string' && /^\d+$/.test(v)) ? Number(v) : null;
+                });
             } catch (e) {
                 tasks = [];
             }
 
             try {
-                const cd = await grist.docApi.fetchTable(TABLE.chefProjet);
+                const cd = await grist.docApi.fetchTable(TABLE.responsableProjet);
                 team = convert(cd);  // 'team' conservé pour compatibilité avec le reste du code
             } catch (e) { team = []; }
 
@@ -3537,21 +4039,23 @@
                 grist.ready({
                     requiredAccess: 'full',
                     columns: [
-                        { name: 'titre',        title: 'Phase (Ref)',        type: 'Ref',       optional: false, description: 'Colonne Ref vers la table des categories de phases' },
-                        { name: 'dateDebut',    title: 'Date de debut',      type: 'Date',      optional: false },
-                        { name: 'dateEcheance', title: 'Date echeance',      type: 'Date',      optional: false },
-                        { name: 'statut',       title: 'Statut',             type: 'Choice',    optional: true,  description: 'todo / inprogress / review / done' },
-                        { name: 'progression',  title: 'Progression (%)',    type: 'Numeric',   optional: true },
-                        { name: 'projet',       title: 'Operation (Ref)',    type: 'Ref',       optional: true,  description: 'Colonne Ref vers la table des operations' },
-                        { name: 'assignees',    title: 'Chefs de projet',    type: 'RefList',   optional: true,  description: 'Colonne RefList vers les chefs de projet' },
-                        { name: 'dependDe',     title: 'Depend de',          type: 'RefList',   optional: true,  description: 'Colonne RefList vers les phases predecesseurs' },
-                        { name: 'type',         title: 'Type',               type: 'Choice',    optional: true,  description: 'jalon pour afficher un losange' },
-                        { name: 'priorite',     title: 'Priorite',           type: 'Choice',    optional: true },
-                        { name: 'tags',         title: 'Tags',               type: 'ChoiceList',optional: true },
-                        { name: 'couleur',      title: 'Couleur',            type: 'Text',      optional: true },
-                        { name: 'description',  title: 'Description',        type: 'Text',      optional: true },
-                        { name: 'estimationH',  title: 'Estimation (h)',     type: 'Numeric',   optional: true },
-                        { name: 'tempsPasse',   title: 'Temps passe (h)',    type: 'Numeric',   optional: true }
+                        { name: 'titre',          title: 'Phase (Ref)',            type: 'Ref',       optional: false, description: 'Colonne Ref vers la table des categories de phases' },
+                        { name: 'dateDebut',       title: 'Date de debut saisie',   type: 'Date',      optional: false, description: 'Date saisie manuellement (utilisée si pas de prédécesseur)' },
+                        { name: 'duree',           title: 'Duree (jours)',          type: 'Numeric',   optional: false, description: 'Durée de la tâche en jours' },
+                        { name: 'dateDebutCalc',   title: 'Date debut calculee',    type: 'Date',      optional: false, description: 'Date_Debut_Calculee : dateDebut ou max(fin prédécesseurs)+1' },
+                        { name: 'dateFinCalc',     title: 'Date fin calculee',      type: 'Date',      optional: false, description: 'Date_Fin_Calculee : dateDebutCalc + duree' },
+                        { name: 'statut',          title: 'Statut',                 type: 'Choice',    optional: true,  description: 'todo / inprogress / review / done' },
+                        { name: 'progression',     title: 'Progression (%)',        type: 'Numeric',   optional: true },
+                        { name: 'projet',          title: 'Operation (Ref)',        type: 'Ref',       optional: true,  description: 'Colonne Ref vers la table des operations' },
+                        { name: 'assignees',       title: 'Responsables',        type: 'RefList',   optional: true,  description: 'Colonne RefList vers les responsables' },
+                        { name: 'dependDe',        title: 'Depend de',              type: 'RefList',   optional: true,  description: 'Colonne RefList vers les phases predecesseurs' },
+                        { name: 'type',            title: 'Type',                   type: 'Choice',    optional: true,  description: 'jalon pour afficher un losange' },
+                        { name: 'priorite',        title: 'Priorite',               type: 'Choice',    optional: true },
+                        { name: 'tags',            title: 'Tags',                   type: 'ChoiceList',optional: true },
+                        { name: 'couleur',         title: 'Couleur',                type: 'Text',      optional: true },
+                        { name: 'description',     title: 'Description',            type: 'Text',      optional: true },
+                        { name: 'estimationH',     title: 'Estimation (h)',         type: 'Numeric',   optional: true },
+                        { name: 'tempsPasse',      title: 'Temps passe (h)',        type: 'Numeric',   optional: true }
                     ]
                 });
 
@@ -3565,7 +4069,7 @@
                     if (!options) return;
                     // Noms des tables secondaires
                     if (options.tableTasks)      TABLE.tasks      = options.tableTasks;
-                    if (options.tableChefProjet) TABLE.chefProjet = options.tableChefProjet;
+                    if (options.tableChefProjet) TABLE.responsableProjet = options.tableChefProjet;
                     if (options.tableOperations) TABLE.operations = options.tableOperations;
                     if (options.tablePhases)     TABLE.phases     = options.tablePhases;
                     // Colonnes de DPPI_Chef_Projet
@@ -3647,7 +4151,7 @@
                 { id: 3, [COL_OPS.nom]: 'Marguerite Soubeyran - ACC', [COL_OPS.numOpe]: '2024_005', [COL_OPS.statut]: 'Transférée' },
             ];
 
-            // Chefs de projet
+            // Responsables
             team = [
                 { id: 1, [COL_CHEF.nom]: 'Cynthia Chaudron',  [COL_CHEF.fonction]: "Chargée d'opération" },
                 { id: 2, [COL_CHEF.nom]: 'Nathalie Gaillard', [COL_CHEF.fonction]: "Chargée d'opération" },
@@ -3696,12 +4200,12 @@
         // Mapping entre les IDs des champs du panneau et les clés d'options Grist
         const CONFIG_FIELDS = [
             { id: 'cfg-tableTasks',            optionKey: 'tableTasks',            default: () => GRIST_CONFIG.tables.tasks },
-            { id: 'cfg-tableChefProjet',       optionKey: 'tableChefProjet',       default: () => GRIST_CONFIG.tables.chefProjet },
+            { id: 'cfg-tableChefProjet',       optionKey: 'tableChefProjet',       default: () => GRIST_CONFIG.tables.responsableProjet },
             { id: 'cfg-tableOperations',       optionKey: 'tableOperations',       default: () => GRIST_CONFIG.tables.operations },
             { id: 'cfg-tablePhases',           optionKey: 'tablePhases',           default: () => GRIST_CONFIG.tables.phases },
-            { id: 'cfg-colChefNom',            optionKey: 'colChefNom',            default: () => GRIST_CONFIG.columns.chefProjet.nom },
-            { id: 'cfg-colChefFonction',       optionKey: 'colChefFonction',       default: () => GRIST_CONFIG.columns.chefProjet.fonction },
-            { id: 'cfg-colChefActif',          optionKey: 'colChefActif',          default: () => GRIST_CONFIG.columns.chefProjet.actif },
+            { id: 'cfg-colChefNom',            optionKey: 'colChefNom',            default: () => GRIST_CONFIG.columns.responsableProjet.nom },
+            { id: 'cfg-colChefFonction',       optionKey: 'colChefFonction',       default: () => GRIST_CONFIG.columns.responsableProjet.fonction },
+            { id: 'cfg-colChefActif',          optionKey: 'colChefActif',          default: () => GRIST_CONFIG.columns.responsableProjet.actif },
             { id: 'cfg-colOpsNom',             optionKey: 'colOpsNom',             default: () => GRIST_CONFIG.columns.operations.nom },
             { id: 'cfg-colOpsNumOpe',          optionKey: 'colOpsNumOpe',          default: () => GRIST_CONFIG.columns.operations.numOpe },
             { id: 'cfg-colOpsStatut',          optionKey: 'colOpsStatut',          default: () => GRIST_CONFIG.columns.operations.statut },
@@ -3715,7 +4219,7 @@
             // Pré-remplir les champs avec les valeurs actives (TABLE / COL_CHEF / COL_PROJECTS)
             const current = {
                 tableTasks:        TABLE.tasks,
-                tableChefProjet:   TABLE.chefProjet,
+                tableChefProjet:   TABLE.responsableProjet,
                 tableOperations:   TABLE.operations,
                 tablePhases:       TABLE.phases,
                 colChefNom:        COL_CHEF.nom,
@@ -3775,7 +4279,7 @@
 
             // Appliquer immédiatement les nouvelles valeurs aux variables actives
             TABLE.tasks      = options.tableTasks;
-            TABLE.chefProjet = options.tableChefProjet;
+            TABLE.responsableProjet = options.tableChefProjet;
             TABLE.operations = options.tableOperations;
             TABLE.phases     = options.tablePhases;
 
@@ -3791,6 +4295,8 @@
             COL_PHASES.nomOrder = options.colPhasesNomOrder;
             COL_PHASES.couleur  = options.colPhasesCouleur;
             COL_PHASES.numOrder = options.colPhasesNumOrder;
+
+
 
             // Persister dans Grist si disponible
             if (gristReady) {
@@ -3888,8 +4394,7 @@
                         .map(it => it.id);
                     filters.projects = matched;
                 } else {
-                    // Recherche vidée → tout sélectionner (pas de filtre)
-                    filters.projects = [];
+                    filters.projects = null;
                 }
                 renderFilterList('projects', q);
                 updateFilterUI();
@@ -3903,7 +4408,7 @@
                         .map(it => it.id);
                     filters.assignees = matched;
                 } else {
-                    filters.assignees = [];
+                    filters.assignees = null;
                 }
                 renderFilterList('assignees', q);
                 updateFilterUI();
