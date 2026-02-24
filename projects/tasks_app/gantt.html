@@ -3863,49 +3863,117 @@
             };
         }
 
-        async function ensureSchema() {
-            const log = (msg) => {}; // logging disabled
-            let created = 0, added = 0;
-            const tablesCreated = [];
+        // options = l'objet reçu par onOptions (null si jamais configuré)
+        async function ensureSchema(options) {
+            const savedOptions = options || {};
 
-            for (const [tableName, columns] of Object.entries(getTaskflowSchema())) {
-                let existingCols = [];
-                let tableExists = false;
+            const configuredTableChef  = savedOptions.tableChefProjet || GRIST_CONFIG.tables.responsableProjet;
+            const configuredTableOps   = savedOptions.tableOperations  || GRIST_CONFIG.tables.operations;
+            const configuredTablePhases= savedOptions.tablePhases      || GRIST_CONFIG.tables.phases;
 
-                try {
-                    const data = await grist.docApi.fetchTable(tableName);
-                    existingCols = Object.keys(data).filter(c => c !== 'id' && c !== 'manualSort');
-                    tableExists = true;
-                    log(`✓ Table ${tableName} existe (${existingCols.length} colonnes)`);
-                } catch (e) {
-                    try {
-                        await grist.docApi.applyUserActions([
-                            ['AddTable', tableName, columns.map(c => ({ id: c.id, type: c.type }))]
-                        ]);
-                        log(`✅ Table ${tableName} créée avec ${columns.length} colonnes`);
-                        tablesCreated.push(tableName);
-                        created++;
-                        continue;
-                    } catch (e2) {
-                        log(`⚠️ Impossible de créer ${tableName}: ${e2.message || e2}`);
-                        continue;
-                    }
+            const hasCustomConfig = !!(savedOptions._configured ||
+                savedOptions.tableChefProjet || savedOptions.tableOperations || savedOptions.tablePhases ||
+                savedOptions.colChefNom || savedOptions.colOpsNom || savedOptions.colPhasesNom);
+
+            // Vérifier quelles tables existent réellement dans le document
+            let allTables = [];
+            try { allTables = await grist.docApi.listTables(); } catch(e) {}
+
+            const missingTables = [];
+            const tablesToCheck = [
+                { name: configuredTableChef,   key: 'tableChefProjet',  label: 'Chefs de projet' },
+                { name: configuredTableOps,    key: 'tableOperations',  label: 'Opérations' },
+                { name: configuredTablePhases, key: 'tablePhases',      label: 'Phases' },
+            ];
+
+            for (const t of tablesToCheck) {
+                if (!allTables.includes(t.name)) {
+                    missingTables.push(t);
                 }
+            }
 
-                // Ne pas créer de colonnes — l'utilisateur configure les noms via le panneau.
-                // On crée uniquement les tables absentes (ci-dessus).
-                _ = tableExists; // tableExists utilisé pour éviter warning
+            if (missingTables.length === 0) {
+                // Tout est OK, rien à faire
+                return;
+            }
+
+            // Stratégie : si au moins UNE des tables par défaut existe déjà dans Grist,
+            // c'est que le widget a déjà été initialisé. Ne jamais recréer dans ce cas.
+            const defaultTables = [
+                GRIST_CONFIG.tables.responsableProjet,
+                GRIST_CONFIG.tables.operations,
+                GRIST_CONFIG.tables.phases,
+            ];
+            const anyDefaultExists = defaultTables.some(t => allTables.includes(t));
+
+            // hasCustomConfig est vrai si options personnalisées OU si tables par défaut existent déjà
+            const alreadySetup = hasCustomConfig || anyDefaultExists;
+
+            if (alreadySetup) {
+                // L'utilisateur avait configuré des tables personnalisées,
+                // et certaines sont introuvables (probablement renommées dans Grist).
+                // → NE PAS recréer ! Alerter et ouvrir le panel de config.
+                const names = missingTables.map(t => `"${t.name}" (${t.label})`).join(', ');
+                showToast(
+                    `⚠ Table(s) introuvable(s) : ${names}. Veuillez reconfigurer le widget.`,
+                    'error', 12000
+                );
+                // Ouvrir le panel de config et mettre en évidence les tables manquantes
+                setTimeout(async () => {
+                    await openConfigPanel();
+                    // Marquer visuellement les selects des tables manquantes
+                    missingTables.forEach(t => {
+                        const selectId = {
+                            tableChefProjet: 'cfg-tableChefProjet',
+                            tableOperations: 'cfg-tableOperations',
+                            tablePhases:     'cfg-tablePhases',
+                        }[t.key];
+                        const sel = document.getElementById(selectId);
+                        if (sel) {
+                            // Ajouter l'option actuelle marquée "introuvable" si absente
+                            const exists = [...sel.options].some(o => o.value === t.name);
+                            if (!exists) {
+                                sel.insertAdjacentHTML('afterbegin',
+                                    `<option value="${t.name}" selected style="color:var(--danger);font-weight:600">⚠ ${t.name} (introuvable — reconfigurer)</option>`
+                                );
+                            } else {
+                                sel.value = t.name;
+                            }
+                            // Mettre en évidence le select
+                            sel.style.borderColor = 'var(--danger)';
+                            sel.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.3)';
+                            sel.closest('.config-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }, 400);
+                return; // Surtout ne pas créer les tables manquantes !
+            }
+
+            // Première utilisation : aucune config personnalisée → créer les tables manquantes
+            let created = 0;
+            const tablesCreated = [];
+            const schema = getTaskflowSchema();
+
+            for (const t of missingTables) {
+                const columns = schema[t.name];
+                if (!columns) continue;
+                try {
+                    await grist.docApi.applyUserActions([
+                        ['AddTable', t.name, columns.map(c => ({ id: c.id, type: c.type }))]
+                    ]);
+                    tablesCreated.push(t.name);
+                    created++;
+                } catch (e2) {
+                    // Impossible de créer — ignorer
+                }
             }
 
             if (tablesCreated.includes(TABLE.tasks)) {
                 await seedData();
             }
 
-            if (created > 0 || added > 0) {
-                log(`Schema OK — ${created} table(s) créée(s), ${added} colonne(s) ajoutée(s)`);
-                showToast(`Schema initialisé (${created} tables, ${added} colonnes)`, 'success');
-            } else {
-                log('Schema complet — rien à modifier');
+            if (created > 0) {
+                showToast(`Schema initialisé (${created} table(s) créée(s))`, 'success');
             }
         }
 
@@ -3998,31 +4066,76 @@
 
         async function loadSecondaryData() {
             const allMissing = [];
+            const missingTables = [];
 
+            // Vérifier/charger Chef de projet
             try {
                 const cd = await grist.docApi.fetchTable(TABLE.responsableProjet);
                 allMissing.push(...checkMissingCols(cd, COL_CHEF, TABLE.responsableProjet));
                 team = convert(cd);
-            } catch (e) { team = []; }
+            } catch (e) {
+                team = [];
+                missingTables.push({ name: TABLE.responsableProjet, key: 'tableChefProjet', label: 'Chefs de projet' });
+            }
 
+            // Vérifier/charger Opérations
             try {
                 const od = await grist.docApi.fetchTable(TABLE.operations);
                 allMissing.push(...checkMissingCols(od, COL_OPS, TABLE.operations));
                 projects = convert(od);
-            } catch (e) { projects = []; }
+            } catch (e) {
+                projects = [];
+                missingTables.push({ name: TABLE.operations, key: 'tableOperations', label: 'Opérations' });
+            }
 
+            // Vérifier/charger Phases
             try {
                 const phd = await grist.docApi.fetchTable(TABLE.phases);
                 allMissing.push(...checkMissingCols(phd, COL_PHASES, TABLE.phases));
                 phases = convert(phd);
-            } catch (e) { phases = []; }
+            } catch (e) {
+                phases = [];
+                missingTables.push({ name: TABLE.phases, key: 'tablePhases', label: 'Phases' });
+            }
+
+            // Si des tables sont introuvables → alerte + panel config
+            if (missingTables.length > 0 && gristReady) {
+                const names = missingTables.map(t => `"${t.name}" (${t.label})`).join(', ');
+                showToast(
+                    `⚠ Table(s) introuvable(s) : ${names}. Reconfigurer le widget.`,
+                    'error', 12000
+                );
+                setTimeout(async () => {
+                    await openConfigPanel();
+                    missingTables.forEach(t => {
+                        const selectId = {
+                            tableChefProjet: 'cfg-tableChefProjet',
+                            tableOperations: 'cfg-tableOperations',
+                            tablePhases:     'cfg-tablePhases',
+                        }[t.key];
+                        const sel = document.getElementById(selectId);
+                        if (!sel) return;
+                        const exists = [...sel.options].some(o => o.value === t.name);
+                        if (!exists) {
+                            sel.insertAdjacentHTML('afterbegin',
+                                `<option value="${t.name}" selected style="color:var(--danger);font-weight:600">⚠ ${t.name} (introuvable — reconfigurer)</option>`
+                            );
+                        }
+                        sel.style.borderColor = 'var(--danger)';
+                        sel.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.3)';
+                        sel.closest('.config-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                }, 400);
+            }
 
             // Si des colonnes configurées sont introuvables, avertir et ouvrir le panel
             if (allMissing.length > 0 && gristReady) {
                 const msg = allMissing.map(m => `${m.table}.${m.configured}`).join(', ');
                 showToast(`⚠ Colonnes introuvables : ${msg} — vérifiez la configuration`, 'error', 8000);
-                // Ouvrir automatiquement le panneau config pour correction
-                setTimeout(() => openConfigPanel(), 500);
+                if (missingTables.length === 0) {
+                    // Ouvrir automatiquement le panneau config pour correction (si pas déjà ouvert)
+                    setTimeout(() => openConfigPanel(), 500);
+                }
             }
         }
 
@@ -4054,6 +4167,18 @@
             render();
         }
 
+        // ── Cache localStorage : fallback si Grist efface les options ──────────
+        // Grist peut appeler setOptions(null) quand une table référencée est renommée/supprimée.
+        // On garde une copie dans localStorage comme filet de sécurité.
+        const LS_KEY = 'gantt_config_' + (location.hostname + location.pathname).replace(/[^a-z0-9]/gi, '_');
+
+        function lsSaveOptions(options) {
+            try { localStorage.setItem(LS_KEY, JSON.stringify(options)); } catch(e) {}
+        }
+        function lsLoadOptions() {
+            try { const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+        }
+
         async function initGrist() {
             try {
                 // ── Déclaration des colonnes mappables (panneau "Colonnes" de Grist) ──────
@@ -4082,12 +4207,40 @@
                     ]
                 });
 
-                // ── IMPORTANT : enregistrer onRecords IMMÉDIATEMENT après grist.ready() ──
-                // Grist envoie onRecords juste après ready(). Si on met un await avant,
-                // l'événement est manqué et les données n'arrivent jamais.
+                // ── Fonction utilitaire : applique les options aux variables TABLE/COL ──
+                const applyOptions = (opts) => {
+                    if (!opts) return;
+                    if (opts.tableChefProjet) TABLE.responsableProjet = opts.tableChefProjet;
+                    if (opts.tableOperations) TABLE.operations = opts.tableOperations;
+                    if (opts.tablePhases)     TABLE.phases     = opts.tablePhases;
+                    if (opts.colChefNom)      COL_CHEF.nom      = opts.colChefNom;
+                    if (opts.colChefPrenom)   COL_CHEF.prenom   = opts.colChefPrenom;
+                    if (opts.colChefFonction) COL_CHEF.fonction = opts.colChefFonction;
+                    if (opts.colChefActif)    COL_CHEF.actif    = opts.colChefActif;
+                    if (opts.colOpsNom)       COL_OPS.nom      = opts.colOpsNom;
+                    if (opts.colOpsNumOpe)    COL_OPS.numOpe   = opts.colOpsNumOpe;
+                    if (opts.colOpsStatut)    COL_OPS.statut   = opts.colOpsStatut;
+                    if (opts.colPhasesNom)      COL_PHASES.nom      = opts.colPhasesNom;
+                    if (opts.colPhasesNomOrder) COL_PHASES.nomOrder = opts.colPhasesNomOrder;
+                    if (opts.colPhasesCouleur)  COL_PHASES.couleur  = opts.colPhasesCouleur;
+                    if (opts.colPhasesNumOrder) COL_PHASES.numOrder = opts.colPhasesNumOrder;
+                };
+
+                // ── Coordination onRecords / onOptions ─────────────────────────────────
+                // Les options arrivent via onOptions. onRecords attend qu'elles soient appliquées
+                // avant de charger les données (évite d'utiliser les noms de tables par défaut).
+                let resolveOptionsReady;
+                const optionsReady = new Promise(res => { resolveOptionsReady = res; });
+
+                // onRecords doit être enregistré immédiatement après grist.ready()
+                let _onRecordsDebounceTimer = null;
                 grist.onRecords(async (records, mappings) => {
                     applyMappings(mappings);
-                    await loadAllData();
+                    clearTimeout(_onRecordsDebounceTimer);
+                    _onRecordsDebounceTimer = setTimeout(async () => {
+                        await optionsReady;
+                        await loadAllData();
+                    }, 50);
                 });
 
                 // ── Sync de sélection inter-widgets ─────────────────────────────────────
@@ -4101,32 +4254,23 @@
                 });
 
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
-                grist.onOptions((options) => {
-                    if (!options) return;
-                    // Noms des tables secondaires
-                    if (options.tableChefProjet) TABLE.responsableProjet = options.tableChefProjet;
-                    if (options.tableOperations) TABLE.operations = options.tableOperations;
-                    if (options.tablePhases)     TABLE.phases     = options.tablePhases;
-                    // Colonnes de DPPI_Chef_Projet
-                    if (options.colChefNom)      COL_CHEF.nom      = options.colChefNom;
-                    if (options.colChefPrenom)   COL_CHEF.prenom   = options.colChefPrenom;
-                    if (options.colChefFonction) COL_CHEF.fonction = options.colChefFonction;
-                    if (options.colChefActif)    COL_CHEF.actif    = options.colChefActif;
-                    // Colonnes de DPPI_Operations
-                    if (options.colOpsNom)       COL_OPS.nom      = options.colOpsNom;
-                    if (options.colOpsNumOpe)    COL_OPS.numOpe   = options.colOpsNumOpe;
-                    if (options.colOpsStatut)    COL_OPS.statut   = options.colOpsStatut;
-                    // Colonnes de PL_Liste_Phases
-                    if (options.colPhasesNom)      COL_PHASES.nom      = options.colPhasesNom;
-                    if (options.colPhasesNomOrder) COL_PHASES.nomOrder = options.colPhasesNomOrder;
-                    if (options.colPhasesCouleur)  COL_PHASES.couleur  = options.colPhasesCouleur;
-                    if (options.colPhasesNumOrder) COL_PHASES.numOrder = options.colPhasesNumOrder;
-                    // Recharger après changement d'options
-                    loadAllData(); // recharge tables secondaires + re-render
+                // Grist peut effacer les options (onOptions null) quand une table référencée
+                // est renommée. On utilise localStorage comme cache de secours.
+                let firstOptionCall = true;
+                grist.onOptions(async (gristOptions) => {
+                    // Grist peut envoyer null quand une table référencée est renommée.
+                    // On utilise le cache localStorage comme fallback.
+                    const options = gristOptions ?? lsLoadOptions();
+                    if (firstOptionCall) {
+                        firstOptionCall = false;
+                        applyOptions(options);
+                        resolveOptionsReady();
+                        await ensureSchema(options);
+                        return;
+                    }
+                    applyOptions(options);
+                    await loadAllData();
                 });
-
-                // Auto-init du schéma des tables secondaires uniquement
-                await ensureSchema();
 
             } catch (e) {
                 useDemoMode();
@@ -4310,6 +4454,9 @@
                 const el = document.getElementById(f.id);
                 if (!el) return;
                 options[f.optionKey] = el.value || f.default();
+                // Réinitialiser les styles d'erreur éventuels
+                el.style.borderColor = '';
+                el.style.boxShadow = '';
             });
 
             // Appliquer immédiatement les nouvelles valeurs aux variables actives
@@ -4330,15 +4477,17 @@
             COL_PHASES.couleur  = options.colPhasesCouleur;
             COL_PHASES.numOrder = options.colPhasesNumOrder;
 
-
+            // Marquer que le widget a été configuré au moins une fois (sentinel)
+            options._configured = true;
 
             // Persister dans Grist si disponible
             if (gristReady) {
                 try {
+                    lsSaveOptions(options);
                     await grist.setOptions(options);
                     showToast('Configuration enregistrée', 'success');
                 } catch (e) {
-                    console.error('setOptions error:', e);
+                    console.error('[Gantt] setOptions error:', e);
                     showToast("Erreur lors de l'enregistrement", 'error');
                 }
             } else {
