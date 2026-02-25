@@ -936,6 +936,34 @@
         .alert-box.warning { background: #fef3c7; color: #92400e; }
         .alert-box.info { background: #dbeafe; color: #1e40af; }
 
+        /* Bandeau d'avertissement colonnes manquantes */
+        #missingColsBanner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 14px;
+            background: #fef3c7;
+            color: #92400e;
+            border-bottom: 1px solid #fcd34d;
+            font-size: 0.78rem;
+            font-weight: 500;
+            z-index: 100;
+        }
+        #missingColsBanner.visible { display: flex; }
+        #missingColsBanner svg { flex-shrink: 0; }
+        #missingColsBanner .banner-msg { flex: 1; }
+        #missingColsBanner .banner-btn {
+            padding: 3px 10px;
+            background: #92400e;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #missingColsBanner .banner-btn:hover { background: #78350f; }
+
         /* === PANNEAU DE DETAIL TACHE === */
         .detail-panel {
             position: fixed;
@@ -1407,6 +1435,17 @@
     </style>
 </head>
 <body>
+    <!-- Bandeau d'avertissement : colonnes secondaires introuvables -->
+    <div id="missingColsBanner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="banner-msg" id="missingColsBannerMsg"></span>
+        <button class="banner-btn" onclick="openConfigPanel()">Reconfigurer</button>
+    </div>
+
     <div class="header">
         <div class="header-left">
             <h1>
@@ -4129,14 +4168,18 @@
                 }, 400);
             }
 
-            // Si des colonnes configurées sont introuvables, avertir et ouvrir le panel
+            // Si des colonnes configurées sont introuvables → bandeau d'avertissement
             if (allMissing.length > 0 && gristReady) {
-                const msg = allMissing.map(m => `${m.table}.${m.configured}`).join(', ');
-                showToast(`⚠ Colonnes introuvables : ${msg} — vérifiez la configuration`, 'error', 8000);
-                if (missingTables.length === 0) {
-                    // Ouvrir automatiquement le panneau config pour correction (si pas déjà ouvert)
-                    setTimeout(() => openConfigPanel(), 500);
+                const msg = allMissing.map(m => `"${m.configured}" (${m.table})`).join(', ');
+                const banner = document.getElementById('missingColsBanner');
+                const bannerMsg = document.getElementById('missingColsBannerMsg');
+                if (banner && bannerMsg) {
+                    bannerMsg.textContent = `⚠ Colonne(s) introuvable(s) : ${msg} — reconfiguration nécessaire.`;
+                    banner.classList.add('visible');
                 }
+            } else {
+                // Masquer le bandeau si tout est OK
+                document.getElementById('missingColsBanner')?.classList.remove('visible');
             }
         }
 
@@ -4161,8 +4204,8 @@
                 });
             } catch(e) { tasks = []; }
 
-            await loadSecondaryData();
             gristReady = true;
+            await loadSecondaryData();
             sortTasks();
             updateFilterMenus();
             render();
@@ -4379,20 +4422,22 @@
         // ═══════════════════════════════════════════════════════════════════════
 
         // Mapping champs config → clés options Grist
+        // IMPORTANT : default() pointe vers les variables COL_* actives (pas GRIST_CONFIG figé)
+        // afin que le panel affiche toujours la valeur courante en mémoire, même après correction.
         const CONFIG_FIELDS = [
-            { id: 'cfg-tableChefProjet',   optionKey: 'tableChefProjet',   default: () => GRIST_CONFIG.tables.responsableProjet },
-            { id: 'cfg-tableOperations',   optionKey: 'tableOperations',   default: () => GRIST_CONFIG.tables.operations },
-            { id: 'cfg-tablePhases',       optionKey: 'tablePhases',       default: () => GRIST_CONFIG.tables.phases },
-            { id: 'cfg-colChefNom',        optionKey: 'colChefNom',        default: () => GRIST_CONFIG.columns.responsableProjet.nom },
-            { id: 'cfg-colChefFonction',   optionKey: 'colChefFonction',   default: () => GRIST_CONFIG.columns.responsableProjet.fonction },
-            { id: 'cfg-colChefActif',      optionKey: 'colChefActif',      default: () => GRIST_CONFIG.columns.responsableProjet.actif },
-            { id: 'cfg-colOpsNom',         optionKey: 'colOpsNom',         default: () => GRIST_CONFIG.columns.operations.nom },
-            { id: 'cfg-colOpsNumOpe',      optionKey: 'colOpsNumOpe',      default: () => GRIST_CONFIG.columns.operations.numOpe },
-            { id: 'cfg-colOpsStatut',      optionKey: 'colOpsStatut',      default: () => GRIST_CONFIG.columns.operations.statut },
-            { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => GRIST_CONFIG.columns.phases.nom },
-            { id: 'cfg-colPhasesNomOrder', optionKey: 'colPhasesNomOrder', default: () => GRIST_CONFIG.columns.phases.nomOrder },
-            { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => GRIST_CONFIG.columns.phases.couleur },
-            { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => GRIST_CONFIG.columns.phases.numOrder },
+            { id: 'cfg-tableChefProjet',   optionKey: 'tableChefProjet',   default: () => TABLE.responsableProjet },
+            { id: 'cfg-tableOperations',   optionKey: 'tableOperations',   default: () => TABLE.operations },
+            { id: 'cfg-tablePhases',       optionKey: 'tablePhases',       default: () => TABLE.phases },
+            { id: 'cfg-colChefNom',        optionKey: 'colChefNom',        default: () => COL_CHEF.nom },
+            { id: 'cfg-colChefFonction',   optionKey: 'colChefFonction',   default: () => COL_CHEF.fonction },
+            { id: 'cfg-colChefActif',      optionKey: 'colChefActif',      default: () => COL_CHEF.actif },
+            { id: 'cfg-colOpsNom',         optionKey: 'colOpsNom',         default: () => COL_OPS.nom },
+            { id: 'cfg-colOpsNumOpe',      optionKey: 'colOpsNumOpe',      default: () => COL_OPS.numOpe },
+            { id: 'cfg-colOpsStatut',      optionKey: 'colOpsStatut',      default: () => COL_OPS.statut },
+            { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => COL_PHASES.nom },
+            { id: 'cfg-colPhasesNomOrder', optionKey: 'colPhasesNomOrder', default: () => COL_PHASES.nomOrder },
+            { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => COL_PHASES.couleur },
+            { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => COL_PHASES.numOrder },
         ];
 
         // Groupes : associe chaque groupe à son select de table et ses selects de colonnes
@@ -4524,6 +4569,7 @@
                     await grist.setOptions(options);
                     console.log('[GANTT] setOptions OK');
                     showToast('Configuration enregistrée', 'success');
+                    document.getElementById('missingColsBanner')?.classList.remove('visible');
                 } catch (e) {
                     console.error('setOptions error:', e);
                     showToast("Erreur lors de l'enregistrement", 'error');
