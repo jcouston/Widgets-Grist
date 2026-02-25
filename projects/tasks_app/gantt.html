@@ -1575,10 +1575,6 @@
                     <select id="cfg-tablePhases" onchange="onTableSelect(this, 'phases')"></select>
                 </div>
                 <div class="config-field">
-                    <label>Nom avec numéro (affiché sur le gantt)</label>
-                    <select id="cfg-colPhasesNomOrder" data-group="phases"></select>
-                </div>
-                <div class="config-field">
                     <label>Nom court</label>
                     <select id="cfg-colPhasesNom" data-group="phases"></select>
                 </div>
@@ -1798,6 +1794,7 @@
                     // fetchSelectedTable() retourne les données avec ces clés, quel que soit
                     // le nom physique de la colonne dans Grist.
                     titre:        'titre',
+                    titreAdapte:  'titreAdapte',  // Titre personnalisé par opération (optionnel)
                     description:  'description',
                     dateDebut:    'dateDebut',
                     dateEcheance: 'dateEcheance',
@@ -1831,9 +1828,8 @@
                 },
                 phases: {
                     nom:      'Nom',        // Nom court
-                    nomOrder: 'Nom_Order',  // Nom complet avec numéro (ex: "103 - Programme")
                     couleur:  'Couleur',    // Couleur hex de la catégorie
-                    numOrder: 'Num_Order'   // Numéro pour le tri
+                    numOrder: 'Num_Order'   // Numéro pour le tri (ex: 103)
                 }
             }
         };
@@ -1858,7 +1854,13 @@
         // Résolution des Refs Grist
         // fetchTable() retourne l'ID numérique pour les colonnes Ref.
         // Ces fonctions font la résolution ID → valeur affichable.
-        const resolvePhaseNom      = (id) => phases.find(x => x.id === id)?.[COL_PHASES.nomOrder] || String(id || '');
+        const resolvePhaseNom      = (id) => {
+            const p = phases.find(x => x.id === id);
+            if (!p) return String(id || '');
+            const num = p[COL_PHASES.numOrder];
+            const nom = p[COL_PHASES.nom] || '';
+            return num ? `${num} - ${nom}` : nom;
+        };
 
         // Retourne true si la tâche a au moins un prédécesseur (dependDe non vide)
         function hasPredecesseurs(t) {
@@ -2029,23 +2031,32 @@
 
         // Résolution du titre d'une tâche : la colonne titre est une Ref vers PL_Liste_Phases.
         // Nom court (Nom) — pour les barres, tooltip, menu contextuel
-        function getTaskTitre(t) {
+        // Résolution du titre affiché d'une tâche.
+        // titreAdapte (colonne Tasks) est prioritaire sur la Ref vers phases.
+        function _resolveBaseTitre(t) {
+            // titreAdapte non vide → utilisé tel quel
+            const adapte = t[COL.titreAdapte];
+            if (adapte && String(adapte).trim()) return { court: String(adapte).trim(), fromPhase: false };
+            // Sinon : Ref vers phases
             const val = t[COL.titre];
-            if (!val) return '';
+            if (!val) return { court: '', fromPhase: false };
             if (typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val))) {
-                return resolvePhaseNomCourt(Number(val));
+                return { court: resolvePhaseNomCourt(Number(val)), fromPhase: true, phaseId: Number(val) };
             }
-            return String(val);
+            return { court: String(val), fromPhase: false };
         }
 
-        // Nom long avec numéro (Nom_Order) — pour la liste gauche et le tri
+        // Titre court : affiché dans les barres Gantt
+        function getTaskTitre(t) {
+            return _resolveBaseTitre(t).court;
+        }
+
+        // Titre long avec numéro : affiché dans la liste gauche
         function getTaskTitreOrder(t) {
-            const val = t[COL.titre];
-            if (!val) return '';
-            if (typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val))) {
-                return resolvePhaseNom(Number(val));
-            }
-            return String(val);
+            const { court, fromPhase, phaseId } = _resolveBaseTitre(t);
+            if (fromPhase && phaseId) return resolvePhaseNom(phaseId);
+            // titreAdapte ou texte libre : pas de numéro disponible, on retourne tel quel
+            return court;
         }
 
         // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
@@ -2790,7 +2801,7 @@
                     const e0 = getDaysDiff(start, tEnd);
                     if (e0 < 0 || s0 > totalDays) return;
                     const left  = Math.max(0, s0) * pxPerDay;
-                    const right = Math.min(e0 + 1, totalDays) * pxPerDay;
+                    const right = Math.min(e0, totalDays) * pxPerDay;
                     const width = Math.max(right - left, 4);
                     const colour = getTaskCouleur(t) || 'var(--primary)';
                     const titre  = escapeHtml(getTaskTitre(t));
@@ -2999,7 +3010,7 @@
                     }
                 } else {
                     let left = visStart * pxPerDay;
-                    let width = (visEnd - visStart + 1) * pxPerDay;
+                    let width = (visEnd - visStart) * pxPerDay;
                     if (width < 4) width = 4;
 
                     const prog = t[COL.progression] || 0;
@@ -3111,7 +3122,7 @@
                     const taskStart = getEffectiveStart(t);
                     if (!depEnd || !taskStart) return;
 
-                    const x1 = (getDaysDiff(start, depEnd) + 1) * pxPerDay;
+                    const x1 = getDaysDiff(start, depEnd) * pxPerDay;
                     const y1 = depIdx * ROW_H + 22;
                     const x2 = getDaysDiff(start, taskStart) * pxPerDay;
                     const y2 = (rowIndexOf[t.id] ?? i) * ROW_H + 22;
@@ -3573,7 +3584,7 @@
             const phasesSorted = [...phases].sort((a, b) => (a[COL_PHASES.numOrder] || 0) - (b[COL_PHASES.numOrder] || 0));
             document.getElementById('create-titre').innerHTML =
                 '<option value="">— Choisir une phase —</option>' +
-                phasesSorted.map(p => `<option value="${p.id}">${escapeHtml(p[COL_PHASES.nomOrder] || p[COL_PHASES.nom])}</option>`).join('');
+                phasesSorted.map(p => `<option value="${p.id}">${escapeHtml(resolvePhaseNom(p.id))}</option>`).join('');
 
             // Opération pré-sélectionnée (lecture seule)
             document.getElementById('create-projet-label').textContent = projet ? (projet[COL_OPS.nom] || '') : '';
@@ -3758,6 +3769,7 @@
             const dx = e.clientX - dragState.startX;
             const pxPerDay = getPixelsPerDay();
             const daysDelta = Math.round(dx / pxPerDay);
+            dragState.lastDaysDelta = daysDelta; // stocker pour endDrag
 
             const bar = document.querySelector(`.gantt-bar[data-id="${dragState.taskId}"]`);
             if (!bar) return;
@@ -3780,9 +3792,9 @@
         async function endDrag(e) {
             if (!dragState.active) return;
 
-            const dx = e.clientX - dragState.startX;
-            const pxPerDay = getPixelsPerDay();
-            const daysDelta = Math.round(dx / pxPerDay);
+            // Utiliser le daysDelta issu du dernier onDrag (position snappée)
+            // plutôt que de recalculer depuis e.clientX (position brute du mouseup)
+            const daysDelta = dragState.lastDaysDelta ?? Math.round((e.clientX - dragState.startX) / getPixelsPerDay());
 
             document.removeEventListener('mousemove', onDrag);
             document.removeEventListener('mouseup', endDrag);
@@ -3820,8 +3832,10 @@
                 newStart = addDays(dragState.originalStart, daysDelta);
             }
 
-            // Calcul de la durée en jours
-            const newDuree = Math.max(1, Math.round((newEnd - newStart) / 86400000) + 1);
+            // Calcul de la durée en jours.
+            // dateFinCalc = dateDebutCalc + timedelta(duree) — fin exclusive.
+            // (newEnd - newStart) / 86400000 = durée exacte, sans +1.
+            const newDuree = Math.max(1, Math.round((newEnd - newStart) / 86400000));
 
             // Colonnes à mettre à jour
             const dragUpdates = { [COL.duree]: newDuree };
@@ -3892,7 +3906,6 @@
                 ],
                 [TABLE.phases]: [
                     { id: COL_PHASES.nom,      type: 'Text' },
-                    { id: COL_PHASES.nomOrder, type: 'Text' },
                     { id: COL_PHASES.couleur,  type: 'Text' },
                     { id: COL_PHASES.numOrder, type: 'Numeric' }
                 ],
@@ -4051,13 +4064,13 @@
                 log(`✅ 3 responsables ajoutés à ${TABLE.responsableProjet}`);
 
                 await grist.docApi.applyUserActions([
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Faisabilité',      [COL_PHASES.nomOrder]: '101 - Faisabilité',      [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Pré-programme',    [COL_PHASES.nomOrder]: '102 - Pré-programme',    [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Programme',        [COL_PHASES.nomOrder]: '103 - Programme',        [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Consultation MOE', [COL_PHASES.nomOrder]: '203 - Consultation MOE', [COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Études',           [COL_PHASES.nomOrder]: '301 - Études',           [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Travaux',          [COL_PHASES.nomOrder]: '401 - Travaux',          [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Livraison',        [COL_PHASES.nomOrder]: '501 - Livraison',        [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 }]
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Faisabilité',      [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Pré-programme',    [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Programme',        [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Consultation MOE', [COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Études',           [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Travaux',          [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Livraison',        [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 }]
                 ]);
                 log(`✅ 7 phases ajoutées à ${TABLE.phases}`);
 
@@ -4231,7 +4244,8 @@
                 grist.ready({
                     requiredAccess: 'full',
                     columns: [
-                        { name: 'titre',         title: 'Catégorie (Ref phases)',  type: 'Ref',        optional: false },
+                        { name: 'titre',         title: 'Catégorie (Ref phases)',           type: 'Ref',        optional: false },
+                        { name: 'titreAdapte',   title: 'Titre adapté par opération',       type: 'Text',       optional: true  },
                         { name: 'dateDebut',     title: 'Date de début',           type: 'Date',       optional: true  },
                         { name: 'duree',         title: 'Durée (jours)',           type: 'Numeric',    optional: true  },
                         { name: 'dateDebutCalc', title: 'Date début calculée',     type: 'Date',       optional: true  },
@@ -4265,7 +4279,6 @@
                     if (opts.colOpsNumOpe)    COL_OPS.numOpe   = opts.colOpsNumOpe;
                     if (opts.colOpsStatut)    COL_OPS.statut   = opts.colOpsStatut;
                     if (opts.colPhasesNom)      COL_PHASES.nom      = opts.colPhasesNom;
-                    if (opts.colPhasesNomOrder) COL_PHASES.nomOrder = opts.colPhasesNomOrder;
                     if (opts.colPhasesCouleur)  COL_PHASES.couleur  = opts.colPhasesCouleur;
                     if (opts.colPhasesNumOrder) COL_PHASES.numOrder = opts.colPhasesNumOrder;
                 };
@@ -4359,13 +4372,13 @@
             // En mode démo, les titres sont des IDs qui pointent vers phases[]
             // On crée des phases démo pour que resolvePhaseNom fonctionne
             phases = [
-                { id: 1, [COL_PHASES.nomOrder]: '101 - Faisabilité',     [COL_PHASES.nom]: 'Faisabilité',     [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 },
-                { id: 2, [COL_PHASES.nomOrder]: '102 - Pré-programme',   [COL_PHASES.nom]: 'Pré-programme',   [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 },
-                { id: 3, [COL_PHASES.nomOrder]: '103 - Programme',       [COL_PHASES.nom]: 'Programme',       [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 },
-                { id: 4, [COL_PHASES.nomOrder]: '203 - Consultation MOE',[COL_PHASES.nom]: 'Consultation MOE',[COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 },
-                { id: 5, [COL_PHASES.nomOrder]: '301 - Études',          [COL_PHASES.nom]: 'Études',          [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 },
-                { id: 6, [COL_PHASES.nomOrder]: '401 - Travaux',         [COL_PHASES.nom]: 'Travaux',         [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 },
-                { id: 7, [COL_PHASES.nomOrder]: '501 - Livraison',       [COL_PHASES.nom]: 'Livraison',       [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 },
+                { id: 1, [COL_PHASES.nom]: 'Faisabilité',     [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 },
+                { id: 2, [COL_PHASES.nom]: 'Pré-programme',   [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 },
+                { id: 3, [COL_PHASES.nom]: 'Programme',       [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 },
+                { id: 4, [COL_PHASES.nom]: 'Consultation MOE',[COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 },
+                { id: 5, [COL_PHASES.nom]: 'Études',          [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 },
+                { id: 6, [COL_PHASES.nom]: 'Travaux',         [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 },
+                { id: 7, [COL_PHASES.nom]: 'Livraison',       [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 },
             ];
 
             // Projets (opérations)
@@ -4435,7 +4448,6 @@
             { id: 'cfg-colOpsNumOpe',      optionKey: 'colOpsNumOpe',      default: () => COL_OPS.numOpe },
             { id: 'cfg-colOpsStatut',      optionKey: 'colOpsStatut',      default: () => COL_OPS.statut },
             { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => COL_PHASES.nom },
-            { id: 'cfg-colPhasesNomOrder', optionKey: 'colPhasesNomOrder', default: () => COL_PHASES.nomOrder },
             { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => COL_PHASES.couleur },
             { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => COL_PHASES.numOrder },
         ];
@@ -4552,7 +4564,6 @@
             COL_OPS.statut = options.colOpsStatut;
 
             COL_PHASES.nom      = options.colPhasesNom;
-            COL_PHASES.nomOrder = options.colPhasesNomOrder;
             COL_PHASES.couleur  = options.colPhasesCouleur;
             COL_PHASES.numOrder = options.colPhasesNumOrder;
 
