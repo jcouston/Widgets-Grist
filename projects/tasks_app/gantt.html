@@ -1883,6 +1883,7 @@
         // STATE
         // ═══════════════════════════════════════════════════════════════════════
         let gristReady = false;
+        let _mainTableId = null; // Vrai ID Grist de la table principale (mis à jour par onRecords)
         let tasks = [];
         let team = [];      // DPPI_Chef_Projet
         let projects = [];  // DPPI_Operations
@@ -4227,18 +4228,28 @@
                 };
 
                 // ── Coordination onRecords / onOptions ─────────────────────────────────
-                // Les options arrivent via onOptions. onRecords attend qu'elles soient appliquées
-                // avant de charger les données (évite d'utiliser les noms de tables par défaut).
+                // DIAGNOSTIC CONFIRMÉ : grist.getOptions() retourne NULL lors d'un Ctrl+Shift+R.
+                // Les vraies options persistées n'arrivent QUE via onOptions (premier appel).
+                // Stratégie : onRecords attend onOptions sans timeout — onOptions arrive TOUJOURS.
                 let resolveOptionsReady;
                 const optionsReady = new Promise(res => { resolveOptionsReady = res; });
 
-                // onRecords doit être enregistré immédiatement après grist.ready()
+                // ── IMPORTANT : enregistrer onRecords IMMÉDIATEMENT après grist.ready() ──
                 let _onRecordsDebounceTimer = null;
+                let _firstOnRecords = true;
                 grist.onRecords(async (records, mappings) => {
+                    console.log('[GANTT] onRecords appelé, TABLE.phases=', TABLE.phases);
+                    // Capturer le vrai ID Grist de la table principale (une seule fois suffit)
+                    if (_firstOnRecords) {
+                        _firstOnRecords = false;
+                        try { _mainTableId = await grist.selectedTable.getTableId(); } catch(e) {}
+                        if (_mainTableId) TABLE.tasks = _mainTableId;
+                    }
                     applyMappings(mappings);
                     clearTimeout(_onRecordsDebounceTimer);
                     _onRecordsDebounceTimer = setTimeout(async () => {
-                        await optionsReady;
+                        await optionsReady;  // attend que onOptions ait appliqué les vraies options
+                        console.log('[GANTT] onRecords débloqué, TABLE.phases=', TABLE.phases);
                         await loadAllData();
                     }, 50);
                 });
@@ -4256,20 +4267,39 @@
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
                 // Grist peut effacer les options (onOptions null) quand une table référencée
                 // est renommée. On utilise localStorage comme cache de secours.
-                let firstOptionCall = true;
+                let _firstOnOptions = true;
                 grist.onOptions(async (gristOptions) => {
-                    // Grist peut envoyer null quand une table référencée est renommée.
-                    // On utilise le cache localStorage comme fallback.
-                    const options = gristOptions ?? lsLoadOptions();
-                    if (firstOptionCall) {
-                        firstOptionCall = false;
-                        applyOptions(options);
+                    const isFirstCall = _firstOnOptions;
+                    _firstOnOptions = false;
+
+                    if (isFirstCall) {
+                        // Grist peut envoyer null lors d'un hard refresh → fallback localStorage
+                        const opts = gristOptions ?? lsLoadOptions();
+                        const hasConfig = opts && (
+                            opts.tableChefProjet || opts.tableOperations || opts.tablePhases
+                        );
+                        if (hasConfig) {
+                            applyOptions(opts);
+                            console.log('[GANTT] après applyOptions initial, TABLE.phases=', TABLE.phases);
+                        }
+                        // Débloquer onRecords dans tous les cas
                         resolveOptionsReady();
-                        await ensureSchema(options);
-                        return;
+                        // Vérifier / créer le schéma si nécessaire
+                        await ensureSchema(opts);
+
+                        if (!hasConfig) {
+                            // Vraie première utilisation : aucune config nulle part
+                            setTimeout(() => openConfigPanel(), 400);
+                        }
+                    } else {
+                        // Appel suivant (changement d'options en live ou après setOptions)
+                        const cachedOptions = lsLoadOptions();
+                        const options = gristOptions ?? cachedOptions;
+                        console.log('[GANTT] onOptions suivant — grist:', JSON.stringify(gristOptions),
+                                    '| retenu:', JSON.stringify(options));
+                        if (options) applyOptions(options);
+                        await loadAllData();
                     }
-                    applyOptions(options);
-                    await loadAllData();
                 });
 
             } catch (e) {
@@ -4390,6 +4420,10 @@
             let allTables = [];
             try { allTables = await grist.docApi.listTables(); } catch(e) {}
 
+            // Exclure la table tâches (table principale, gérée par le panel natif Grist)
+            const tasksId = TABLE.tasks || _mainTableId || '';
+            const allTablesFiltered = tasksId ? allTables.filter(t => t !== tasksId) : allTables;
+
             // Valeurs courantes sauvegardées
             const current = {};
             CONFIG_FIELDS.forEach(f => {
@@ -4402,7 +4436,7 @@
                 const tableSel = document.getElementById(cfg.tableId);
                 if (!tableSel) continue;
                 const curTable = cfg.curTable();
-                tableSel.innerHTML = allTables.map(t =>
+                tableSel.innerHTML = allTablesFiltered.map(t =>
                     `<option value="${t}"${t === curTable ? ' selected' : ''}>${t}</option>`
                 ).join('');
                 await loadColumnsForGroup(group, curTable, current);
@@ -4477,17 +4511,21 @@
             COL_PHASES.couleur  = options.colPhasesCouleur;
             COL_PHASES.numOrder = options.colPhasesNumOrder;
 
+
+
             // Marquer que le widget a été configuré au moins une fois (sentinel)
             options._configured = true;
 
             // Persister dans Grist si disponible
             if (gristReady) {
                 try {
-                    lsSaveOptions(options);
+                    console.log('[GANTT] setOptions appelé avec:', JSON.stringify(options));
+                    lsSaveOptions(options);  // cache local en cas d'effacement par Grist
                     await grist.setOptions(options);
+                    console.log('[GANTT] setOptions OK');
                     showToast('Configuration enregistrée', 'success');
                 } catch (e) {
-                    console.error('[Gantt] setOptions error:', e);
+                    console.error('setOptions error:', e);
                     showToast("Erreur lors de l'enregistrement", 'error');
                 }
             } else {
