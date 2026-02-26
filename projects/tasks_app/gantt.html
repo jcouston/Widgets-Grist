@@ -376,7 +376,7 @@
         .task-list {
             width: var(--task-list-width);
             min-width: var(--task-list-width);
-            overflow-y: auto;
+            overflow: hidden;
             border-right: 1px solid var(--border);
             background: var(--card-bg);
         }
@@ -3150,6 +3150,12 @@
                 months.scrollLeft = body.scrollLeft;
                 taskList.scrollTop = body.scrollTop;
             };
+
+            // Rediriger le scroll molette sur la task-list vers le timelineBody
+            taskList.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                body.scrollTop += e.deltaY;
+            }, { passive: false });
 
             // Clic sur zone vide du Gantt → fermer le panneau de détail
             body.addEventListener('click', (e) => {
