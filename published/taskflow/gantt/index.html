@@ -4274,8 +4274,8 @@
                 });
             } catch(e) { tasks = []; }
 
-            gristReady = true;
             await loadSecondaryData();
+            gristReady = true;
             sortTasks();
             updateFilterMenus();
             render();
