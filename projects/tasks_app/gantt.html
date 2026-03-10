@@ -1745,14 +1745,14 @@
             // Noms des tables Grist — défauts modifiables via Widget Options
             tables: {
                 tasks:      'Tasks',
-                responsableProjet: 'DPPI_Chef_Projet',
-                operations: 'DPPI_Operations',
-                phases:     'PL_Liste_Phases'
+                responsableProjet: 'DPPI_User',
+                operations: 'DPPI_Operation',
+                phases:     'DPPI_Categorie_Phase'
             },
             // Noms des colonnes par défaut (écrasés par le mappage Grist)
             columns: {
                 tasks: {
-                    titre:        'titre',        // Ref → PL_Liste_Phases (catégorie)
+                    titre:        'titre',        // Ref → DPPI_Categorie_Phase (catégorie)
                     titreAdapte:  'titreAdapte',  // Titre personnalisé par opération (optionnel)
                     description:  'description',
                     dateDebut:    'dateDebut',
@@ -1800,7 +1800,7 @@
         let TABLE = { ...GRIST_CONFIG.tables };
 
         // Données des tables secondaires chargées en mémoire
-        let phases = [];  // PL_Liste_Phases
+        let phases = [];  // DPPI_Categorie_Phase
 
         // Résolution des Refs Grist
         // fetchTable() retourne l'ID numérique pour les colonnes Ref.
@@ -1883,8 +1883,8 @@
         let gristReady = false;
         let _mainTableId = null; // Vrai ID Grist de la table principale (mis à jour par onRecords)
         let tasks = [];
-        let team = [];      // DPPI_Chef_Projet
-        let projects = [];  // DPPI_Operations
+        let team = [];      // DPPI_User
+        let projects = [];  // DPPI_Operation
 
         // Modes de layout : 'multi' (défaut), 'compact', 'single'
         let layoutMode = 'compact';
@@ -2046,7 +2046,7 @@
 
         function getInitials(n) { return n ? n.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) : '?'; }
 
-        // Résolution du titre d'une tâche : la colonne titre est une Ref vers PL_Liste_Phases.
+        // Résolution du titre d'une tâche : la colonne titre est une Ref vers DPPI_Categorie_Phase.
         // Nom court (Nom) — pour les barres, tooltip, menu contextuel
         // Résolution du titre affiché d'une tâche.
         // titreAdapte (colonne Tasks) est prioritaire sur la Ref vers phases.
@@ -2082,10 +2082,10 @@
             return court;
         }
 
-        // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
+        // Couleur de la barre : issue de DPPI_Categorie_Phase via la Ref titre,
         // ou de la colonne couleur directe si présente.
         function getTaskCouleur(t) {
-            // La couleur vient de PL_Liste_Phases via la Ref titre → PL_Liste_Phases.Couleur
+            // La couleur vient de DPPI_Categorie_Phase via la Ref titre → DPPI_Categorie_Phase.Couleur
             const phaseId = t._phaseId ?? (() => {
                 const val = t[COL.titre];
                 return (typeof val === 'number') ? val :
@@ -2094,7 +2094,7 @@
             return phaseId ? (resolvePhaseCouleur(phaseId) || null) : null;
         }
 
-        // Résolution du nom du projet (DPPI_Operations)
+        // Résolution du nom du projet (DPPI_Operation)
         function getTaskProjetNom(t) {
             const val = t[COL.projet];
             if (!val) return '';
@@ -2104,7 +2104,7 @@
             return String(val);
         }
 
-        // Résolution des noms des responsables (RefList → DPPI_Chef_Projet)
+        // Résolution des noms des responsables (RefList → DPPI_User)
         function getTaskAssigneesNoms(t) {
             return getAssigneesArray(t).map(id => resolveResponsableNom(id, team)).filter(Boolean);
         }
@@ -4377,21 +4377,33 @@
                 });
 
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
-                // Grist peut effacer les options (onOptions null) quand une table référencée
-                // est renommée. On utilise localStorage comme cache de secours.
+                // Quand Grist envoie null (premier chargement sur un nouveau navigateur,
+                // hard refresh, ou table renommée), on rappelle explicitement grist.getOptions()
+                // qui retourne les options persistées dans le document Grist — partagées entre
+                // tous les utilisateurs. Le localStorage n'est conservé qu'en dernier recours
+                // pour les cas où getOptions() échoue aussi (réseau, erreur API).
                 let _firstOnOptions = true;
                 grist.onOptions(async (gristOptions) => {
                     const isFirstCall = _firstOnOptions;
                     _firstOnOptions = false;
 
                     if (isFirstCall) {
-                        // Grist peut envoyer null lors d'un hard refresh → fallback localStorage
-                        const opts = gristOptions ?? lsLoadOptions();
+                        // Si Grist envoie null, rappeler getOptions() pour récupérer
+                        // la config partagée (persistée dans le document, visible par tous).
+                        let opts = gristOptions;
+                        if (!opts) {
+                            try { opts = await grist.getOptions(); } catch(e) {}
+                        }
+                        // Dernier recours : localStorage (propre au navigateur local)
+                        if (!opts) opts = lsLoadOptions();
+
                         const hasConfig = opts && (
                             opts.tableChefProjet || opts.tableOperations || opts.tablePhases
                         );
                         if (hasConfig) {
                             applyOptions(opts);
+                            // Mettre à jour le cache local pour les appels suivants
+                            lsSaveOptions(opts);
                             console.log('[GANTT] après applyOptions initial, TABLE.phases=', TABLE.phases);
                         }
                         // Débloquer onRecords dans tous les cas
@@ -4405,8 +4417,12 @@
                         }
                     } else {
                         // Appel suivant (changement d'options en live ou après setOptions)
-                        const cachedOptions = lsLoadOptions();
-                        const options = gristOptions ?? cachedOptions;
+                        // Même stratégie : getOptions() si null, localStorage en dernier recours
+                        let options = gristOptions;
+                        if (!options) {
+                            try { options = await grist.getOptions(); } catch(e) {}
+                        }
+                        if (!options) options = lsLoadOptions();
                         console.log('[GANTT] onOptions suivant — grist:', JSON.stringify(gristOptions),
                                     '| retenu:', JSON.stringify(options));
                         if (options) applyOptions(options);
