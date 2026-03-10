@@ -4306,6 +4306,7 @@
                 // colonne de sa table. Les 3 premiers champs sont obligatoires.
                 grist.ready({
                     requiredAccess: 'full',
+                    hasCustomOptions: true,
                     columns: [
                         { name: 'titre',         title: 'Catégorie (Ref phases)',       type: 'Ref',     optional: false },
                         { name: 'titreAdapte',   title: 'Titre adapté par opération',   type: 'Text',    optional: true  },
