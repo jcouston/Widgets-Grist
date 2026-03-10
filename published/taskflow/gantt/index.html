@@ -361,13 +361,16 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: hidden;
         }
 
         .timeline-header-months {
             display: flex;
             background: var(--bg);
             border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
         .month-cell {
@@ -377,10 +380,13 @@
             font-weight: 600;
             color: var(--text-muted);
             border-right: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .timeline-header-days {
             display: flex;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
         .day-cell {
