@@ -361,16 +361,13 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            overflow-y: hidden;
+            overflow: hidden;
         }
 
         .timeline-header-months {
             display: flex;
             background: var(--bg);
             border-bottom: 1px solid var(--border);
-            overflow: hidden;
-            flex-shrink: 0;
         }
 
         .month-cell {
@@ -380,13 +377,10 @@
             font-weight: 600;
             color: var(--text-muted);
             border-right: 1px solid var(--border);
-            flex-shrink: 0;
         }
 
         .timeline-header-days {
             display: flex;
-            overflow: hidden;
-            flex-shrink: 0;
         }
 
         .day-cell {
@@ -1033,6 +1027,7 @@
         .panel-filter-widget {
             border: 1px solid var(--border);
             border-radius: 6px;
+            overflow: hidden;
             margin-top: 4px;
         }
         .panel-filter-search {
@@ -1047,10 +1042,8 @@
             outline: none;
         }
         .panel-filter-list {
-            height: 180px;
-            overflow-y: scroll;
-            border-top: 1px solid var(--border);
-            background: var(--card-bg);
+            max-height: 140px;
+            overflow-y: auto;
         }
         .panel-filter-item {
             display: flex;
@@ -1732,12 +1725,6 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script>
         // ═══════════════════════════════════════════════════════════════════════
-        // VERSION
-        // ═══════════════════════════════════════════════════════════════════════
-        const WIDGET_VERSION = 'V36';
-        console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
-
-        // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION GRIST
         // Noms de tables et colonnes par défaut.
         // • Les colonnes Tasks sont mappables via le panneau "Colonnes" de Grist
@@ -1751,14 +1738,14 @@
             // Noms des tables Grist — défauts modifiables via Widget Options
             tables: {
                 tasks:      'Tasks',
-                responsableProjet: 'DPPI_User',
-                operations: 'DPPI_Operation',
-                phases:     'DPPI_Categorie_Phase'
+                responsableProjet: 'DPPI_Chef_Projet',
+                operations: 'DPPI_Operations',
+                phases:     'PL_Liste_Phases'
             },
             // Noms des colonnes par défaut (écrasés par le mappage Grist)
             columns: {
                 tasks: {
-                    titre:        'titre',        // Ref → DPPI_Categorie_Phase (catégorie)
+                    titre:        'titre',        // Ref → PL_Liste_Phases (catégorie)
                     titreAdapte:  'titreAdapte',  // Titre personnalisé par opération (optionnel)
                     description:  'description',
                     dateDebut:    'dateDebut',
@@ -1806,7 +1793,7 @@
         let TABLE = { ...GRIST_CONFIG.tables };
 
         // Données des tables secondaires chargées en mémoire
-        let phases = [];  // DPPI_Categorie_Phase
+        let phases = [];  // PL_Liste_Phases
 
         // Résolution des Refs Grist
         // fetchTable() retourne l'ID numérique pour les colonnes Ref.
@@ -1889,8 +1876,8 @@
         let gristReady = false;
         let _mainTableId = null; // Vrai ID Grist de la table principale (mis à jour par onRecords)
         let tasks = [];
-        let team = [];      // DPPI_User
-        let projects = [];  // DPPI_Operation
+        let team = [];      // DPPI_Chef_Projet
+        let projects = [];  // DPPI_Operations
 
         // Modes de layout : 'multi' (défaut), 'compact', 'single'
         let layoutMode = 'compact';
@@ -2004,31 +1991,25 @@
             return parts.slice(0, 2).join(' ');
         }
         // Formate des jours en texte, en tenant compte de la date de début
-        // pour exprimer les mois calendaires exacts avec aller-retour stable.
+        // pour exprimer les mois calendaires exacts (ex: 31 jours depuis le 1er = "1 mois").
         function formatDureeTexteFromDate(jours, dateDebut) {
             if (jours === 0) return '0 j (jalon)';
             if (!jours || jours < 0) return '';
             if (!dateDebut) return formatDureeTexte(jours);
-            var fin = new Date(dateDebut);
+            const fin = new Date(dateDebut);
             fin.setDate(fin.getDate() + jours);
-            var ans = fin.getFullYear() - dateDebut.getFullYear();
-            var mois = fin.getMonth() - dateDebut.getMonth();
+            // Calculer les années complètes calendaires
+            let ans = fin.getFullYear() - dateDebut.getFullYear();
+            let mois = fin.getMonth() - dateDebut.getMonth();
             if (mois < 0) { ans--; mois += 12; }
-            // Calcul de l'intermédiaire après soustraction des mois entiers
-            var inter = new Date(dateDebut);
+            // Date intermédiaire après retrait ans et mois
+            const inter = new Date(dateDebut);
             if (ans)  inter.setFullYear(inter.getFullYear() + ans);
             if (mois) inter.setMonth(inter.getMonth() + mois);
-            var restJ = Math.round((fin - inter) / 86400000);
-            // Si restJ < 0 : la fin est avant le même jour du mois → 1 mois de trop
-            if (restJ < 0) {
-                mois--;
-                if (mois < 0) { ans--; mois = 11; }
-                var inter2 = new Date(dateDebut);
-                if (ans)  inter2.setFullYear(inter2.getFullYear() + ans);
-                if (mois) inter2.setMonth(inter2.getMonth() + mois);
-                restJ = Math.round((fin - inter2) / 86400000);
-            }
-            var sem = Math.floor(restJ / 7), j = restJ % 7, parts = [];
+            const restJ = Math.round((fin - inter) / 86400000);
+            const sem = Math.floor(restJ / 7);
+            const j   = restJ % 7;
+            const parts = [];
             if (ans  > 0) parts.push(ans  + ' an'  + (ans  > 1 ? 's' : ''));
             if (mois > 0) parts.push(mois + ' mois');
             if (sem  > 0) parts.push(sem  + ' sem');
@@ -2036,7 +2017,7 @@
             return parts.length ? parts.join(' ') : '0 j';
         }
 
-                const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+        const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
         const isSameDay = (a, b) => a.toDateString() === b.toDateString();
         const getDaysDiff = (a, b) => Math.round((b - a) / 86400000);
         const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
@@ -2052,7 +2033,7 @@
 
         function getInitials(n) { return n ? n.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) : '?'; }
 
-        // Résolution du titre d'une tâche : la colonne titre est une Ref vers DPPI_Categorie_Phase.
+        // Résolution du titre d'une tâche : la colonne titre est une Ref vers PL_Liste_Phases.
         // Nom court (Nom) — pour les barres, tooltip, menu contextuel
         // Résolution du titre affiché d'une tâche.
         // titreAdapte (colonne Tasks) est prioritaire sur la Ref vers phases.
@@ -2088,10 +2069,10 @@
             return court;
         }
 
-        // Couleur de la barre : issue de DPPI_Categorie_Phase via la Ref titre,
+        // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
         // ou de la colonne couleur directe si présente.
         function getTaskCouleur(t) {
-            // La couleur vient de DPPI_Categorie_Phase via la Ref titre → DPPI_Categorie_Phase.Couleur
+            // La couleur vient de PL_Liste_Phases via la Ref titre → PL_Liste_Phases.Couleur
             const phaseId = t._phaseId ?? (() => {
                 const val = t[COL.titre];
                 return (typeof val === 'number') ? val :
@@ -2100,7 +2081,7 @@
             return phaseId ? (resolvePhaseCouleur(phaseId) || null) : null;
         }
 
-        // Résolution du nom du projet (DPPI_Operation)
+        // Résolution du nom du projet (DPPI_Operations)
         function getTaskProjetNom(t) {
             const val = t[COL.projet];
             if (!val) return '';
@@ -2110,7 +2091,7 @@
             return String(val);
         }
 
-        // Résolution des noms des responsables (RefList → DPPI_User)
+        // Résolution des noms des responsables (RefList → DPPI_Chef_Projet)
         function getTaskAssigneesNoms(t) {
             return getAssigneesArray(t).map(id => resolveResponsableNom(id, team)).filter(Boolean);
         }
@@ -2874,7 +2855,7 @@
                             style="position:absolute;left:${left}px;top:50%;transform:translateY(-50%) rotate(45deg);
                             width:12px;height:12px;background:${colour};cursor:pointer;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`;
                     } else {
-                        const dureeStrC = formatDureeTexteFromDate(t[COL.duree], tStart);
+                        const dureeStrC = formatDureeBar(t[COL.duree]);
                         // Compact : nom+durée si ≥100px, nom seul si ≥30px, rien si < 30px
                         const cLabel = width < 30 ? '' :
                                        (dureeStrC && width >= 100) ? titre + ' - ' + dureeStrC : titre;
@@ -3076,7 +3057,7 @@
                     const prog = t[COL.progression] || 0;
                     const dStart = formatDateBar(taskStart);
                     const dEnd   = formatDateBar(getDisplayEnd(t));
-                    const dureeStr = formatDureeTexteFromDate(t[COL.duree], taskStart);
+                    const dureeStr = formatDureeBar(t[COL.duree]);
                     // Décision d'affichage selon largeur
                     let barInner;
                     if (width >= 120 && dureeStr) {
@@ -3238,18 +3219,7 @@
             const dureeRow = tt.querySelector('.tt-duree-row');
             const dureeVal = bar.dataset.duree;
             if (dureeVal && dureeVal !== '0') {
-                // Reconstruire la date de début depuis le dataset pour le formatage calendaire
-                var _ttStart = null;
-                try {
-                    var _s = bar.dataset.start; // format dd/mm/yyyy ou similaire
-                    // Essayer de parser depuis dateDebutCalc si disponible via data-id
-                    var _tid = parseInt(bar.dataset.id);
-                    if (_tid) {
-                        var _tt = tasks.find(function(x) { return x.id === _tid; });
-                        if (_tt) _ttStart = getEffectiveStart(_tt);
-                    }
-                } catch(e) {}
-                tt.querySelector('.tooltip-duree').textContent = formatDureeTexteFromDate(parseInt(dureeVal), _ttStart);
+                tt.querySelector('.tooltip-duree').textContent = formatDureeTexte(parseInt(dureeVal));
                 dureeRow.style.display = '';
             } else {
                 dureeRow.style.display = 'none';
@@ -3295,75 +3265,68 @@
                 retardHtml = `<div class="retard-badge">⚠️ En retard de ${d} jour${d > 1 ? 's' : ''}</div>`;
             }
 
-            function _normIds(val) {
-                if (!val) return [];
-                if (Array.isArray(val)) {
-                    var arr = (val[0] === 'L') ? val.slice(1) : val;
-                    return arr.map(function(x){return parseInt(x);}).filter(function(x){return !isNaN(x);});
-                }
-                if (typeof val === 'number' && !isNaN(val)) return [val];
-                if (typeof val === 'string') { var n=parseInt(val); return isNaN(n)?[]:[n]; }
-                return [];
-            }
+            // Dépendances
+            const depIds = !taskDependDe ? [] :
+                Array.isArray(taskDependDe) ? (taskDependDe[0] === 'L' ? taskDependDe.slice(1) : taskDependDe) : [taskDependDe];
+            const dependents = tasks.filter(t => {
+                const dd = t[COL.dependDe];
+                if (!dd) return false;
+                const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                return ids.includes(task.id);
+            });
 
-            var taskId_int = parseInt(task.id);
-            var depIds = _normIds(taskDependDe);
-
-            var successorIds = new Set();
-            function collectSuccessors(id) {
-                tasks.forEach(function(t) {
-                    if (successorIds.has(parseInt(t.id))) return;
-                    if (_normIds(t[COL.dependDe]).indexOf(id) !== -1) {
-                        successorIds.add(parseInt(t.id));
-                        collectSuccessors(parseInt(t.id));
+            // Liste des tâches pouvant être prédécesseurs (toutes sauf cette tâche et ses successeurs)
+            const successorIds = new Set();
+            const collectSuccessors = (id) => {
+                tasks.forEach(t => {
+                    const dd = t[COL.dependDe];
+                    if (!dd) return;
+                    const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                    if (ids.includes(id) && !successorIds.has(t.id)) {
+                        successorIds.add(t.id);
+                        collectSuccessors(t.id);
                     }
                 });
-            }
-            collectSuccessors(taskId_int);
+            };
+            collectSuccessors(task.id);
 
-            var dependents = tasks.filter(function(t) {
-                return _normIds(t[COL.dependDe]).indexOf(taskId_int) !== -1;
-            });
-
-            var candidats = tasks.filter(function(t) {
-                var tid = parseInt(t.id);
-                return tid !== taskId_int && !successorIds.has(tid) && depIds.indexOf(tid) === -1;
-            });
+            const candidats = tasks.filter(t =>
+                t.id !== task.id &&                          // pas elle-même
+                String(t[COL.projet]) === String(task[COL.projet]) && // même projet
+                !successorIds.has(t.id) &&                  // pas un successeur
+                !depIds.includes(t.id)                      // pas déjà prédécesseur
+            );
 
             // Prédécesseurs — widget filtre avec recherche + cases cochées
             // candidats déjà triés par projet, on les affiche tous cochables
             const allPredCandidats = [...candidats];
             // Ajouter les déjà-prédécesseurs en tête (cochés)
-            var allPredItems = [
-                ...depIds.map(function(id) {
-                    return tasks.find(function(t) { return parseInt(t.id) === id; });
-                }).filter(Boolean),
+            const allPredItems = [
+                ...depIds.map(id => tasks.find(t => t.id === id)).filter(Boolean),
                 ...allPredCandidats
             ];
 
-            var predItemsHtml = allPredItems.map(function(pt) {
-                var chk = depIds.indexOf(parseInt(pt.id)) !== -1 ? ' checked' : '';
-                return '<label class="panel-filter-item" data-pred-id="' + pt.id +
-                    '" data-pred-nom="' + escapeHtml(getTaskTitreOrder(pt)).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + pt.id + '"' + chk + '>' +
-                    escapeHtml(getTaskTitreOrder(pt)) + '</label>';
-            }).join('');
+            const predsWidgetHtml = `<div class="panel-filter-widget" id="dp-pred-widget">
+                <input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-pred-list">
+                    ${allPredItems.map(function(t) {
+                        const checked = depIds.includes(t.id);
+                        return '<label class="panel-filter-item" data-pred-id="' + t.id + '" data-pred-nom="' + escapeHtml(getTaskTitreOrder(t)).toLowerCase() + '">' +
+                            '<input type="checkbox" value="' + t.id + '"' + (checked ? ' checked' : '') + '>' +
+                            escapeHtml(getTaskTitreOrder(t)) +
+                            '</label>';
+                    }).join('')}
+                </div>
+            </div>`;
 
-            var predsWidgetHtml = allPredItems.length
-                ? '<div class="panel-filter-widget" id="dp-pred-widget">' +
-                    '<input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">' +
-                    '<div class="panel-filter-list" id="dp-pred-list">' + predItemsHtml + '</div></div>'
-                : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>';
+            // Successeurs (lecture seule)
+            const succsHtml = dependents.map(dep =>
+                `<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ${escapeHtml(getTaskTitre(dep))}</div>`
+            ).join('');
 
-            var succsHtml = dependents.map(function(dep) {
-                return '<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ' +
-                    escapeHtml(getTaskTitre(dep)) + '</div>';
-            }).join('');
-
-            var depsHtml = '<div class="panel-section-title">Prédécesseurs</div>' +
-                predsWidgetHtml +
-                (succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div>' +
-                    '<div class="assignee-list">' + succsHtml + '</div>' : '');
+            let depsHtml = `<div class="panel-section-title">Prédécesseurs</div>
+                ${allPredItems.length ? predsWidgetHtml : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>'}
+                ${succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div><div class="assignee-list">'+succsHtml+'</div>' : ''}`;
 
             // Assignés — widget filtre avec recherche, actifs d'abord
             const assigneeIds = getAssigneesArray(task);
@@ -3373,18 +3336,20 @@
                 if (aActif !== bActif) return aActif ? -1 : 1;
                 return String(a[COL_CHEF.nom]).localeCompare(String(b[COL_CHEF.nom]));
             });
-            var chefItemsHtml = teamSorted.map(function(m) {
-                var actif = m[COL_CHEF.actif] !== false;
-                var chk = assigneeIds.includes(m.id) ? ' checked' : '';
-                var cls = 'panel-filter-item' + (actif ? '' : ' inactive');
-                return '<label class="' + cls + '" data-responsable-id="' + m.id +
-                    '" data-responsable-nom="' + escapeHtml(m[COL_CHEF.nom]).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + m.id + '"' + chk + '>' +
-                    escapeHtml(m[COL_CHEF.nom]) + (actif ? '' : ' (inactif)') + '</label>';
-            }).join('');
-            var assigneesHtml = '<div class="panel-filter-widget" id="dp-chef-widget">' +
-                '<input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">' +
-                '<div class="panel-filter-list" id="dp-chef-list">' + chefItemsHtml + '</div></div>';
+            const assigneesHtml = `<div class="panel-filter-widget" id="dp-chef-widget">
+                <input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-chef-list">
+                    ${teamSorted.map(function(m) {
+                        const actif = m[COL_CHEF.actif] !== false;
+                        const checked = assigneeIds.includes(m.id);
+                        const cls = 'panel-filter-item' + (actif ? '' : ' inactive');
+                        return '<label class="' + cls + '" data-responsable-id="' + m.id + '" data-responsable-nom="' + escapeHtml(m[COL_CHEF.nom]).toLowerCase() + '">' +
+                            '<input type="checkbox" value="' + m.id + '"' + (checked ? ' checked' : '') + '>' +
+                            escapeHtml(m[COL_CHEF.nom]) + (actif ? '' : ' (inactif)') +
+                            '</label>';
+                    }).join('')}
+                </div>
+            </div>`;
 
             const toDateInput = (d) => d ? d.toISOString().slice(0, 10) : '';
             const hasPreds = hasPredecesseurs(task);
@@ -3508,8 +3473,7 @@
         function getDepIds(task) {
             const dd = task[COL.dependDe];
             if (!dd) return [];
-            const raw = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
-            return raw.map(function(id) { return parseInt(id); }).filter(function(id) { return !isNaN(id); });
+            return Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
         }
 
         function buildDepGristValue(ids) {
@@ -4286,8 +4250,8 @@
                 });
             } catch(e) { tasks = []; }
 
-            await loadSecondaryData();
             gristReady = true;
+            await loadSecondaryData();
             sortTasks();
             updateFilterMenus();
             render();
@@ -4312,7 +4276,6 @@
                 // colonne de sa table. Les 3 premiers champs sont obligatoires.
                 grist.ready({
                     requiredAccess: 'full',
-                    hasCustomOptions: true,
                     columns: [
                         { name: 'titre',         title: 'Catégorie (Ref phases)',       type: 'Ref',     optional: false },
                         { name: 'titreAdapte',   title: 'Titre adapté par opération',   type: 'Text',    optional: true  },
@@ -4384,51 +4347,22 @@
                 });
 
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
-                // Quand Grist envoie null (premier chargement sur un nouveau navigateur,
-                // hard refresh, ou table renommée), on rappelle explicitement grist.getOptions()
-                // qui retourne les options persistées dans le document Grist — partagées entre
-                // tous les utilisateurs. Le localStorage n'est conservé qu'en dernier recours
-                // pour les cas où getOptions() échoue aussi (réseau, erreur API).
+                // Grist peut effacer les options (onOptions null) quand une table référencée
+                // est renommée. On utilise localStorage comme cache de secours.
                 let _firstOnOptions = true;
                 grist.onOptions(async (gristOptions) => {
                     const isFirstCall = _firstOnOptions;
                     _firstOnOptions = false;
 
                     if (isFirstCall) {
-                        console.log('[GANTT] onOptions PREMIER APPEL — gristOptions:', JSON.stringify(gristOptions));
-
-                        // Si Grist envoie null, rappeler getOptions() pour récupérer
-                        // la config partagée (persistée dans le document, visible par tous).
-                        let opts = gristOptions;
-                        if (!opts) {
-                            console.log('[GANTT] gristOptions null → appel grist.getOptions()...');
-                            try {
-                                opts = await grist.getOptions();
-                                console.log('[GANTT] grist.getOptions() retourne:', JSON.stringify(opts));
-                            } catch(e) {
-                                console.warn('[GANTT] grist.getOptions() erreur:', e);
-                            }
-                        }
-                        // Dernier recours : localStorage (propre au navigateur local)
-                        if (!opts) {
-                            opts = lsLoadOptions();
-                            console.log('[GANTT] localStorage fallback:', JSON.stringify(opts));
-                        }
-
-                        console.log('[GANTT] opts final utilisé:', JSON.stringify(opts));
+                        // Grist peut envoyer null lors d'un hard refresh → fallback localStorage
+                        const opts = gristOptions ?? lsLoadOptions();
                         const hasConfig = opts && (
                             opts.tableChefProjet || opts.tableOperations || opts.tablePhases
                         );
-                        console.log('[GANTT] hasConfig:', hasConfig,
-                            '| tableChefProjet:', opts?.tableChefProjet,
-                            '| tableOperations:', opts?.tableOperations,
-                            '| tablePhases:', opts?.tablePhases);
-
                         if (hasConfig) {
                             applyOptions(opts);
-                            // Mettre à jour le cache local pour les appels suivants
-                            lsSaveOptions(opts);
-                            console.log('[GANTT] après applyOptions initial, TABLE.responsableProjet=', TABLE.responsableProjet, 'TABLE.phases=', TABLE.phases);
+                            console.log('[GANTT] après applyOptions initial, TABLE.phases=', TABLE.phases);
                         }
                         // Débloquer onRecords dans tous les cas
                         resolveOptionsReady();
@@ -4441,17 +4375,10 @@
                         }
                     } else {
                         // Appel suivant (changement d'options en live ou après setOptions)
-                        // Même stratégie : getOptions() si null, localStorage en dernier recours
-                        console.log('[GANTT] onOptions APPEL SUIVANT — gristOptions:', JSON.stringify(gristOptions));
-                        let options = gristOptions;
-                        if (!options) {
-                            try {
-                                options = await grist.getOptions();
-                                console.log('[GANTT] getOptions() fallback suivant:', JSON.stringify(options));
-                            } catch(e) {}
-                        }
-                        if (!options) options = lsLoadOptions();
-                        console.log('[GANTT] onOptions suivant — retenu:', JSON.stringify(options));
+                        const cachedOptions = lsLoadOptions();
+                        const options = gristOptions ?? cachedOptions;
+                        console.log('[GANTT] onOptions suivant — grist:', JSON.stringify(gristOptions),
+                                    '| retenu:', JSON.stringify(options));
                         if (options) applyOptions(options);
                         await loadAllData();
                     }

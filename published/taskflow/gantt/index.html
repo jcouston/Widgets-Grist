@@ -1732,6 +1732,12 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script>
         // ═══════════════════════════════════════════════════════════════════════
+        // VERSION
+        // ═══════════════════════════════════════════════════════════════════════
+        const WIDGET_VERSION = 'V36';
+        console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
+
+        // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION GRIST
         // Noms de tables et colonnes par défaut.
         // • Les colonnes Tasks sont mappables via le panneau "Colonnes" de Grist
@@ -4389,23 +4395,40 @@
                     _firstOnOptions = false;
 
                     if (isFirstCall) {
+                        console.log('[GANTT] onOptions PREMIER APPEL — gristOptions:', JSON.stringify(gristOptions));
+
                         // Si Grist envoie null, rappeler getOptions() pour récupérer
                         // la config partagée (persistée dans le document, visible par tous).
                         let opts = gristOptions;
                         if (!opts) {
-                            try { opts = await grist.getOptions(); } catch(e) {}
+                            console.log('[GANTT] gristOptions null → appel grist.getOptions()...');
+                            try {
+                                opts = await grist.getOptions();
+                                console.log('[GANTT] grist.getOptions() retourne:', JSON.stringify(opts));
+                            } catch(e) {
+                                console.warn('[GANTT] grist.getOptions() erreur:', e);
+                            }
                         }
                         // Dernier recours : localStorage (propre au navigateur local)
-                        if (!opts) opts = lsLoadOptions();
+                        if (!opts) {
+                            opts = lsLoadOptions();
+                            console.log('[GANTT] localStorage fallback:', JSON.stringify(opts));
+                        }
 
+                        console.log('[GANTT] opts final utilisé:', JSON.stringify(opts));
                         const hasConfig = opts && (
                             opts.tableChefProjet || opts.tableOperations || opts.tablePhases
                         );
+                        console.log('[GANTT] hasConfig:', hasConfig,
+                            '| tableChefProjet:', opts?.tableChefProjet,
+                            '| tableOperations:', opts?.tableOperations,
+                            '| tablePhases:', opts?.tablePhases);
+
                         if (hasConfig) {
                             applyOptions(opts);
                             // Mettre à jour le cache local pour les appels suivants
                             lsSaveOptions(opts);
-                            console.log('[GANTT] après applyOptions initial, TABLE.phases=', TABLE.phases);
+                            console.log('[GANTT] après applyOptions initial, TABLE.responsableProjet=', TABLE.responsableProjet, 'TABLE.phases=', TABLE.phases);
                         }
                         // Débloquer onRecords dans tous les cas
                         resolveOptionsReady();
@@ -4419,13 +4442,16 @@
                     } else {
                         // Appel suivant (changement d'options en live ou après setOptions)
                         // Même stratégie : getOptions() si null, localStorage en dernier recours
+                        console.log('[GANTT] onOptions APPEL SUIVANT — gristOptions:', JSON.stringify(gristOptions));
                         let options = gristOptions;
                         if (!options) {
-                            try { options = await grist.getOptions(); } catch(e) {}
+                            try {
+                                options = await grist.getOptions();
+                                console.log('[GANTT] getOptions() fallback suivant:', JSON.stringify(options));
+                            } catch(e) {}
                         }
                         if (!options) options = lsLoadOptions();
-                        console.log('[GANTT] onOptions suivant — grist:', JSON.stringify(gristOptions),
-                                    '| retenu:', JSON.stringify(options));
+                        console.log('[GANTT] onOptions suivant — retenu:', JSON.stringify(options));
                         if (options) applyOptions(options);
                         await loadAllData();
                     }

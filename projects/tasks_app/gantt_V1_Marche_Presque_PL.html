@@ -201,39 +201,6 @@
 
         .filter-menu.open { display: flex; }
 
-        .filter-sort-section {
-            display: none;
-            flex-direction: column;
-            gap: 2px;
-            padding: 8px;
-            border-bottom: 2px solid var(--border);
-        }
-        .filter-sort-section.visible { display: flex; }
-        .filter-sort-title {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 4px;
-        }
-        .filter-sort-btn {
-            padding: 5px 10px;
-            font-size: 0.75rem;
-            text-align: left;
-            border: none;
-            border-radius: 4px;
-            background: transparent;
-            color: var(--text);
-            cursor: pointer;
-        }
-        .filter-sort-btn:hover { background: var(--hover); }
-        .filter-sort-btn.active {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-weight: 600;
-        }
-
         .filter-search {
             padding: 8px;
             border-bottom: 1px solid var(--border);
@@ -361,16 +328,13 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            overflow-y: hidden;
+            overflow: hidden;
         }
 
         .timeline-header-months {
             display: flex;
             background: var(--bg);
             border-bottom: 1px solid var(--border);
-            overflow: hidden;
-            flex-shrink: 0;
         }
 
         .month-cell {
@@ -380,13 +344,10 @@
             font-weight: 600;
             color: var(--text-muted);
             border-right: 1px solid var(--border);
-            flex-shrink: 0;
         }
 
         .timeline-header-days {
             display: flex;
-            overflow: hidden;
-            flex-shrink: 0;
         }
 
         .day-cell {
@@ -415,7 +376,7 @@
         .task-list {
             width: var(--task-list-width);
             min-width: var(--task-list-width);
-            overflow: hidden;
+            overflow-y: auto;
             border-right: 1px solid var(--border);
             background: var(--card-bg);
         }
@@ -487,6 +448,15 @@
             color: var(--text-muted);
         }
 
+        .task-progress-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-muted);
+            min-width: 36px;
+            text-align: center;
+        }
 
         /* === TIMELINE === */
         .timeline-body {
@@ -729,7 +699,48 @@
             color: var(--danger);
         }
 
-        
+        /* === LEGEND === */
+        .legend {
+            display: flex;
+            gap: 14px;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            font-size: 0.7rem;
+            align-items: center;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .legend-milestone {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            transform: rotate(45deg);
+        }
+
+        .legend-separator {
+            width: 1px;
+            height: 16px;
+            background: var(--border);
+        }
+
+        .legend-tip {
+            color: var(--text-muted);
+            font-style: italic;
+        }
 
         /* === TOOLTIP === */
         .tooltip {
@@ -925,34 +936,6 @@
         .alert-box.warning { background: #fef3c7; color: #92400e; }
         .alert-box.info { background: #dbeafe; color: #1e40af; }
 
-        /* Bandeau d'avertissement colonnes manquantes */
-        #missingColsBanner {
-            display: none;
-            align-items: center;
-            gap: 10px;
-            padding: 7px 14px;
-            background: #fef3c7;
-            color: #92400e;
-            border-bottom: 1px solid #fcd34d;
-            font-size: 0.78rem;
-            font-weight: 500;
-            z-index: 100;
-        }
-        #missingColsBanner.visible { display: flex; }
-        #missingColsBanner svg { flex-shrink: 0; }
-        #missingColsBanner .banner-msg { flex: 1; }
-        #missingColsBanner .banner-btn {
-            padding: 3px 10px;
-            background: #92400e;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        #missingColsBanner .banner-btn:hover { background: #78350f; }
-
         /* === PANNEAU DE DETAIL TACHE === */
         .detail-panel {
             position: fixed;
@@ -999,6 +982,23 @@
             gap: 8px;
             flex-shrink: 0;
         }
+        .status-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            opacity: 0.45;
+        }
+        .status-pill.active { opacity: 1; border-color: currentColor; }
+        .status-pill:hover { opacity: 0.8; }
+        .status-pill.s-todo       { background: #f1f5f9; color: #64748b; }
+        .status-pill.s-inprogress { background: #eff6ff; color: #3b82f6; }
+        .status-pill.s-review     { background: #fefce8; color: #ca8a04; }
+        .status-pill.s-done       { background: #f0fdf4; color: #16a34a; }
         .prog-slider-wrap { display: flex; align-items: center; gap: 10px; }
         .prog-slider-wrap input[type=range] { flex: 1; accent-color: var(--primary); }
         .prog-value { font-size: 0.8rem; font-weight: 700; min-width: 36px; text-align: right; }
@@ -1033,6 +1033,7 @@
         .panel-filter-widget {
             border: 1px solid var(--border);
             border-radius: 6px;
+            overflow: hidden;
             margin-top: 4px;
         }
         .panel-filter-search {
@@ -1047,10 +1048,8 @@
             outline: none;
         }
         .panel-filter-list {
-            height: 180px;
-            overflow-y: scroll;
-            border-top: 1px solid var(--border);
-            background: var(--card-bg);
+            max-height: 140px;
+            overflow-y: auto;
         }
         .panel-filter-item {
             display: flex;
@@ -1408,17 +1407,6 @@
     </style>
 </head>
 <body>
-    <!-- Bandeau d'avertissement : colonnes secondaires introuvables -->
-    <div id="missingColsBanner">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-        <span class="banner-msg" id="missingColsBannerMsg"></span>
-        <button class="banner-btn" onclick="openConfigPanel()">Reconfigurer</button>
-    </div>
-
     <div class="header">
         <div class="header-left">
             <h1>
@@ -1439,7 +1427,6 @@
                 <select id="sortSelect" onchange="changeSortMode(this.value)">
                     <option value="priority">Priorité</option>
                     <option value="date" selected>Date</option>
-                    <option value="titre">Titre</option>
                     <option value="manual">Manuel</option>
                 </select>
             </div>
@@ -1452,9 +1439,9 @@
             </div>
             <div class="view-controls">
                 <button class="btn" data-view="week" onclick="setView('week')">Sem</button>
-                <button class="btn" data-view="month" onclick="setView('month')">Mois</button>
+                <button class="btn active" data-view="month" onclick="setView('month')">Mois</button>
                 <button class="btn" data-view="sem6" onclick="setView('sem6')">Sem.</button>
-                <button class="btn active" data-view="year" onclick="setView('year')">1 An</button>
+                <button class="btn" data-view="year" onclick="setView('year')">1 An</button>
                 <button class="btn" data-view="three" onclick="setView('three')">3 Ans</button>
             </div>
             <div class="current-period-wrap">
@@ -1539,10 +1526,6 @@
                     <label>Statut</label>
                     <select id="cfg-colOpsStatut" data-group="ops"></select>
                 </div>
-                <div class="config-field">
-                    <label>Date réception</label>
-                    <select id="cfg-colOpsDateReception" data-group="ops"></select>
-                </div>
             </div>
 
             <!-- Table Phases / Catégories -->
@@ -1551,6 +1534,10 @@
                 <div class="config-field">
                     <label>Table</label>
                     <select id="cfg-tablePhases" onchange="onTableSelect(this, 'phases')"></select>
+                </div>
+                <div class="config-field">
+                    <label>Nom avec numéro (affiché sur le gantt)</label>
+                    <select id="cfg-colPhasesNomOrder" data-group="phases"></select>
                 </div>
                 <div class="config-field">
                     <label>Nom court</label>
@@ -1588,13 +1575,6 @@
                 <span id="filterProjectLabel">Projet ▾</span>
             </button>
             <div class="filter-menu" id="filterProjectMenu">
-                <div class="filter-sort-section" id="projSortSection">
-                    <div class="filter-sort-title">Trier par</div>
-                    <button class="filter-sort-btn" data-sort="nom-asc" onclick="changeProjSort('nom-asc')">A→Z Nom</button>
-                    <button class="filter-sort-btn" data-sort="nom-desc" onclick="changeProjSort('nom-desc')">Z→A Nom</button>
-                    <button class="filter-sort-btn" data-sort="dateReception-asc" onclick="changeProjSort('dateReception-asc')">Date réception ↑</button>
-                    <button class="filter-sort-btn active" data-sort="dateReception-desc" onclick="changeProjSort('dateReception-desc')">Date réception ↓</button>
-                </div>
                 <div class="filter-search"><input type="text" placeholder="Rechercher..." id="filterProjectSearch"></div>
                 <div class="filter-actions">
                     <button class="filter-action-btn" data-filter-action="all" data-filter-type="projects">Tout</button>
@@ -1641,12 +1621,21 @@
         <div id="compactView" style="display:none;flex:1;min-height:0;overflow-y:auto;overflow-x:auto;position:relative;"></div>
     </div>
 
-
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background: var(--danger)"></div>Critique</div>
+        <div class="legend-item"><div class="legend-color" style="background: var(--warning)"></div>Haute</div>
+        <div class="legend-item"><div class="legend-color" style="background: var(--info)"></div>Moyenne</div>
+        <div class="legend-item"><div class="legend-color" style="background: var(--text-muted)"></div>Basse</div>
+        <div class="legend-separator"></div>
+        <div class="legend-item"><div class="legend-milestone"></div>Jalon</div>
+        <div class="legend-separator"></div>
+        <span class="legend-tip">Glissez • Redimensionnez • Double-clic</span>
+    </div>
 
     <div class="tooltip" id="tooltip">
         <div class="tooltip-title"></div>
         <div class="tooltip-row"><span>Début:</span><span class="tooltip-start"></span></div>
-        <div class="tooltip-row"><span>Échéance <span style="opacity:0.6;font-size:0.85em">(exclu)</span>:</span><span class="tooltip-end"></span></div>
+        <div class="tooltip-row"><span>Échéance:</span><span class="tooltip-end"></span></div>
         <div class="tooltip-row tt-duree-row" style="display:none"><span>Durée:</span><span class="tooltip-duree"></span></div>
         <div class="tooltip-row"><span>Progression:</span><span class="tooltip-progress"></span></div>
     </div>
@@ -1679,7 +1668,7 @@
             <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
                 <div style="display:flex;flex-direction:column;gap:14px;">
                     <div class="field-group">
-                        <label>Catégorie de phase *</label>
+                        <label>Phase *</label>
                         <select id="create-titre"></select>
                     </div>
                     <div class="field-group" id="create-projet-wrap">
@@ -1696,9 +1685,23 @@
                             <input type="text" id="create-duree" placeholder="ex: 3m, 45j, 1a 6m" style="width:130px;">
                         </div>
                     </div>
-                    <div class="field-group">
-                        <label>Titre adapté <span style="font-weight:400;opacity:0.65;font-size:0.8em">(optionnel — remplace la catégorie dans l'affichage)</span></label>
-                        <input type="text" id="create-titreAdapte" placeholder="Laisser vide pour utiliser la catégorie" style="width:100%">
+                    <div class="date-fields">
+                        <div class="field-group">
+                            <label>Type</label>
+                            <select id="create-type" onchange="onCreateTypeChange(this.value)">
+                                <option value="tache">Tâche</option>
+                                <option value="jalon">Jalon ◆</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Statut</label>
+                            <select id="create-statut">
+                                <option value="todo">A faire</option>
+                                <option value="inprogress">En cours</option>
+                                <option value="review">En revue</option>
+                                <option value="done">Terminé</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="field-group">
                         <label>Responsables</label>
@@ -1732,12 +1735,6 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script>
         // ═══════════════════════════════════════════════════════════════════════
-        // VERSION
-        // ═══════════════════════════════════════════════════════════════════════
-        const WIDGET_VERSION = 'V36';
-        console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
-
-        // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION GRIST
         // Noms de tables et colonnes par défaut.
         // • Les colonnes Tasks sont mappables via le panneau "Colonnes" de Grist
@@ -1751,21 +1748,32 @@
             // Noms des tables Grist — défauts modifiables via Widget Options
             tables: {
                 tasks:      'Tasks',
-                responsableProjet: 'DPPI_User',
-                operations: 'DPPI_Operation',
-                phases:     'DPPI_Categorie_Phase'
+                responsableProjet: 'DPPI_Chef_Projet',
+                operations: 'DPPI_Operations',
+                phases:     'PL_Liste_Phases'
             },
             // Noms des colonnes par défaut (écrasés par le mappage Grist)
             columns: {
                 tasks: {
-                    titre:        'titre',        // Ref → DPPI_Categorie_Phase (catégorie)
-                    titreAdapte:  'titreAdapte',  // Titre personnalisé par opération (optionnel)
+                    // Noms LOGIQUES : correspondent exactement aux 'name' dans grist.ready columns.
+                    // fetchSelectedTable() retourne les données avec ces clés, quel que soit
+                    // le nom physique de la colonne dans Grist.
+                    titre:        'titre',
                     description:  'description',
                     dateDebut:    'dateDebut',
+                    dateEcheance: 'dateEcheance',
+                    priorite:     'priorite',
+                    statut:       'statut',
+                    progression:  'progression',
+                    projet:       'projet',
+                    assignees:    'assignees',
+                    type:         'type',
+                    dependDe:     'dependDe',
+                    tags:         'tags',
+                    estimationH:  'estimationH',
+                    tempsPasse:   'tempsPasse',
+                    couleur:      'couleur',
                     duree:        'duree',
-                    projet:       'projet',       // Ref → opération
-                    assignees:    'assignees',    // RefList → responsables
-                    dependDe:     'dependDe',     // RefList → prédécesseurs
                     dateDebutCalc:'dateDebutCalc',
                     dateFinCalc:  'dateFinCalc'
                 },
@@ -1777,16 +1785,16 @@
                     actif:    'Actif'
                 },
                 operations: {
-                    nom:            'Nom_Ope',     // Nom de l'opération
-                    numOpe:         'Num_Ope',
-                    statut:         'Statut_Ope',
-                    exercice:       'Exercice',
-                    dateReception:  'Date_Reception'
+                    nom:     'Nom_Ope',     // Nom de l'opération
+                    numOpe:  'Num_Ope',
+                    statut:  'Statut_Ope',
+                    exercice:'Exercice'
                 },
                 phases: {
                     nom:      'Nom',        // Nom court
+                    nomOrder: 'Nom_Order',  // Nom complet avec numéro (ex: "103 - Programme")
                     couleur:  'Couleur',    // Couleur hex de la catégorie
-                    numOrder: 'Num_Order'   // Numéro pour le tri (ex: 103)
+                    numOrder: 'Num_Order'   // Numéro pour le tri
                 }
             }
         };
@@ -1806,18 +1814,12 @@
         let TABLE = { ...GRIST_CONFIG.tables };
 
         // Données des tables secondaires chargées en mémoire
-        let phases = [];  // DPPI_Categorie_Phase
+        let phases = [];  // PL_Liste_Phases
 
         // Résolution des Refs Grist
         // fetchTable() retourne l'ID numérique pour les colonnes Ref.
         // Ces fonctions font la résolution ID → valeur affichable.
-        const resolvePhaseNom      = (id) => {
-            const p = phases.find(x => x.id === id);
-            if (!p) return String(id || '');
-            const num = p[COL_PHASES.numOrder];
-            const nom = p[COL_PHASES.nom] || '';
-            return num ? `${num} - ${nom}` : nom;
-        };
+        const resolvePhaseNom      = (id) => phases.find(x => x.id === id)?.[COL_PHASES.nomOrder] || String(id || '');
 
         // Retourne true si la tâche a au moins un prédécesseur (dependDe non vide)
         function hasPredecesseurs(t) {
@@ -1839,12 +1841,6 @@
         function getEffectiveEnd(t) {
             if (t[COL.dateFinCalc]) return gristToDate(t[COL.dateFinCalc]);
             return gristToDate(t[COL.dateEcheance]);
-        }
-
-        // Date de fin pour l'affichage : fin exclusive → -1 jour pour montrer le vrai dernier jour
-        function getDisplayEnd(t) {
-            const d = getEffectiveEnd(t);
-            return d ? addDays(d, -1) : null;
         }
         const resolvePhaseNomCourt = (id) => phases.find(x => x.id === id)?.[COL_PHASES.nom]      || resolvePhaseNom(id);
         const resolvePhaseCouleur = (id) => phases.find(x => x.id === id)?.[COL_PHASES.couleur]  || null;
@@ -1887,22 +1883,19 @@
         // STATE
         // ═══════════════════════════════════════════════════════════════════════
         let gristReady = false;
-        let _mainTableId = null; // Vrai ID Grist de la table principale (mis à jour par onRecords)
         let tasks = [];
-        let team = [];      // DPPI_User
-        let projects = [];  // DPPI_Operation
+        let team = [];      // DPPI_Chef_Projet
+        let projects = [];  // DPPI_Operations
 
         // Modes de layout : 'multi' (défaut), 'compact', 'single'
         let layoutMode = 'compact';
         // En mode 'single' : ID de l'opération sélectionnée (null = toutes)
         let selectedProjectId = null;
-        let currentView = 'year';
+        let currentView = 'month';
         let viewStartDate = new Date();
         let selectedTaskId = null;
         let lastRenderedRows = null; // dernière allRows passée à renderTimeline
         let sortMode = 'date';
-        let projSortMode = 'dateReception';   // 'nom' | 'dateReception'
-        let projSortDir  = 'desc';             // 'asc' | 'desc'
         let sortableInstance = null;
         let filters = { projects: null, assignees: null }; // null=tout, []=aucun, [ids]=filtre
 
@@ -1924,50 +1917,25 @@
 
         // Parse une saisie libre de durée → jours
         // Ex: "3,5 ans" → 1278, "18 mois" → 547, "2a 3m" → 821
-        // Analyse la saisie et retourne un objet {ans, mois, sem, j} ou null.
-        function parseDureeComponents(str) {
-            if (!str) return null;
-            str = str.toString().trim().replace(',', '.').toLowerCase();
-            if (/^\d+$/.test(str)) return { ans: 0, mois: 0, sem: 0, j: parseInt(str) };
-            var s = str, matched = false;
-            var comp = { ans: 0, mois: 0, sem: 0, j: 0 };
-            var patterns = [
-                { key: 'ans',  re: /(\d+(?:\.\d+)?)\s*(?:ans?|ann.es?|years?)/i },
-                { key: 'mois', re: /(\d+(?:\.\d+)?)\s*(?:mois|months?|mo)/i },
-                { key: 'sem',  re: /(\d+(?:\.\d+)?)\s*(?:sem(?:aines?)?|weeks?|w)/i },
-                { key: 'j',    re: /(\d+(?:\.\d+)?)\s*(?:jours?|days?|j|d)(?!\w)/i },
-            ];
-            patterns.forEach(function(p) {
-                var m = s.match(p.re);
-                if (m) { comp[p.key] = Math.round(parseFloat(m[1])); s = s.replace(m[0], ' '); matched = true; }
-            });
-            return matched ? comp : null;
-        }
-
-        // Calcule la durée en jours calendaires depuis une date de début.
-        // Mois et années → mois calendaires exacts (setMonth/setFullYear).
-        // Semaines et jours → jours fixes.
-        // dateDebut : objet Date. Si null, fallback jours fixes (mois=30, an=365).
-        function parseDureeEnJours(str, dateDebut) {
-            if (!str) return null;
-            str = str.toString().trim().replace(',', '.').toLowerCase();
-            if (/^\d+$/.test(str)) { var n = parseInt(str); return n >= 0 ? n : null; }
-            var comp = parseDureeComponents(str);
-            if (!comp) return null;
-            if (!dateDebut) {
-                return Math.max(0, comp.ans * 365 + comp.mois * 30 + comp.sem * 7 + comp.j);
-            }
-            var fin = new Date(dateDebut);
-            if (comp.ans)  fin.setFullYear(fin.getFullYear() + comp.ans);
-            if (comp.mois) fin.setMonth(fin.getMonth() + comp.mois);
-            fin.setDate(fin.getDate() + comp.sem * 7 + comp.j);
-            return Math.max(0, Math.round((fin.getTime() - dateDebut.getTime()) / 86400000));
-        }
-
-        // Rétrocompatibilité — sans date de référence (fallback jours fixes).
         function parseDureeInput(str) {
             if (!str) return null;
-            return parseDureeEnJours(str, null);
+            str = str.toString().trim().replace(',', '.').toLowerCase();
+            // Essai direct : nombre seul → jours
+            if (/^\d+(\.\d+)?$/.test(str)) return Math.round(parseFloat(str));
+            let jours = 0;
+            // Patterns : (nombre)(unité)
+            const patterns = [
+                { re: /(\d+(?:\.\d+)?)\s*(?:a(?:n(?:s|née?s?)?)?|y(?:ears?)?)/, mult: 365 },
+                { re: /(\d+(?:\.\d+)?)\s*(?:m(?:ois|o(?:nths?)?)?)/, mult: 30 },
+                { re: /(\d+(?:\.\d+)?)\s*(?:s(?:em(?:aines?)?|em)?|w(?:eeks?)?)/, mult: 7 },
+                { re: /(\d+(?:\.\d+)?)\s*(?:j(?:ours?)?|d(?:ays?)?)/, mult: 1 },
+            ];
+            let matched = false;
+            patterns.forEach(({ re, mult }) => {
+                const m = str.match(re);
+                if (m) { jours += Math.round(parseFloat(m[1]) * mult); matched = true; }
+            });
+            return matched ? Math.max(1, jours) : null;
         }
 
         // Formate des jours en texte lisible : "1a 6m", "3m 2s", "5j"
@@ -2003,45 +1971,12 @@
             // N'afficher que les 2 premières unités significatives
             return parts.slice(0, 2).join(' ');
         }
-        // Formate des jours en texte, en tenant compte de la date de début
-        // pour exprimer les mois calendaires exacts avec aller-retour stable.
-        function formatDureeTexteFromDate(jours, dateDebut) {
-            if (jours === 0) return '0 j (jalon)';
-            if (!jours || jours < 0) return '';
-            if (!dateDebut) return formatDureeTexte(jours);
-            var fin = new Date(dateDebut);
-            fin.setDate(fin.getDate() + jours);
-            var ans = fin.getFullYear() - dateDebut.getFullYear();
-            var mois = fin.getMonth() - dateDebut.getMonth();
-            if (mois < 0) { ans--; mois += 12; }
-            // Calcul de l'intermédiaire après soustraction des mois entiers
-            var inter = new Date(dateDebut);
-            if (ans)  inter.setFullYear(inter.getFullYear() + ans);
-            if (mois) inter.setMonth(inter.getMonth() + mois);
-            var restJ = Math.round((fin - inter) / 86400000);
-            // Si restJ < 0 : la fin est avant le même jour du mois → 1 mois de trop
-            if (restJ < 0) {
-                mois--;
-                if (mois < 0) { ans--; mois = 11; }
-                var inter2 = new Date(dateDebut);
-                if (ans)  inter2.setFullYear(inter2.getFullYear() + ans);
-                if (mois) inter2.setMonth(inter2.getMonth() + mois);
-                restJ = Math.round((fin - inter2) / 86400000);
-            }
-            var sem = Math.floor(restJ / 7), j = restJ % 7, parts = [];
-            if (ans  > 0) parts.push(ans  + ' an'  + (ans  > 1 ? 's' : ''));
-            if (mois > 0) parts.push(mois + ' mois');
-            if (sem  > 0) parts.push(sem  + ' sem');
-            if (j    > 0) parts.push(j    + ' j');
-            return parts.length ? parts.join(' ') : '0 j';
-        }
-
-                const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+        const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
         const isSameDay = (a, b) => a.toDateString() === b.toDateString();
         const getDaysDiff = (a, b) => Math.round((b - a) / 86400000);
         const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
         const getTaskPriority = (t) => { const p = Number(t?.[COL.priorite]); return (p >= 1 && p <= 4) ? p : 3; };
-        const isJalon = (t) => t?.[COL.duree] === 0 || (getEffectiveStart(t) && getEffectiveEnd(t) && getEffectiveStart(t).toDateString() === getEffectiveEnd(t).toDateString());
+        const isJalon = (t) => t?.[COL.type] === 'jalon' || t?.[COL.duree] === 0 || (getEffectiveStart(t)?.toDateString() === getEffectiveEnd(t)?.toDateString());
 
         function getAssigneesArray(t) {
             const val = t?.[COL.assignees];
@@ -2052,46 +1987,31 @@
 
         function getInitials(n) { return n ? n.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) : '?'; }
 
-        // Résolution du titre d'une tâche : la colonne titre est une Ref vers DPPI_Categorie_Phase.
+        // Résolution du titre d'une tâche : la colonne titre est une Ref vers PL_Liste_Phases.
         // Nom court (Nom) — pour les barres, tooltip, menu contextuel
-        // Résolution du titre affiché d'une tâche.
-        // titreAdapte (colonne Tasks) est prioritaire sur la Ref vers phases.
-        function _resolveBaseTitre(t) {
-            // titreAdapte non vide → utilisé tel quel
-            const adapte = t[COL.titreAdapte];
-            if (adapte && String(adapte).trim()) return { court: String(adapte).trim(), fromPhase: false };
-            // Sinon : Ref vers phases
-            const val = t[COL.titre];
-            if (!val) return { court: '', fromPhase: false };
-            if (typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val))) {
-                return { court: resolvePhaseNomCourt(Number(val)), fromPhase: true, phaseId: Number(val) };
-            }
-            return { court: String(val), fromPhase: false };
-        }
-
-        // Titre court : affiché dans les barres Gantt
         function getTaskTitre(t) {
-            return _resolveBaseTitre(t).court;
-        }
-
-        // Titre long avec numéro : affiché dans la liste gauche
-        function getTaskTitreOrder(t) {
-            const { court, fromPhase, phaseId } = _resolveBaseTitre(t);
-            if (fromPhase && phaseId) return resolvePhaseNom(phaseId);
-            // titreAdapte défini : préfixer avec Num_Order de la phase associée si disponible
-            const pid = t._phaseId;
-            if (pid) {
-                const phase = phases.find(p => p.id === pid);
-                const num = phase?.[COL_PHASES.numOrder];
-                if (num) return `${num} - ${court}`;
+            const val = t[COL.titre];
+            if (!val) return '';
+            if (typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val))) {
+                return resolvePhaseNomCourt(Number(val));
             }
-            return court;
+            return String(val);
         }
 
-        // Couleur de la barre : issue de DPPI_Categorie_Phase via la Ref titre,
+        // Nom long avec numéro (Nom_Order) — pour la liste gauche et le tri
+        function getTaskTitreOrder(t) {
+            const val = t[COL.titre];
+            if (!val) return '';
+            if (typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val))) {
+                return resolvePhaseNom(Number(val));
+            }
+            return String(val);
+        }
+
+        // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
         // ou de la colonne couleur directe si présente.
         function getTaskCouleur(t) {
-            // La couleur vient de DPPI_Categorie_Phase via la Ref titre → DPPI_Categorie_Phase.Couleur
+            // La couleur vient de PL_Liste_Phases via la Ref titre → PL_Liste_Phases.Couleur
             const phaseId = t._phaseId ?? (() => {
                 const val = t[COL.titre];
                 return (typeof val === 'number') ? val :
@@ -2100,7 +2020,7 @@
             return phaseId ? (resolvePhaseCouleur(phaseId) || null) : null;
         }
 
-        // Résolution du nom du projet (DPPI_Operation)
+        // Résolution du nom du projet (DPPI_Operations)
         function getTaskProjetNom(t) {
             const val = t[COL.projet];
             if (!val) return '';
@@ -2110,7 +2030,7 @@
             return String(val);
         }
 
-        // Résolution des noms des responsables (RefList → DPPI_User)
+        // Résolution des noms des responsables (RefList → DPPI_Chef_Projet)
         function getTaskAssigneesNoms(t) {
             return getAssigneesArray(t).map(id => resolveResponsableNom(id, team)).filter(Boolean);
         }
@@ -2293,20 +2213,8 @@
         // ═══════════════════════════════════════════════════════════════════════
         function changeSortMode(mode) {
             sortMode = mode;
-            const labels = { priority: 'Par priorité', date: 'Par date', titre: 'Par titre', manual: 'Manuel' };
-            document.getElementById('sortInfo').textContent = labels[mode] || mode;
+            document.getElementById('sortInfo').textContent = mode === 'priority' ? 'Par priorité' : mode === 'date' ? 'Par date' : 'Manuel';
             sortTasks();
-            render();
-        }
-
-        function changeProjSort(value) {
-            const [mode, dir] = value.split('-');
-            projSortMode = mode;
-            projSortDir  = dir;
-            // Mettre à jour le bouton actif
-            document.querySelectorAll('#projSortSection .filter-sort-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.sort === value);
-            });
             render();
         }
 
@@ -2318,25 +2226,11 @@
                 });
             } else if (sortMode === 'date') {
                 tasks.sort((a, b) => { const sa = getEffectiveStart(a); const sb = getEffectiveStart(b); return (sa?.getTime()||0) - (sb?.getTime()||0); });
-            } else if (sortMode === 'titre') {
-                tasks.sort((a, b) => getTaskTitreOrder(a).localeCompare(getTaskTitreOrder(b), 'fr', { sensitivity: 'base' }));
             }
         }
 
-        function sortProjects(projList) {
-            return [...projList].sort((a, b) => {
-                let va, vb;
-                if (projSortMode === 'dateReception') {
-                    va = a[COL_OPS.dateReception] || 0;
-                    vb = b[COL_OPS.dateReception] || 0;
-                } else {
-                    va = (a[COL_OPS.nom] || '').toLowerCase();
-                    vb = (b[COL_OPS.nom] || '').toLowerCase();
-                }
-                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-                return projSortDir === 'desc' ? -cmp : cmp;
-            });
-        }
+        // ═══════════════════════════════════════════════════════════════════════
+        // FILTERS
         // ═══════════════════════════════════════════════════════════════════════
         function loadFilters() {
             try {
@@ -2539,10 +2433,10 @@
                 if (!byProj[pid]) byProj[pid] = [];
                 byProj[pid].push(t);
             });
-            // Ordre : projets triés selon projSortMode/projSortDir, puis orphelins
+            // Ordre : projets dans l'ordre de la liste projects, puis orphelins
             const rows = [];
             const seen = new Set();
-            sortProjects(projects).forEach(proj => {
+            projects.forEach(proj => {
                 const pid = String(proj.id);
                 if (byProj[pid] && byProj[pid].length) {
                     rows.push({ type: 'header', projNom: proj[COL_OPS.nom], projId: proj.id });
@@ -2599,13 +2493,9 @@
                 filters.assignees = null;
             }
 
-            // Tri tâches : visible en multi et single, masqué en compact
+            // Tri visible seulement en mode multi/single
             const sortWrap = document.getElementById('sortSelectorWrap');
             if (sortWrap) sortWrap.style.display = isCompact ? 'none' : '';
-
-            // Section tri opérations dans le menu Projet : visible en compact et single
-            const projSortSection = document.getElementById('projSortSection');
-            if (projSortSection) projSortSection.classList.toggle('visible', isCompact || mode === 'single');
 
             // Label liste gauche
             const lbl = document.getElementById('listHeaderLabel');
@@ -2760,7 +2650,7 @@
                             ${projetNom ? `<div class="task-projet">${escapeHtml(projetNom)}</div>` : ''}
                             <div class="task-dates">${formatDateShort(tStart)} → ${formatDateShort(tEnd)}</div>
                         </div>
-
+                        <span class="task-progress-badge">${t[COL.progression] || 0}%</span>
                     </div>`;
                 }
             });
@@ -2829,7 +2719,6 @@
                 const pts = filteredTasks.filter(t => t[COL.projet] == p.id);
                 if (pts.length) { tasksByProject[p.id] = pts; projectsWithTasks.push(p); }
             });
-            const sortedProjectsWithTasks = sortProjects(projectsWithTasks);
             const orphans = filteredTasks.filter(t => !t[COL.projet]);
 
             // Helper cellules de fond
@@ -2861,7 +2750,7 @@
                     const e0 = getDaysDiff(start, tEnd);
                     if (e0 < 0 || s0 > totalDays) return;
                     const left  = Math.max(0, s0) * pxPerDay;
-                    const right = Math.min(e0, totalDays) * pxPerDay;
+                    const right = Math.min(e0 + 1, totalDays) * pxPerDay;
                     const width = Math.max(right - left, 4);
                     const colour = getTaskCouleur(t) || 'var(--primary)';
                     const titre  = escapeHtml(getTaskTitre(t));
@@ -2870,17 +2759,17 @@
                         // colour est déjà calculé correctement via getTaskCouleur(t) juste au-dessus
                         bars += `<div title="${titre}" onclick="showDetailPanel(${t.id})"
                             onmouseenter="showTooltip(event)" onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)"
-                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(tStart)}" data-duree="${t[COL.duree]||0}"
+                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(tStart)}" data-progress="${t[COL.progression]||0}" data-duree="${t[COL.duree]||0}"
                             style="position:absolute;left:${left}px;top:50%;transform:translateY(-50%) rotate(45deg);
                             width:12px;height:12px;background:${colour};cursor:pointer;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`;
                     } else {
-                        const dureeStrC = formatDureeTexteFromDate(t[COL.duree], tStart);
+                        const dureeStrC = formatDureeBar(t[COL.duree]);
                         // Compact : nom+durée si ≥100px, nom seul si ≥30px, rien si < 30px
                         const cLabel = width < 30 ? '' :
                                        (dureeStrC && width >= 100) ? titre + ' - ' + dureeStrC : titre;
                         bars += `<div class="compact-bar" onclick="showDetailPanel(${t.id})"
                             onmouseenter="showTooltip(event)" onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)"
-                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(getEffectiveEnd(t))}" data-duree="${t[COL.duree]||0}"
+                            data-title="${titre}" data-start="${formatDateShort(tStart)}" data-end="${formatDateShort(tEnd)}" data-progress="${t[COL.progression] || 0}" data-duree="${t[COL.duree]||0}"
                             style="left:${left}px;width:${width}px;background:${colour};">
                             <div class="compact-bar-label">${escapeHtml(cLabel)}</div>
                         </div>`;
@@ -2935,7 +2824,7 @@
 
             // ── Construire les lignes ─────────────────────────────────────────────
             let rowsHtml = '';
-            sortedProjectsWithTasks.forEach(proj => {
+            projectsWithTasks.forEach(proj => {
                 const pts = tasksByProject[proj.id];
                 rowsHtml += `
                 <div style="display:flex;height:${ROW_H}px;border-bottom:1px solid var(--border);">
@@ -3070,13 +2959,13 @@
                     }
                 } else {
                     let left = visStart * pxPerDay;
-                    let width = (visEnd - visStart) * pxPerDay;
+                    let width = (visEnd - visStart + 1) * pxPerDay;
                     if (width < 4) width = 4;
 
                     const prog = t[COL.progression] || 0;
                     const dStart = formatDateBar(taskStart);
-                    const dEnd   = formatDateBar(getDisplayEnd(t));
-                    const dureeStr = formatDureeTexteFromDate(t[COL.duree], taskStart);
+                    const dEnd   = formatDateBar(taskEnd);
+                    const dureeStr = formatDureeBar(t[COL.duree]);
                     // Décision d'affichage selon largeur
                     let barInner;
                     if (width >= 120 && dureeStr) {
@@ -3098,7 +2987,7 @@
                     }
                     html += `
                         <div class="gantt-bar p${p}${sel}" style="left: ${left}px; width: ${width}px; top: ${top}px; ${barStyle}" 
-                             data-id="${t.id}" data-title="${titre}" data-start="${formatDate(taskStart)}" data-end="${formatDate(getEffectiveEnd(t))}" data-duree="${t[COL.duree]||0}">
+                             data-id="${t.id}" data-title="${titre}" data-start="${formatDate(taskStart)}" data-end="${formatDate(taskEnd)}" data-progress="${prog}" data-duree="${t[COL.duree]||0}">
                             <div class="resize-handle left" data-resize="left"></div>
                             <div class="gantt-bar-progress" style="width: ${prog}%"></div>
                             ${barInner}
@@ -3182,7 +3071,7 @@
                     const taskStart = getEffectiveStart(t);
                     if (!depEnd || !taskStart) return;
 
-                    const x1 = getDaysDiff(start, depEnd) * pxPerDay;
+                    const x1 = (getDaysDiff(start, depEnd) + 1) * pxPerDay;
                     const y1 = depIdx * ROW_H + 22;
                     const x2 = getDaysDiff(start, taskStart) * pxPerDay;
                     const y2 = (rowIndexOf[t.id] ?? i) * ROW_H + 22;
@@ -3211,12 +3100,6 @@
                 taskList.scrollTop = body.scrollTop;
             };
 
-            // Rediriger le scroll molette sur la task-list vers le timelineBody
-            taskList.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                body.scrollTop += e.deltaY;
-            }, { passive: false });
-
             // Clic sur zone vide du Gantt → fermer le panneau de détail
             body.addEventListener('click', (e) => {
                 if (e.target.classList.contains('grid-cell') || e.target.classList.contains('grid-row')) {
@@ -3238,18 +3121,7 @@
             const dureeRow = tt.querySelector('.tt-duree-row');
             const dureeVal = bar.dataset.duree;
             if (dureeVal && dureeVal !== '0') {
-                // Reconstruire la date de début depuis le dataset pour le formatage calendaire
-                var _ttStart = null;
-                try {
-                    var _s = bar.dataset.start; // format dd/mm/yyyy ou similaire
-                    // Essayer de parser depuis dateDebutCalc si disponible via data-id
-                    var _tid = parseInt(bar.dataset.id);
-                    if (_tid) {
-                        var _tt = tasks.find(function(x) { return x.id === _tid; });
-                        if (_tt) _ttStart = getEffectiveStart(_tt);
-                    }
-                } catch(e) {}
-                tt.querySelector('.tooltip-duree').textContent = formatDureeTexteFromDate(parseInt(dureeVal), _ttStart);
+                tt.querySelector('.tooltip-duree').textContent = formatDureeTexte(parseInt(dureeVal));
                 dureeRow.style.display = '';
             } else {
                 dureeRow.style.display = 'none';
@@ -3281,89 +3153,91 @@
 
             const start = gristToDate(task[COL.dateDebut]);
             const end   = gristToDate(task[COL.dateEcheance]);
+            const progress = task[COL.progression] || 0;
+            const statut   = task[COL.statut] || 'todo';
             const taskDependDe = task[COL.dependDe];
             const today = new Date();
 
             document.getElementById('dp-titre').textContent = getTaskTitre(task);
             document.getElementById('dp-projet').textContent = getTaskProjetNom(task);
 
-            // Alerte retard (basée sur la date de fin)
+            // Alerte retard
             let retardHtml = '';
-            const today2 = new Date(); today2.setHours(0,0,0,0);
-            if (end && end < today2) {
-                const d = getDaysDiff(end, today2);
+            if (end && end < today && progress < 100) {
+                const d = getDaysDiff(end, today);
                 retardHtml = `<div class="retard-badge">⚠️ En retard de ${d} jour${d > 1 ? 's' : ''}</div>`;
             }
 
-            function _normIds(val) {
-                if (!val) return [];
-                if (Array.isArray(val)) {
-                    var arr = (val[0] === 'L') ? val.slice(1) : val;
-                    return arr.map(function(x){return parseInt(x);}).filter(function(x){return !isNaN(x);});
-                }
-                if (typeof val === 'number' && !isNaN(val)) return [val];
-                if (typeof val === 'string') { var n=parseInt(val); return isNaN(n)?[]:[n]; }
-                return [];
-            }
+            // Dépendances
+            const depIds = !taskDependDe ? [] :
+                Array.isArray(taskDependDe) ? (taskDependDe[0] === 'L' ? taskDependDe.slice(1) : taskDependDe) : [taskDependDe];
+            const dependents = tasks.filter(t => {
+                const dd = t[COL.dependDe];
+                if (!dd) return false;
+                const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                return ids.includes(task.id);
+            });
 
-            var taskId_int = parseInt(task.id);
-            var depIds = _normIds(taskDependDe);
-
-            var successorIds = new Set();
-            function collectSuccessors(id) {
-                tasks.forEach(function(t) {
-                    if (successorIds.has(parseInt(t.id))) return;
-                    if (_normIds(t[COL.dependDe]).indexOf(id) !== -1) {
-                        successorIds.add(parseInt(t.id));
-                        collectSuccessors(parseInt(t.id));
+            // Liste des tâches pouvant être prédécesseurs (toutes sauf cette tâche et ses successeurs)
+            const successorIds = new Set();
+            const collectSuccessors = (id) => {
+                tasks.forEach(t => {
+                    const dd = t[COL.dependDe];
+                    if (!dd) return;
+                    const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                    if (ids.includes(id) && !successorIds.has(t.id)) {
+                        successorIds.add(t.id);
+                        collectSuccessors(t.id);
                     }
                 });
-            }
-            collectSuccessors(taskId_int);
+            };
+            collectSuccessors(task.id);
 
-            var dependents = tasks.filter(function(t) {
-                return _normIds(t[COL.dependDe]).indexOf(taskId_int) !== -1;
-            });
-
-            var candidats = tasks.filter(function(t) {
-                var tid = parseInt(t.id);
-                return tid !== taskId_int && !successorIds.has(tid) && depIds.indexOf(tid) === -1;
-            });
+            const candidats = tasks.filter(t =>
+                t.id !== task.id &&                          // pas elle-même
+                String(t[COL.projet]) === String(task[COL.projet]) && // même projet
+                !successorIds.has(t.id) &&                  // pas un successeur
+                !depIds.includes(t.id)                      // pas déjà prédécesseur
+            );
 
             // Prédécesseurs — widget filtre avec recherche + cases cochées
             // candidats déjà triés par projet, on les affiche tous cochables
             const allPredCandidats = [...candidats];
             // Ajouter les déjà-prédécesseurs en tête (cochés)
-            var allPredItems = [
-                ...depIds.map(function(id) {
-                    return tasks.find(function(t) { return parseInt(t.id) === id; });
-                }).filter(Boolean),
+            const allPredItems = [
+                ...depIds.map(id => tasks.find(t => t.id === id)).filter(Boolean),
                 ...allPredCandidats
             ];
 
-            var predItemsHtml = allPredItems.map(function(pt) {
-                var chk = depIds.indexOf(parseInt(pt.id)) !== -1 ? ' checked' : '';
-                return '<label class="panel-filter-item" data-pred-id="' + pt.id +
-                    '" data-pred-nom="' + escapeHtml(getTaskTitreOrder(pt)).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + pt.id + '"' + chk + '>' +
-                    escapeHtml(getTaskTitreOrder(pt)) + '</label>';
-            }).join('');
+            const predsWidgetHtml = `<div class="panel-filter-widget" id="dp-pred-widget">
+                <input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-pred-list">
+                    ${allPredItems.map(t => {
+                        const checked = depIds.includes(t.id);
+                        return `<label class="panel-filter-item" data-pred-id="${t.id}" data-pred-nom="${escapeHtml(getTaskTitreOrder(t)).toLowerCase()}">
+                            <input type="checkbox" value="${t.id}" ${checked ? 'checked' : ''}>
+                            ${escapeHtml(getTaskTitreOrder(t))}
+                        </label>`;
+                    }).join('')}
+                </div>
+            </div>`;
 
-            var predsWidgetHtml = allPredItems.length
-                ? '<div class="panel-filter-widget" id="dp-pred-widget">' +
-                    '<input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">' +
-                    '<div class="panel-filter-list" id="dp-pred-list">' + predItemsHtml + '</div></div>'
-                : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>';
+            // Successeurs (lecture seule)
+            const succsHtml = dependents.map(dep =>
+                `<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ${escapeHtml(getTaskTitre(dep))}</div>`
+            ).join('');
 
-            var succsHtml = dependents.map(function(dep) {
-                return '<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ' +
-                    escapeHtml(getTaskTitre(dep)) + '</div>';
-            }).join('');
+            let depsHtml = `<div class="panel-section-title">Prédécesseurs</div>
+                ${allPredItems.length ? predsWidgetHtml : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>'}
+                ${succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div><div class="assignee-list">'+succsHtml+'</div>' : ''}`;
 
-            var depsHtml = '<div class="panel-section-title">Prédécesseurs</div>' +
-                predsWidgetHtml +
-                (succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div>' +
-                    '<div class="assignee-list">' + succsHtml + '</div>' : '');
+            // Statut labels
+            const statuts = [
+                { v: 'todo',       l: 'A faire',  cls: 's-todo' },
+                { v: 'inprogress', l: 'En cours', cls: 's-inprogress' },
+                { v: 'review',     l: 'En revue', cls: 's-review' },
+                { v: 'done',       l: 'Termine',  cls: 's-done' }
+            ];
 
             // Assignés — widget filtre avec recherche, actifs d'abord
             const assigneeIds = getAssigneesArray(task);
@@ -3373,53 +3247,42 @@
                 if (aActif !== bActif) return aActif ? -1 : 1;
                 return String(a[COL_CHEF.nom]).localeCompare(String(b[COL_CHEF.nom]));
             });
-            var chefItemsHtml = teamSorted.map(function(m) {
-                var actif = m[COL_CHEF.actif] !== false;
-                var chk = assigneeIds.includes(m.id) ? ' checked' : '';
-                var cls = 'panel-filter-item' + (actif ? '' : ' inactive');
-                return '<label class="' + cls + '" data-responsable-id="' + m.id +
-                    '" data-responsable-nom="' + escapeHtml(m[COL_CHEF.nom]).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + m.id + '"' + chk + '>' +
-                    escapeHtml(m[COL_CHEF.nom]) + (actif ? '' : ' (inactif)') + '</label>';
-            }).join('');
-            var assigneesHtml = '<div class="panel-filter-widget" id="dp-chef-widget">' +
-                '<input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">' +
-                '<div class="panel-filter-list" id="dp-chef-list">' + chefItemsHtml + '</div></div>';
+            const assigneesHtml = `<div class="panel-filter-widget" id="dp-chef-widget">
+                <input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-chef-list">
+                    ${teamSorted.map(m => {
+                        const actif = m[COL_CHEF.actif] !== false;
+                        const checked = assigneeIds.includes(m.id);
+                        return `<label class="panel-filter-item${actif ? '' : ' inactive'}" data-responsable-id="${m.id}" data-responsable-nom="${escapeHtml(m[COL_CHEF.nom]).toLowerCase()}">
+                            <input type="checkbox" value="${m.id}" ${checked ? 'checked' : ''}>
+                            ${escapeHtml(m[COL_CHEF.nom])}${actif ? '' : ' (inactif)'}
+                        </label>`;
+                    }).join('')}
+                </div>
+            </div>`;
 
             const toDateInput = (d) => d ? d.toISOString().slice(0, 10) : '';
             const hasPreds = hasPredecesseurs(task);
 
-            // Catégorie (phase) courante
-            const currentPhaseId = (() => {
-                const val = task[COL.titre];
-                if (typeof val === 'number') return val;
-                if (typeof val === 'string' && /^\d+$/.test(val)) return Number(val);
-                return null;
-            })();
-            const phasesSorted = [...phases].sort((a,b) => (a[COL_PHASES.numOrder]||0)-(b[COL_PHASES.numOrder]||0));
-            const phaseOpts = '<option value="">— Choisir une catégorie —</option>' +
-                phasesSorted.map(function(p) {
-                    const sel = p.id === currentPhaseId ? ' selected' : '';
-                    return '<option value="' + p.id + '"' + sel + '>' + escapeHtml(resolvePhaseNom(p.id)) + '</option>';
-                }).join('');
-            const phaseSelectHtml = '<select id="dp-phase" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;">' + phaseOpts + '</select>';
-            const titreAdapteVal = task[COL.titreAdapte] ? String(task[COL.titreAdapte]).trim() : '';
-
             document.getElementById('dp-body').innerHTML = `
                 ${retardHtml}
 
-                <div class="field-group" style="margin-bottom:0">
-                    <label style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;display:block;">Catégorie de phase</label>
-                    ${phaseSelectHtml}
+                <div>
+                    <div class="panel-section-title">Statut</div>
+                    <div class="status-pills">
+                        ${statuts.map(s => `<div class="status-pill ${s.cls} ${statut === s.v ? 'active' : ''}"
+                            onclick="setTaskStatut(${task.id}, '${s.v}', this)">${s.l}</div>`).join('')}
+                    </div>
                 </div>
 
-                <div class="field-group" style="margin-bottom:0">
-                    <label style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;display:block;">
-                        Titre adapté <span style="font-weight:400;opacity:0.65">(optionnel — remplace la catégorie dans l'affichage)</span>
-                    </label>
-                    <input type="text" id="dp-titreAdapte" value="${escapeHtml(titreAdapteVal)}"
-                        placeholder="Laisser vide pour utiliser la catégorie"
-                        style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;">
+                <div>
+                    <div class="panel-section-title">Progression</div>
+                    <div class="prog-slider-wrap">
+                        <input type="range" min="0" max="100" step="5" value="${progress}"
+                            id="dp-prog-slider"
+                            oninput="document.getElementById('dp-prog-val').textContent=this.value+'%'">
+                        <span class="prog-value" id="dp-prog-val">${progress}%</span>
+                    </div>
                 </div>
 
                 <div class="date-fields">
@@ -3436,13 +3299,13 @@
                     <div class="field-group">
                         <label>Durée</label>
                         <input type="text" id="dp-duree" placeholder="ex: 3m, 1a 6m, 45j"
-                            value="${formatDureeTexteFromDate(task[COL.duree], getEffectiveStart(task))}"
+                            value="${formatDureeTexte(task[COL.duree])}"
                             title="Saisir: 3,5 ans | 18 mois | 2 semaines | 45j | combinaisons: 1a 3m"
                             style="width:140px;">
                         <div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;">${task[COL.duree] ? task[COL.duree] + ' jours' : ''}</div>
                     </div>
                     <div class="field-group">
-                        <label>Date fin calculée <span style="font-weight:400;opacity:0.6;font-size:0.75em">(exclu)</span></label>
+                        <label>Date fin calculée</label>
                         <input type="date" id="dp-dateFinCalc" value="${toDateInput(getEffectiveEnd(task))}" disabled>
                     </div>
                 </div>
@@ -3454,6 +3317,12 @@
 
                 ${depsHtml}
 
+                <div>
+                    <div class="panel-section-title">Informations</div>
+                    <div class="info-row"><span class="lbl">Type</span><span>${isJalon(task) ? 'Jalon' : 'Tache'}</span></div>
+                    <div class="info-row"><span class="lbl">Estimation</span><span>${task[COL.estimationH] || 0} h</span></div>
+                    <div class="info-row"><span class="lbl">Temps passe</span><span>${task[COL.tempsPasse] || 0} h</span></div>
+                </div>
             `;
 
             // Attacher événements — widget responsables
@@ -3508,8 +3377,7 @@
         function getDepIds(task) {
             const dd = task[COL.dependDe];
             if (!dd) return [];
-            const raw = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
-            return raw.map(function(id) { return parseInt(id); }).filter(function(id) { return !isNaN(id); });
+            return Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
         }
 
         function buildDepGristValue(ids) {
@@ -3564,7 +3432,23 @@
             }
         }
 
-
+        async function setTaskStatut(taskId, newStatut, el) {
+            // Mettre à jour l'UI
+            el.closest('.status-pills').querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            // Mettre à jour en mémoire
+            const task = tasks.find(t => t.id === taskId);
+            if (task) task[COL.statut] = newStatut;
+            // Persister dans Grist
+            if (gristReady) {
+                try {
+                    await grist.docApi.applyUserActions([
+                        ['UpdateRecord', TABLE.tasks, taskId, { [COL.statut]: newStatut }]
+                    ]);
+                    render();
+                } catch(e) { showToast('Erreur statut', 'error'); }
+            }
+        }
 
         // Mise à jour d'un responsable (checkbox)
         async function updateAssignee(taskId, checkbox) {
@@ -3586,7 +3470,7 @@
             }
         }
 
-        // Enregistrer dates + catégorie + titreAdapte
+        // Enregistrer dates + progression
         async function saveDetailPanel() {
             if (!detailPanelTaskId) return;
             const task = tasks.find(t => t.id === detailPanelTaskId);
@@ -3595,29 +3479,12 @@
             const toGrist = (s) => s ? Math.floor(new Date(s + 'T00:00:00').getTime() / 1000) : null;
             const hasPreds = hasPredecesseurs(task);
 
+            const prog  = parseInt(document.getElementById('dp-prog-slider')?.value || 0);
             const dureeRaw = document.getElementById('dp-duree')?.value || '';
-            // Utiliser la date de début effective comme référence pour les mois calendaires
-            const _refStart = hasPreds
-                ? getEffectiveStart(task)
-                : (() => {
-                    const v = document.getElementById('dp-dateDebut')?.value;
-                    return v ? new Date(v + 'T00:00:00') : getEffectiveStart(task);
-                  })();
-            const duree = parseDureeEnJours(dureeRaw, _refStart);
-
-            // Catégorie de phase (Ref)
-            const phaseEl = document.getElementById('dp-phase');
-            const newPhaseId = phaseEl ? parseInt(phaseEl.value) || null : null;
-
-            // Titre adapté
-            const titreAdapteEl = document.getElementById('dp-titreAdapte');
-            const newTitreAdapte = titreAdapteEl ? titreAdapteEl.value.trim() : '';
+            const duree = parseDureeInput(dureeRaw);
 
             // Colonnes à mettre à jour dans Grist
-            const updates = {};
-
-            if (newPhaseId) updates[COL.titre] = newPhaseId;
-            updates[COL.titreAdapte] = newTitreAdapte; // peut être vide (efface le titre adapté)
+            const updates = { [COL.progression]: prog };
 
             if (!hasPreds) {
                 // Pas de prédécesseur : dateDebut saisie manuellement
@@ -3626,9 +3493,8 @@
             }
             if (duree) updates[COL.duree] = duree;
 
-            // Mise à jour en mémoire
+            // Mise à jour en mémoire (les dates calculées seront rafraîchies depuis Grist)
             Object.assign(task, updates);
-            if (newPhaseId) { task._phaseId = newPhaseId; }
 
             if (gristReady) {
                 try {
@@ -3666,10 +3532,8 @@
             // Phases
             const phasesSorted = [...phases].sort((a, b) => (a[COL_PHASES.numOrder] || 0) - (b[COL_PHASES.numOrder] || 0));
             document.getElementById('create-titre').innerHTML =
-                '<option value="">— Choisir une catégorie —</option>' +
-                phasesSorted.map(function(p) {
-                    return '<option value="' + p.id + '">' + escapeHtml(resolvePhaseNom(p.id)) + '</option>';
-                }).join('');
+                '<option value="">— Choisir une phase —</option>' +
+                phasesSorted.map(p => `<option value="${p.id}">${escapeHtml(p[COL_PHASES.nomOrder] || p[COL_PHASES.nom])}</option>`).join('');
 
             // Opération pré-sélectionnée (lecture seule)
             document.getElementById('create-projet-label').textContent = projet ? (projet[COL_OPS.nom] || '') : '';
@@ -3680,24 +3544,21 @@
                 if (aA !== bA) return aA ? -1 : 1;
                 return String(a[COL_CHEF.nom]).localeCompare(String(b[COL_CHEF.nom]));
             });
-            document.getElementById('create-chef-list').innerHTML = teamSorted.map(function(m) {
+            document.getElementById('create-chef-list').innerHTML = teamSorted.map(m => {
                 const actif = m[COL_CHEF.actif] !== false;
-                const cls = 'panel-filter-item' + (actif ? '' : ' inactive');
-                return '<label class="' + cls + '" data-chef-nom="' + String(m[COL_CHEF.nom]).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + m.id + '">' +
-                    escapeHtml(m[COL_CHEF.nom]) + (actif ? '' : ' (inactif)') +
-                    '</label>';
+                return `<label class="panel-filter-item${actif ? '' : ' inactive'}" data-chef-nom="${String(m[COL_CHEF.nom]).toLowerCase()}">
+                    <input type="checkbox" value="${m.id}">
+                    ${escapeHtml(m[COL_CHEF.nom])}${actif ? '' : ' (inactif)'}
+                </label>`;
             }).join('');
 
             // Prédécesseurs — tâches du même projet
             const projTasks = tasks.filter(t => String(t[COL.projet]) === String(projetId));
             document.getElementById('create-pred-list').innerHTML = projTasks.length
-                ? projTasks.map(function(t) {
-                    return '<label class="panel-filter-item" data-pred-nom="' + escapeHtml(getTaskTitreOrder(t)).toLowerCase() + '">' +
-                        '<input type="checkbox" value="' + t.id + '">' +
-                        escapeHtml(getTaskTitreOrder(t)) +
-                        '</label>';
-                }).join('')
+                ? projTasks.map(t => `<label class="panel-filter-item" data-pred-nom="${escapeHtml(getTaskTitreOrder(t)).toLowerCase()}">
+                    <input type="checkbox" value="${t.id}">
+                    ${escapeHtml(getTaskTitreOrder(t))}
+                </label>`).join('')
                 : '<div style="padding:6px 8px;font-size:0.7rem;color:var(--text-muted);">Aucune tâche dans ce projet</div>';
 
             // Recherche responsables
@@ -3719,7 +3580,9 @@
             document.getElementById('create-dateDebut').value = today;
             document.getElementById('create-duree').value = '';
             document.getElementById('create-description').value = '';
-            document.getElementById('create-titreAdapte').value = '';
+            document.getElementById('create-statut').value = 'todo';
+            document.getElementById('create-type').value = 'tache';
+            onCreateTypeChange('tache');
 
             document.getElementById('createModal').classList.add('open');
         }
@@ -3728,20 +3591,35 @@
             document.getElementById('createModal').classList.remove('open');
         }
 
-
+        function onCreateTypeChange(type) {
+            const dureeWrap = document.getElementById('create-duree').closest('.field-group');
+            if (type === 'jalon') {
+                dureeWrap.style.opacity = '0.4';
+                dureeWrap.style.pointerEvents = 'none';
+                document.getElementById('create-duree').value = '0';
+            } else {
+                dureeWrap.style.opacity = '';
+                dureeWrap.style.pointerEvents = '';
+                if (document.getElementById('create-duree').value === '0') {
+                    document.getElementById('create-duree').value = '';
+                }
+            }
+        }
 
         async function submitCreateTask() {
-            const titreId      = parseInt(document.getElementById('create-titre').value);
-            const dDebut       = document.getElementById('create-dateDebut').value;
-            const dureeRaw     = document.getElementById('create-duree').value;
-            const _createStart = dDebut ? new Date(dDebut + 'T00:00:00') : null;
-            const duree        = parseDureeEnJours(dureeRaw, _createStart);
-            const titreAdapte  = document.getElementById('create-titreAdapte')?.value.trim() || '';
-            const desc         = document.getElementById('create-description').value.trim();
+            const titreId  = parseInt(document.getElementById('create-titre').value);
+            const dDebut   = document.getElementById('create-dateDebut').value;
+            const dureeRaw = document.getElementById('create-duree').value;
+            const duree    = parseDureeInput(dureeRaw);
+            const statut   = document.getElementById('create-statut').value;
+            const desc     = document.getElementById('create-description').value.trim();
 
-            if (!titreId) { showToast('Choisissez une catégorie de phase', 'error'); return; }
+            const typeVal  = document.getElementById('create-type').value;
+            const isJalonCreate = typeVal === 'jalon';
+
+            if (!titreId) { showToast('Choisissez une phase', 'error'); return; }
             if (!dDebut)  { showToast('Date de début obligatoire', 'error'); return; }
-            if (duree === null) { showToast('Durée obligatoire (ex: 3m, 45j, ou 0 pour un jalon)', 'error'); return; }
+            if (!isJalonCreate && duree === null) { showToast('Durée obligatoire (ex: 3m, 45j)', 'error'); return; }
 
             const projetId = filters.projects?.length === 1 ? parseInt(filters.projects[0]) : null;
             const toGrist  = (s) => s ? Math.floor(new Date(s + 'T00:00:00').getTime() / 1000) : null;
@@ -3753,11 +3631,13 @@
             const dependDeVal = predIds.length ? ['L', ...predIds] : null;
 
             const record = {
-                [COL.titre]:   titreId,
-                [COL.dateDebut]: toGrist(dDebut),
-                [COL.duree]:   duree, // 0 = jalon automatiquement
+                [COL.titre]:       titreId,
+                [COL.dateDebut]:   toGrist(dDebut),
+                [COL.duree]:       isJalonCreate ? 0 : duree,
+                [COL.statut]:      statut,
+                [COL.progression]: 0,
+                [COL.type]:        typeVal,
             };
-            if (titreAdapte)  record[COL.titreAdapte] = titreAdapte;
             if (projetId)     record[COL.projet]      = projetId;
             if (assigneesVal) record[COL.assignees]   = assigneesVal;
             if (dependDeVal)  record[COL.dependDe]    = dependDeVal;
@@ -3782,7 +3662,7 @@
                 record.id = newId;
                 record._phaseId = titreId || null;
                 tasks.push(record);
-                showToast('Phase créée (démo)', 'info');
+                showToast('Phase créée (demo)', 'info');
                 closeCreateModal();
                 sortTasks(); updateFilterMenus(); render();
                 showDetailPanel(newId);
@@ -3838,9 +3718,8 @@
             const dx = e.clientX - dragState.startX;
             const pxPerDay = getPixelsPerDay();
             const daysDelta = Math.round(dx / pxPerDay);
-            dragState.lastDaysDelta = daysDelta; // stocker pour endDrag
 
-            const bar = document.querySelector('.gantt-bar[data-id="' + dragState.taskId + '"]');
+            const bar = document.querySelector(`.gantt-bar[data-id="${dragState.taskId}"]`);
             if (!bar) return;
 
             if (dragState.type === 'move') {
@@ -3861,14 +3740,14 @@
         async function endDrag(e) {
             if (!dragState.active) return;
 
-            // Utiliser le daysDelta issu du dernier onDrag (position snappée)
-            // plutôt que de recalculer depuis e.clientX (position brute du mouseup)
-            const daysDelta = dragState.lastDaysDelta ?? Math.round((e.clientX - dragState.startX) / getPixelsPerDay());
+            const dx = e.clientX - dragState.startX;
+            const pxPerDay = getPixelsPerDay();
+            const daysDelta = Math.round(dx / pxPerDay);
 
             document.removeEventListener('mousemove', onDrag);
             document.removeEventListener('mouseup', endDrag);
 
-            const bar = document.querySelector('.gantt-bar[data-id="' + dragState.taskId + '"]');
+            const bar = document.querySelector(`.gantt-bar[data-id="${dragState.taskId}"]`);
             if (bar) bar.classList.remove('dragging');
 
             if (daysDelta === 0) {
@@ -3901,10 +3780,8 @@
                 newStart = addDays(dragState.originalStart, daysDelta);
             }
 
-            // Calcul de la durée en jours.
-            // dateFinCalc = dateDebutCalc + timedelta(duree) — fin exclusive.
-            // (newEnd - newStart) / 86400000 = durée exacte, sans +1.
-            const newDuree = Math.max(1, Math.round((newEnd - newStart) / 86400000));
+            // Calcul de la durée en jours
+            const newDuree = Math.max(1, Math.round((newEnd - newStart) / 86400000) + 1);
 
             // Colonnes à mettre à jour
             const dragUpdates = { [COL.duree]: newDuree };
@@ -3968,14 +3845,14 @@
                     { id: COL_CHEF.actif,    type: 'Bool' }
                 ],
                 [TABLE.operations]: [
-                    { id: COL_OPS.nom,           type: 'Text' },
-                    { id: COL_OPS.numOpe,        type: 'Text' },
-                    { id: COL_OPS.statut,        type: 'Choice' },
-                    { id: COL_OPS.exercice,      type: 'Text' },
-                    { id: COL_OPS.dateReception, type: 'Date' }
+                    { id: COL_OPS.nom,     type: 'Text' },
+                    { id: COL_OPS.numOpe,  type: 'Text' },
+                    { id: COL_OPS.statut,  type: 'Choice' },
+                    { id: COL_OPS.exercice,type: 'Text' }
                 ],
                 [TABLE.phases]: [
                     { id: COL_PHASES.nom,      type: 'Text' },
+                    { id: COL_PHASES.nomOrder, type: 'Text' },
                     { id: COL_PHASES.couleur,  type: 'Text' },
                     { id: COL_PHASES.numOrder, type: 'Numeric' }
                 ],
@@ -3986,17 +3863,22 @@
             };
         }
 
-        // options = l'objet reçu par onOptions (null si jamais configuré)
-        async function ensureSchema(options) {
-            const savedOptions = options || {};
+        async function ensureSchema() {
+            // Lire les options sauvegardées directement depuis Grist
+            // pour obtenir les vrais noms de tables configurés par l'utilisateur,
+            // indépendamment de l'ordre d'exécution des callbacks.
+            let savedOptions = {};
+            try {
+                savedOptions = await grist.widgetApi.getOptions() || {};
+            } catch(e) { savedOptions = {}; }
 
+            // Déterminer les noms de tables effectivement configurés
             const configuredTableChef  = savedOptions.tableChefProjet || GRIST_CONFIG.tables.responsableProjet;
             const configuredTableOps   = savedOptions.tableOperations  || GRIST_CONFIG.tables.operations;
             const configuredTablePhases= savedOptions.tablePhases      || GRIST_CONFIG.tables.phases;
 
-            const hasCustomConfig = !!(savedOptions._configured ||
-                savedOptions.tableChefProjet || savedOptions.tableOperations || savedOptions.tablePhases ||
-                savedOptions.colChefNom || savedOptions.colOpsNom || savedOptions.colPhasesNom);
+            // Savoir si l'utilisateur a déjà personnalisé les noms (options sauvegardées)
+            const hasCustomConfig = !!(savedOptions.tableChefProjet || savedOptions.tableOperations || savedOptions.tablePhases);
 
             // Vérifier quelles tables existent réellement dans le document
             let allTables = [];
@@ -4020,25 +3902,13 @@
                 return;
             }
 
-            // Stratégie : si au moins UNE des tables par défaut existe déjà dans Grist,
-            // c'est que le widget a déjà été initialisé. Ne jamais recréer dans ce cas.
-            const defaultTables = [
-                GRIST_CONFIG.tables.responsableProjet,
-                GRIST_CONFIG.tables.operations,
-                GRIST_CONFIG.tables.phases,
-            ];
-            const anyDefaultExists = defaultTables.some(t => allTables.includes(t));
-
-            // hasCustomConfig est vrai si options personnalisées OU si tables par défaut existent déjà
-            const alreadySetup = hasCustomConfig || anyDefaultExists;
-
-            if (alreadySetup) {
+            if (hasCustomConfig) {
                 // L'utilisateur avait configuré des tables personnalisées,
                 // et certaines sont introuvables (probablement renommées dans Grist).
                 // → NE PAS recréer ! Alerter et ouvrir le panel de config.
-                const names = missingTables.map(function(t) { return '"' + t.name + '" (' + t.label + ')'; }).join(', ');
+                const names = missingTables.map(t => `"${t.name}" (${t.label})`).join(', ');
                 showToast(
-                    '⚠ Table(s) introuvable(s) : ' + names + '. Veuillez reconfigurer le widget.',
+                    `⚠ Table(s) introuvable(s) : ${names}. Veuillez reconfigurer le widget.`,
                     'error', 12000
                 );
                 // Ouvrir le panel de config et mettre en évidence les tables manquantes
@@ -4057,7 +3927,7 @@
                             const exists = [...sel.options].some(o => o.value === t.name);
                             if (!exists) {
                                 sel.insertAdjacentHTML('afterbegin',
-                                    '<option value="' + t.name + '" selected style="color:var(--danger);font-weight:600">⚠ ' + t.name + ' (introuvable — reconfigurer)</option>'
+                                    `<option value="${t.name}" selected style="color:var(--danger);font-weight:600">⚠ ${t.name} (introuvable — reconfigurer)</option>`
                                 );
                             } else {
                                 sel.value = t.name;
@@ -4121,7 +3991,8 @@
                 ...(d.projet      !== undefined ? { [COL.projet]:      d.projet      } : {}),
                 ...(d.assignees   !== undefined ? { [COL.assignees]:   d.assignees   } : {}),
                 ...(d.dependDe    !== undefined ? { [COL.dependDe]:    d.dependDe    } : {}),
-
+                ...(d.estimationH !== undefined ? { [COL.estimationH]: d.estimationH } : {}),
+                ...(d.tempsPasse  !== undefined ? { [COL.tempsPasse]:  d.tempsPasse  } : {})
             });
 
             try {
@@ -4133,13 +4004,13 @@
                 log(`✅ 3 responsables ajoutés à ${TABLE.responsableProjet}`);
 
                 await grist.docApi.applyUserActions([
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Faisabilité',      [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Pré-programme',    [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Programme',        [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Consultation MOE', [COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Études',           [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Travaux',          [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 }],
-                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Livraison',        [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 }]
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Faisabilité',      [COL_PHASES.nomOrder]: '101 - Faisabilité',      [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Pré-programme',    [COL_PHASES.nomOrder]: '102 - Pré-programme',    [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Programme',        [COL_PHASES.nomOrder]: '103 - Programme',        [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Consultation MOE', [COL_PHASES.nomOrder]: '203 - Consultation MOE', [COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Études',           [COL_PHASES.nomOrder]: '301 - Études',           [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Travaux',          [COL_PHASES.nomOrder]: '401 - Travaux',          [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 }],
+                    ['AddRecord', TABLE.phases, null, { [COL_PHASES.nom]: 'Livraison',        [COL_PHASES.nomOrder]: '501 - Livraison',        [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 }]
                 ]);
                 log(`✅ 7 phases ajoutées à ${TABLE.phases}`);
 
@@ -4222,9 +4093,9 @@
 
             // Si des tables sont introuvables → alerte + panel config
             if (missingTables.length > 0 && gristReady) {
-                const names = missingTables.map(function(t) { return '"' + t.name + '" (' + t.label + ')'; }).join(', ');
+                const names = missingTables.map(t => `"${t.name}" (${t.label})`).join(', ');
                 showToast(
-                    '⚠ Table(s) introuvable(s) : ' + names + '. Reconfigurer le widget.',
+                    `⚠ Table(s) introuvable(s) : ${names}. Reconfigurer le widget.`,
                     'error', 12000
                 );
                 setTimeout(async () => {
@@ -4240,7 +4111,7 @@
                         const exists = [...sel.options].some(o => o.value === t.name);
                         if (!exists) {
                             sel.insertAdjacentHTML('afterbegin',
-                                '<option value="' + t.name + '" selected style="color:var(--danger);font-weight:600">⚠ ' + t.name + ' (introuvable — reconfigurer)</option>'
+                                `<option value="${t.name}" selected style="color:var(--danger);font-weight:600">⚠ ${t.name} (introuvable — reconfigurer)</option>`
                             );
                         }
                         sel.style.borderColor = 'var(--danger)';
@@ -4250,18 +4121,14 @@
                 }, 400);
             }
 
-            // Si des colonnes configurées sont introuvables → bandeau d'avertissement
+            // Si des colonnes configurées sont introuvables, avertir et ouvrir le panel
             if (allMissing.length > 0 && gristReady) {
-                const msg = allMissing.map(function(m) { return '"' + m.configured + '" (' + m.table + ')'; }).join(', ');
-                const banner = document.getElementById('missingColsBanner');
-                const bannerMsg = document.getElementById('missingColsBannerMsg');
-                if (banner && bannerMsg) {
-                    bannerMsg.textContent = `⚠ Colonne(s) introuvable(s) : ${msg} — reconfiguration nécessaire.`;
-                    banner.classList.add('visible');
+                const msg = allMissing.map(m => `${m.table}.${m.configured}`).join(', ');
+                showToast(`⚠ Colonnes introuvables : ${msg} — vérifiez la configuration`, 'error', 8000);
+                if (missingTables.length === 0) {
+                    // Ouvrir automatiquement le panneau config pour correction (si pas déjà ouvert)
+                    setTimeout(() => openConfigPanel(), 500);
                 }
-            } else {
-                // Masquer le bandeau si tout est OK
-                document.getElementById('missingColsBanner')?.classList.remove('visible');
             }
         }
 
@@ -4293,18 +4160,6 @@
             render();
         }
 
-        // ── Cache localStorage : fallback si Grist efface les options ──────────
-        // Grist peut appeler setOptions(null) quand une table référencée est renommée/supprimée.
-        // On garde une copie dans localStorage comme filet de sécurité.
-        const LS_KEY = 'gantt_config_' + (location.hostname + location.pathname).replace(/[^a-z0-9]/gi, '_');
-
-        function lsSaveOptions(options) {
-            try { localStorage.setItem(LS_KEY, JSON.stringify(options)); } catch(e) {}
-        }
-        function lsLoadOptions() {
-            try { const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; } catch(e) { return null; }
-        }
-
         async function initGrist() {
             try {
                 // ── Déclaration des colonnes mappables (panneau "Colonnes" de Grist) ──────
@@ -4312,65 +4167,33 @@
                 // colonne de sa table. Les 3 premiers champs sont obligatoires.
                 grist.ready({
                     requiredAccess: 'full',
-                    hasCustomOptions: true,
                     columns: [
-                        { name: 'titre',         title: 'Catégorie (Ref phases)',       type: 'Ref',     optional: false },
-                        { name: 'titreAdapte',   title: 'Titre adapté par opération',   type: 'Text',    optional: true  },
-                        { name: 'dateDebut',     title: 'Date de début',                type: 'Date',    optional: false },
-                        { name: 'duree',         title: 'Durée (jours)',                type: 'Numeric', optional: false },
-                        { name: 'dateDebutCalc', title: 'Date début calculée',          type: 'Date',    optional: true  },
-                        { name: 'dateFinCalc',   title: 'Date fin calculée',            type: 'Date',    optional: true  },
-                        { name: 'projet',        title: 'Opération (Ref)',              type: 'Ref',     optional: true  },
-                        { name: 'assignees',     title: 'Responsables',                 type: 'RefList', optional: true  },
-                        { name: 'dependDe',      title: 'Dépend de',                    type: 'RefList', optional: true  },
-                        { name: 'description',   title: 'Description',                  type: 'Text',    optional: true  }
+                        { name: 'titre',         title: 'Catégorie (Ref phases)',  type: 'Ref',        optional: false },
+                        { name: 'dateDebut',     title: 'Date de début',           type: 'Date',       optional: true  },
+                        { name: 'duree',         title: 'Durée (jours)',           type: 'Numeric',    optional: true  },
+                        { name: 'dateDebutCalc', title: 'Date début calculée',     type: 'Date',       optional: true  },
+                        { name: 'dateFinCalc',   title: 'Date fin calculée',       type: 'Date',       optional: true  },
+                        { name: 'projet',        title: 'Opération (Ref)',         type: 'Ref',        optional: true  },
+                        { name: 'assignees',     title: 'Responsables',            type: 'RefList',    optional: true  },
+                        { name: 'dependDe',      title: 'Dépend de',               type: 'RefList',    optional: true  },
+                        { name: 'statut',        title: 'Statut',                  type: 'Choice',     optional: true  },
+                        { name: 'type',          title: 'Type (tache/jalon)',       type: 'Choice',     optional: true  },
+                        { name: 'progression',   title: 'Progression (%)',         type: 'Numeric',    optional: true  },
+                        { name: 'priorite',      title: 'Priorité',                type: 'Choice',     optional: true  },
+                        { name: 'couleur',       title: 'Couleur',                 type: 'Text',       optional: true  },
+                        { name: 'description',   title: 'Description',             type: 'Text',       optional: true  },
+                        { name: 'tags',          title: 'Tags',                    type: 'ChoiceList', optional: true  },
+                        { name: 'estimationH',   title: 'Estimation (h)',          type: 'Numeric',    optional: true  },
+                        { name: 'tempsPasse',    title: 'Temps passé (h)',         type: 'Numeric',    optional: true  }
                     ]
                 });
 
-                // ── Fonction utilitaire : applique les options aux variables TABLE/COL ──
-                const applyOptions = (opts) => {
-                    if (!opts) return;
-                    if (opts.tableChefProjet) TABLE.responsableProjet = opts.tableChefProjet;
-                    if (opts.tableOperations) TABLE.operations = opts.tableOperations;
-                    if (opts.tablePhases)     TABLE.phases     = opts.tablePhases;
-                    if (opts.colChefNom)      COL_CHEF.nom      = opts.colChefNom;
-                    if (opts.colChefPrenom)   COL_CHEF.prenom   = opts.colChefPrenom;
-                    if (opts.colChefFonction) COL_CHEF.fonction = opts.colChefFonction;
-                    if (opts.colChefActif)    COL_CHEF.actif    = opts.colChefActif;
-                    if (opts.colOpsNom)            COL_OPS.nom           = opts.colOpsNom;
-                    if (opts.colOpsNumOpe)         COL_OPS.numOpe        = opts.colOpsNumOpe;
-                    if (opts.colOpsStatut)         COL_OPS.statut        = opts.colOpsStatut;
-                    if (opts.colOpsDateReception)  COL_OPS.dateReception = opts.colOpsDateReception;
-                    if (opts.colPhasesNom)      COL_PHASES.nom      = opts.colPhasesNom;
-                    if (opts.colPhasesCouleur)  COL_PHASES.couleur  = opts.colPhasesCouleur;
-                    if (opts.colPhasesNumOrder) COL_PHASES.numOrder = opts.colPhasesNumOrder;
-                };
-
-                // ── Coordination onRecords / onOptions ─────────────────────────────────
-                // DIAGNOSTIC CONFIRMÉ : grist.getOptions() retourne NULL lors d'un Ctrl+Shift+R.
-                // Les vraies options persistées n'arrivent QUE via onOptions (premier appel).
-                // Stratégie : onRecords attend onOptions sans timeout — onOptions arrive TOUJOURS.
-                let resolveOptionsReady;
-                const optionsReady = new Promise(res => { resolveOptionsReady = res; });
-
                 // ── IMPORTANT : enregistrer onRecords IMMÉDIATEMENT après grist.ready() ──
-                let _onRecordsDebounceTimer = null;
-                let _firstOnRecords = true;
+                // Grist envoie onRecords juste après ready(). Si on met un await avant,
+                // l'événement est manqué et les données n'arrivent jamais.
                 grist.onRecords(async (records, mappings) => {
-                    console.log('[GANTT] onRecords appelé, TABLE.phases=', TABLE.phases);
-                    // Capturer le vrai ID Grist de la table principale (une seule fois suffit)
-                    if (_firstOnRecords) {
-                        _firstOnRecords = false;
-                        try { _mainTableId = await grist.selectedTable.getTableId(); } catch(e) {}
-                        if (_mainTableId) TABLE.tasks = _mainTableId;
-                    }
                     applyMappings(mappings);
-                    clearTimeout(_onRecordsDebounceTimer);
-                    _onRecordsDebounceTimer = setTimeout(async () => {
-                        await optionsReady;  // attend que onOptions ait appliqué les vraies options
-                        console.log('[GANTT] onRecords débloqué, TABLE.phases=', TABLE.phases);
-                        await loadAllData();
-                    }, 50);
+                    await loadAllData();
                 });
 
                 // ── Sync de sélection inter-widgets ─────────────────────────────────────
@@ -4384,78 +4207,32 @@
                 });
 
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
-                // Quand Grist envoie null (premier chargement sur un nouveau navigateur,
-                // hard refresh, ou table renommée), on rappelle explicitement grist.getOptions()
-                // qui retourne les options persistées dans le document Grist — partagées entre
-                // tous les utilisateurs. Le localStorage n'est conservé qu'en dernier recours
-                // pour les cas où getOptions() échoue aussi (réseau, erreur API).
-                let _firstOnOptions = true;
-                grist.onOptions(async (gristOptions) => {
-                    const isFirstCall = _firstOnOptions;
-                    _firstOnOptions = false;
-
-                    if (isFirstCall) {
-                        console.log('[GANTT] onOptions PREMIER APPEL — gristOptions:', JSON.stringify(gristOptions));
-
-                        // Si Grist envoie null, rappeler getOptions() pour récupérer
-                        // la config partagée (persistée dans le document, visible par tous).
-                        let opts = gristOptions;
-                        if (!opts) {
-                            console.log('[GANTT] gristOptions null → appel grist.getOptions()...');
-                            try {
-                                opts = await grist.getOptions();
-                                console.log('[GANTT] grist.getOptions() retourne:', JSON.stringify(opts));
-                            } catch(e) {
-                                console.warn('[GANTT] grist.getOptions() erreur:', e);
-                            }
-                        }
-                        // Dernier recours : localStorage (propre au navigateur local)
-                        if (!opts) {
-                            opts = lsLoadOptions();
-                            console.log('[GANTT] localStorage fallback:', JSON.stringify(opts));
-                        }
-
-                        console.log('[GANTT] opts final utilisé:', JSON.stringify(opts));
-                        const hasConfig = opts && (
-                            opts.tableChefProjet || opts.tableOperations || opts.tablePhases
-                        );
-                        console.log('[GANTT] hasConfig:', hasConfig,
-                            '| tableChefProjet:', opts?.tableChefProjet,
-                            '| tableOperations:', opts?.tableOperations,
-                            '| tablePhases:', opts?.tablePhases);
-
-                        if (hasConfig) {
-                            applyOptions(opts);
-                            // Mettre à jour le cache local pour les appels suivants
-                            lsSaveOptions(opts);
-                            console.log('[GANTT] après applyOptions initial, TABLE.responsableProjet=', TABLE.responsableProjet, 'TABLE.phases=', TABLE.phases);
-                        }
-                        // Débloquer onRecords dans tous les cas
-                        resolveOptionsReady();
-                        // Vérifier / créer le schéma si nécessaire
-                        await ensureSchema(opts);
-
-                        if (!hasConfig) {
-                            // Vraie première utilisation : aucune config nulle part
-                            setTimeout(() => openConfigPanel(), 400);
-                        }
-                    } else {
-                        // Appel suivant (changement d'options en live ou après setOptions)
-                        // Même stratégie : getOptions() si null, localStorage en dernier recours
-                        console.log('[GANTT] onOptions APPEL SUIVANT — gristOptions:', JSON.stringify(gristOptions));
-                        let options = gristOptions;
-                        if (!options) {
-                            try {
-                                options = await grist.getOptions();
-                                console.log('[GANTT] getOptions() fallback suivant:', JSON.stringify(options));
-                            } catch(e) {}
-                        }
-                        if (!options) options = lsLoadOptions();
-                        console.log('[GANTT] onOptions suivant — retenu:', JSON.stringify(options));
-                        if (options) applyOptions(options);
-                        await loadAllData();
-                    }
+                grist.onOptions((options) => {
+                    if (!options) return;
+                    // Noms des tables secondaires
+                    if (options.tableChefProjet) TABLE.responsableProjet = options.tableChefProjet;
+                    if (options.tableOperations) TABLE.operations = options.tableOperations;
+                    if (options.tablePhases)     TABLE.phases     = options.tablePhases;
+                    // Colonnes de DPPI_Chef_Projet
+                    if (options.colChefNom)      COL_CHEF.nom      = options.colChefNom;
+                    if (options.colChefPrenom)   COL_CHEF.prenom   = options.colChefPrenom;
+                    if (options.colChefFonction) COL_CHEF.fonction = options.colChefFonction;
+                    if (options.colChefActif)    COL_CHEF.actif    = options.colChefActif;
+                    // Colonnes de DPPI_Operations
+                    if (options.colOpsNom)       COL_OPS.nom      = options.colOpsNom;
+                    if (options.colOpsNumOpe)    COL_OPS.numOpe   = options.colOpsNumOpe;
+                    if (options.colOpsStatut)    COL_OPS.statut   = options.colOpsStatut;
+                    // Colonnes de PL_Liste_Phases
+                    if (options.colPhasesNom)      COL_PHASES.nom      = options.colPhasesNom;
+                    if (options.colPhasesNomOrder) COL_PHASES.nomOrder = options.colPhasesNomOrder;
+                    if (options.colPhasesCouleur)  COL_PHASES.couleur  = options.colPhasesCouleur;
+                    if (options.colPhasesNumOrder) COL_PHASES.numOrder = options.colPhasesNumOrder;
+                    // Recharger après changement d'options
+                    loadAllData(); // recharge tables secondaires + re-render
                 });
+
+                // Auto-init du schéma des tables secondaires uniquement
+                await ensureSchema();
 
             } catch (e) {
                 useDemoMode();
@@ -4471,13 +4248,13 @@
             // En mode démo, les titres sont des IDs qui pointent vers phases[]
             // On crée des phases démo pour que resolvePhaseNom fonctionne
             phases = [
-                { id: 1, [COL_PHASES.nom]: 'Faisabilité',     [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 },
-                { id: 2, [COL_PHASES.nom]: 'Pré-programme',   [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 },
-                { id: 3, [COL_PHASES.nom]: 'Programme',       [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 },
-                { id: 4, [COL_PHASES.nom]: 'Consultation MOE',[COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 },
-                { id: 5, [COL_PHASES.nom]: 'Études',          [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 },
-                { id: 6, [COL_PHASES.nom]: 'Travaux',         [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 },
-                { id: 7, [COL_PHASES.nom]: 'Livraison',       [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 },
+                { id: 1, [COL_PHASES.nomOrder]: '101 - Faisabilité',     [COL_PHASES.nom]: 'Faisabilité',     [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 101 },
+                { id: 2, [COL_PHASES.nomOrder]: '102 - Pré-programme',   [COL_PHASES.nom]: 'Pré-programme',   [COL_PHASES.couleur]: '#BC77FC', [COL_PHASES.numOrder]: 102 },
+                { id: 3, [COL_PHASES.nomOrder]: '103 - Programme',       [COL_PHASES.nom]: 'Programme',       [COL_PHASES.couleur]: '#7C9EFC', [COL_PHASES.numOrder]: 103 },
+                { id: 4, [COL_PHASES.nomOrder]: '203 - Consultation MOE',[COL_PHASES.nom]: 'Consultation MOE',[COL_PHASES.couleur]: '#7CD4FC', [COL_PHASES.numOrder]: 203 },
+                { id: 5, [COL_PHASES.nomOrder]: '301 - Études',          [COL_PHASES.nom]: 'Études',          [COL_PHASES.couleur]: '#7CFCB8', [COL_PHASES.numOrder]: 301 },
+                { id: 6, [COL_PHASES.nomOrder]: '401 - Travaux',         [COL_PHASES.nom]: 'Travaux',         [COL_PHASES.couleur]: '#FCB87C', [COL_PHASES.numOrder]: 401 },
+                { id: 7, [COL_PHASES.nomOrder]: '501 - Livraison',       [COL_PHASES.nom]: 'Livraison',       [COL_PHASES.couleur]: '#FC7C7C', [COL_PHASES.numOrder]: 501 },
             ];
 
             // Projets (opérations)
@@ -4499,9 +4276,12 @@
             const mk = (d) => {
                 const rec = { id: d.id };
                 rec[COL.titre]        = d.titreId;   // ID Ref vers phases
+                rec[COL.priorite]     = d.priorite;
                 rec[COL.projet]       = d.projetId;  // ID Ref vers projects
                 rec[COL.dateDebut]    = d.dateDebut;
                 rec[COL.dateEcheance] = d.dateEcheance;
+                rec[COL.progression]  = d.progression || 0;
+                rec[COL.statut]       = d.statut || 'todo';
                 rec[COL.type]         = d.type || 'tache';
                 if (d.assignees) rec[COL.assignees] = d.assignees;
                 if (d.dependDe)  rec[COL.dependDe]  = d.dependDe;
@@ -4531,22 +4311,20 @@
         // ═══════════════════════════════════════════════════════════════════════
 
         // Mapping champs config → clés options Grist
-        // IMPORTANT : default() pointe vers les variables COL_* actives (pas GRIST_CONFIG figé)
-        // afin que le panel affiche toujours la valeur courante en mémoire, même après correction.
         const CONFIG_FIELDS = [
-            { id: 'cfg-tableChefProjet',   optionKey: 'tableChefProjet',   default: () => TABLE.responsableProjet },
-            { id: 'cfg-tableOperations',   optionKey: 'tableOperations',   default: () => TABLE.operations },
-            { id: 'cfg-tablePhases',       optionKey: 'tablePhases',       default: () => TABLE.phases },
-            { id: 'cfg-colChefNom',        optionKey: 'colChefNom',        default: () => COL_CHEF.nom },
-            { id: 'cfg-colChefFonction',   optionKey: 'colChefFonction',   default: () => COL_CHEF.fonction },
-            { id: 'cfg-colChefActif',      optionKey: 'colChefActif',      default: () => COL_CHEF.actif },
-            { id: 'cfg-colOpsNom',             optionKey: 'colOpsNom',             default: () => COL_OPS.nom },
-            { id: 'cfg-colOpsNumOpe',          optionKey: 'colOpsNumOpe',          default: () => COL_OPS.numOpe },
-            { id: 'cfg-colOpsStatut',          optionKey: 'colOpsStatut',          default: () => COL_OPS.statut },
-            { id: 'cfg-colOpsDateReception',   optionKey: 'colOpsDateReception',   default: () => COL_OPS.dateReception },
-            { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => COL_PHASES.nom },
-            { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => COL_PHASES.couleur },
-            { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => COL_PHASES.numOrder },
+            { id: 'cfg-tableChefProjet',   optionKey: 'tableChefProjet',   default: () => GRIST_CONFIG.tables.responsableProjet },
+            { id: 'cfg-tableOperations',   optionKey: 'tableOperations',   default: () => GRIST_CONFIG.tables.operations },
+            { id: 'cfg-tablePhases',       optionKey: 'tablePhases',       default: () => GRIST_CONFIG.tables.phases },
+            { id: 'cfg-colChefNom',        optionKey: 'colChefNom',        default: () => GRIST_CONFIG.columns.responsableProjet.nom },
+            { id: 'cfg-colChefFonction',   optionKey: 'colChefFonction',   default: () => GRIST_CONFIG.columns.responsableProjet.fonction },
+            { id: 'cfg-colChefActif',      optionKey: 'colChefActif',      default: () => GRIST_CONFIG.columns.responsableProjet.actif },
+            { id: 'cfg-colOpsNom',         optionKey: 'colOpsNom',         default: () => GRIST_CONFIG.columns.operations.nom },
+            { id: 'cfg-colOpsNumOpe',      optionKey: 'colOpsNumOpe',      default: () => GRIST_CONFIG.columns.operations.numOpe },
+            { id: 'cfg-colOpsStatut',      optionKey: 'colOpsStatut',      default: () => GRIST_CONFIG.columns.operations.statut },
+            { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => GRIST_CONFIG.columns.phases.nom },
+            { id: 'cfg-colPhasesNomOrder', optionKey: 'colPhasesNomOrder', default: () => GRIST_CONFIG.columns.phases.nomOrder },
+            { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => GRIST_CONFIG.columns.phases.couleur },
+            { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => GRIST_CONFIG.columns.phases.numOrder },
         ];
 
         // Groupes : associe chaque groupe à son select de table et ses selects de colonnes
@@ -4574,10 +4352,6 @@
             let allTables = [];
             try { allTables = await grist.docApi.listTables(); } catch(e) {}
 
-            // Exclure la table tâches (table principale, gérée par le panel natif Grist)
-            const tasksId = TABLE.tasks || _mainTableId || '';
-            const allTablesFiltered = tasksId ? allTables.filter(t => t !== tasksId) : allTables;
-
             // Valeurs courantes sauvegardées
             const current = {};
             CONFIG_FIELDS.forEach(f => {
@@ -4590,7 +4364,7 @@
                 const tableSel = document.getElementById(cfg.tableId);
                 if (!tableSel) continue;
                 const curTable = cfg.curTable();
-                tableSel.innerHTML = allTablesFiltered.map(t =>
+                tableSel.innerHTML = allTables.map(t =>
                     `<option value="${t}"${t === curTable ? ' selected' : ''}>${t}</option>`
                 ).join('');
                 await loadColumnsForGroup(group, curTable, current);
@@ -4605,7 +4379,7 @@
                 cols = Object.keys(data).filter(c => c !== 'manualSort' && c !== 'id');
             } catch(e) { return; }
 
-            document.querySelectorAll('[data-group="' + group + '"]').forEach(function(sel) {
+            document.querySelectorAll(`[data-group="${group}"]`).forEach(sel => {
                 const field = CONFIG_FIELDS.find(f => f.id === sel.id);
                 const curVal = current ? (current[field?.optionKey] || field?.default()) : sel.value;
                 // Si la colonne configurée n'existe plus dans la table, ajouter une option
@@ -4656,29 +4430,22 @@
             COL_CHEF.fonction = options.colChefFonction;
             COL_CHEF.actif    = options.colChefActif;
 
-            COL_OPS.nom           = options.colOpsNom;
-            COL_OPS.numOpe        = options.colOpsNumOpe;
-            COL_OPS.statut        = options.colOpsStatut;
-            COL_OPS.dateReception = options.colOpsDateReception;
+            COL_OPS.nom    = options.colOpsNom;
+            COL_OPS.numOpe = options.colOpsNumOpe;
+            COL_OPS.statut = options.colOpsStatut;
 
             COL_PHASES.nom      = options.colPhasesNom;
+            COL_PHASES.nomOrder = options.colPhasesNomOrder;
             COL_PHASES.couleur  = options.colPhasesCouleur;
             COL_PHASES.numOrder = options.colPhasesNumOrder;
 
 
 
-            // Marquer que le widget a été configuré au moins une fois (sentinel)
-            options._configured = true;
-
             // Persister dans Grist si disponible
             if (gristReady) {
                 try {
-                    console.log('[GANTT] setOptions appelé avec:', JSON.stringify(options));
-                    lsSaveOptions(options);  // cache local en cas d'effacement par Grist
                     await grist.setOptions(options);
-                    console.log('[GANTT] setOptions OK');
                     showToast('Configuration enregistrée', 'success');
-                    document.getElementById('missingColsBanner')?.classList.remove('visible');
                 } catch (e) {
                     console.error('setOptions error:', e);
                     showToast("Erreur lors de l'enregistrement", 'error');
@@ -4718,91 +4485,7 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // ═══════════════════════════════════════════════════════════════════════
-        // MOLETTE DE SOURIS — navigation horizontale dans la frise
-        // ═══════════════════════════════════════════════════════════════════════
-
-        // Pas de déplacement par "pixel de delta" molette, adapté à l'échelle.
-        // Chaque événement wheel est appliqué immédiatement via RAF.
-        // px2days : combien de jours déplace 1 pixel de delta molette ?
-        function getWheelPxToDays() {
-            switch (currentView) {
-                case 'week':  return 1/8;   // 8px = 1 jour  → très fin
-                case 'month': return 1/4;   // 4px = 1 jour
-                case 'sem6':  return 1/2;   // 2px = 1 jour
-                case 'year':  return 1;     // 1px = 1 jour
-                case 'three': return 3;     // 1px = 3 jours → rapide
-                default:      return 1/4;
-            }
-        }
-
-
-
-
-
-
-
-
-        // === MOLETTE DE SOURIS (uniquement sur l'en-tête des dates + barre) ===
-        // Stratégie : accumulation de jours flottants dans wheelDayBuf.
-        // Un requestAnimationFrame consomme le buffer et re-rend UNE FOIS par frame.
-        // → mouvement immédiat et visible dès le 1er event, sans saccades.
-        let wheelDayBuf = 0;       // jours fractionnaires accumulés
-        let wheelRafId  = null;    // RAF en attente
-
-        function flushWheelBuf() {
-            wheelRafId = null;
-            if (Math.abs(wheelDayBuf) < 0.01) { wheelDayBuf = 0; return; }
-            const days = Math.round(wheelDayBuf);
-            wheelDayBuf = 0;
-            if (days !== 0) {
-                viewStartDate = addDays(viewStartDate, days);
-                render();
-            }
-        }
-
-        function handleWheelEvent(e) {
-            e.preventDefault();
-            // Normaliser le delta en "pixels équivalents"
-            let px = e.deltaY;
-            if (e.deltaMode === 1) px *= 16;   // lignes → px (hauteur de ligne typique)
-            if (e.deltaMode === 2) px *= 600;  // pages → px
-
-            wheelDayBuf += px * getWheelPxToDays();
-
-            // Garantir au moins 1 jour de déplacement dès le 1er cran
-            if (Math.abs(wheelDayBuf) < 1 && Math.abs(wheelDayBuf) > 0) {
-                wheelDayBuf = Math.sign(wheelDayBuf) * 1;
-            }
-
-            if (!wheelRafId) {
-                wheelRafId = requestAnimationFrame(flushWheelBuf);
-            }
-        }
-
-        function initWheelScroll() {
-            // UNIQUEMENT sur l'en-tête des dates et la barre de défilement
-            const targets = ['timelineHeaderWrapper', 'timelineMonths', 'timelineHeader'];
-            targets.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('wheel', handleWheelEvent, { passive: false });
-            });
-
-            // Vue compacte : en-tête interne dans compactView (~50px en haut)
-            const compactEl = document.getElementById('compactView');
-            if (compactEl) {
-                compactEl.addEventListener('wheel', (e) => {
-                    const rect = compactEl.getBoundingClientRect();
-                    // relY par rapport au début du contenu scrollable
-                    const relY = e.clientY - rect.top + compactEl.scrollTop;
-                    if (relY > 52) return; // zone tâches → scroll vertical natif
-                    handleWheelEvent(e);
-                }, { passive: false });
-            }
-        }
-
-
+        loadFilters();
         document.documentElement.style.setProperty('--cell-width', VIEW_CONFIG[currentView].cellWidth + 'px');
         // Initialiser les données de filtre
         buildFilterData();
@@ -4878,10 +4561,6 @@
         // Initialiser le layout compact (mode par défaut)
         setLayoutMode('compact');
         document.querySelectorAll('.view-controls .btn').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
-
-        // Initialiser la scrollbar horizontale et la molette après le premier render
-        setTimeout(() => { initWheelScroll(); }, 50);
-
         initGrist();
     </script>
 </body>
