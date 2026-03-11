@@ -1734,7 +1734,7 @@
         // ═══════════════════════════════════════════════════════════════════════
         // VERSION
         // ═══════════════════════════════════════════════════════════════════════
-        const WIDGET_VERSION = 'V36';
+        const WIDGET_VERSION = 'V37';
         console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -4435,10 +4435,10 @@
                         // Vérifier / créer le schéma si nécessaire
                         await ensureSchema(opts);
 
-                        if (!hasConfig) {
-                            // Vraie première utilisation : aucune config nulle part
-                            setTimeout(() => openConfigPanel(), 400);
-                        }
+                        // Ne pas ouvrir le panel de config automatiquement :
+                        // loadSecondaryData() l'ouvrira si une table/colonne est introuvable.
+                        // Cela évite l'ouverture intempestive pour les nouveaux utilisateurs
+                        // dont les tables par défaut existent et sont accessibles.
                     } else {
                         // Appel suivant (changement d'options en live ou après setOptions)
                         // Même stratégie : getOptions() si null, localStorage en dernier recours
