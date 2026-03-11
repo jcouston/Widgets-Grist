@@ -1734,7 +1734,7 @@
         // ═══════════════════════════════════════════════════════════════════════
         // VERSION
         // ═══════════════════════════════════════════════════════════════════════
-        const WIDGET_VERSION = 'V38';
+        const WIDGET_VERSION = 'V39';
         console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -3077,20 +3077,30 @@
                     const dStart = formatDateBar(taskStart);
                     const dEnd   = formatDateBar(getDisplayEnd(t));
                     const dureeStr = formatDureeTexteFromDate(t[COL.duree], taskStart);
-                    // Décision d'affichage selon largeur
+
+                    // Estimation de la place disponible et de la largeur du texte.
+                    // On réserve ~30px pour les dates de début/fin à l'intérieur de la barre.
+                    const availableInside = width - 30;
+                    // Approximation : 0.55rem ≈ ~6.6px/char à font-size 0.68rem (11px env.)
+                    const PX_PER_CHAR = 6.6;
+                    const labelWithDuree = titre + ' - ' + dureeStr;
+                    const labelSimple    = titre;
+                    const wLabelWithDuree = labelWithDuree.length * PX_PER_CHAR;
+                    const wLabelSimple    = labelSimple.length    * PX_PER_CHAR;
+
                     let barInner;
-                    if (width >= 120 && dureeStr) {
-                        // Barre large : nom + durée à l'intérieur
+                    if (dureeStr && wLabelWithDuree <= availableInside) {
+                        // Titre + durée tiennent à l'intérieur
                         barInner = `<span class="bar-date bar-date-start">${dStart}</span>
-                            <span class="bar-label">${escapeHtml(titre + ' - ' + dureeStr)}</span>
+                            <span class="bar-label">${escapeHtml(labelWithDuree)}</span>
                             <span class="bar-date bar-date-end">${dEnd}</span>`;
-                    } else if (width >= 60) {
-                        // Barre moyenne : nom seul à l'intérieur
+                    } else if (wLabelSimple <= availableInside) {
+                        // Titre seul tient à l'intérieur
                         barInner = `<span class="bar-date bar-date-start">${dStart}</span>
                             <span class="bar-label">${escapeHtml(titre)}</span>
                             <span class="bar-date bar-date-end">${dEnd}</span>`;
                     } else {
-                        // Barre courte : date fin puis nom à l'extérieur (après la date)
+                        // Le titre ne tient pas : date de fin puis titre à l'extérieur
                         barInner = `<span class="bar-date bar-date-start">${dStart}</span>
                             <span class="bar-label"></span>
                             <span class="bar-date bar-date-end">${dEnd}</span>
