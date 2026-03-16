@@ -1734,7 +1734,7 @@
         // ═══════════════════════════════════════════════════════════════════════
         // VERSION
         // ═══════════════════════════════════════════════════════════════════════
-        const WIDGET_VERSION = 'V39';
+        const WIDGET_VERSION = 'V40';
         console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -2162,17 +2162,47 @@
             const cfg = VIEW_CONFIG[currentView];
             const n = getViewCellCount();
             if (cfg.unit === 'day')   return n;
-            if (cfg.unit === 'sem6')  return n * 30; // n = nb mois
-            if (cfg.unit === 'month') return n * 30;
+            if (cfg.unit === 'sem6')  return n * 30; // approximation pour les checks de visibilité
+            if (cfg.unit === 'month') {
+                // Compter les vrais jours sur les n mois depuis le début de la vue
+                const start = getViewStartDate();
+                let days = 0;
+                for (let i = 0; i < n; i++) {
+                    const m = new Date(start.getFullYear(), start.getMonth() + i + 1, 0);
+                    days += m.getDate();
+                }
+                return days;
+            }
             return n;
         }
 
         function getPixelsPerDay() {
+            // Pour les vues en jours : 1 cellule = 1 jour → simple
+            // Pour les vues en mois : valeur MOYENNE (utilisée seulement pour la ligne today et les checks)
             const cfg = VIEW_CONFIG[currentView];
             if (cfg.unit === 'day')   return cfg.cellWidth;
             if (cfg.unit === 'sem6')  return cfg.cellWidth / 30;
-            if (cfg.unit === 'month') return cfg.cellWidth / 30;
+            if (cfg.unit === 'month') return cfg.cellWidth / 30; // moyenne, ne pas utiliser pour positionner
             return cfg.cellWidth;
+        }
+
+        // Convertit une date en position X en pixels pour les vues en mois.
+        // Chaque cellule = 1 mois de largeur fixe cfg.cellWidth.
+        // La date est positionnée proportionnellement dans son mois (jours réels).
+        function dateToPxMonth(date) {
+            const cfg = VIEW_CONFIG[currentView];
+            const start = getViewStartDate();
+            const n = getViewCellCount();
+            // Index du mois de la date par rapport au mois de début
+            const monthIndex = (date.getFullYear() - start.getFullYear()) * 12
+                             + (date.getMonth()    - start.getMonth());
+            if (monthIndex < 0) return 0;
+            if (monthIndex >= n) return n * cfg.cellWidth;
+            // Jours dans ce mois
+            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            // Position dans le mois (0-based)
+            const dayInMonth = date.getDate() - 1;
+            return monthIndex * cfg.cellWidth + (dayInMonth / daysInMonth) * cfg.cellWidth;
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -2860,8 +2890,16 @@
                     const s0 = getDaysDiff(start, tStart);
                     const e0 = getDaysDiff(start, tEnd);
                     if (e0 < 0 || s0 > totalDays) return;
-                    const left  = Math.max(0, s0) * pxPerDay;
-                    const right = Math.min(e0, totalDays) * pxPerDay;
+                    // Positionnement précis : utiliser dateToPxMonth pour les vues en mois
+                    let left, right;
+                    if (cfg.unit === 'month') {
+                        left  = tStart < start ? 0 : dateToPxMonth(tStart);
+                        right = dateToPxMonth(tEnd);
+                        right = Math.min(right, n * cfg.cellWidth);
+                    } else {
+                        left  = Math.max(0, s0) * pxPerDay;
+                        right = Math.min(e0, totalDays) * pxPerDay;
+                    }
                     const width = Math.max(right - left, 4);
                     const colour = getTaskCouleur(t) || 'var(--primary)';
                     const titre  = escapeHtml(getTaskTitre(t));
@@ -2890,8 +2928,9 @@
             }
 
             const todayOff = getDaysDiff(start, today);
+            const todayLeft = cfg.unit === 'month' ? dateToPxMonth(today) : todayOff * pxPerDay;
             const todayLine = todayOff >= 0 && todayOff < totalDays
-                ? `<div class="compact-today-line" style="left:${todayOff * pxPerDay}px"></div>` : '';
+                ? `<div class="compact-today-line" style="left:${todayLeft}px"></div>` : '';
 
             // ── Construire l'en-tête compact ──────────────────────────────────────
             // Mois + jours alignés sur la zone timeline (après le label)
@@ -3057,7 +3096,7 @@
                 const barStyle = barColor ? `background:${barColor};` : '';
 
                 if (isJalon(t)) {
-                    const left = startOff * pxPerDay;
+                    const left = cfg.unit === 'month' ? dateToPxMonth(taskStart) : startOff * pxPerDay;
                     if (startOff >= 0 && startOff < totalDays) {
                         const diamondStyle = barColor ? `background:${barColor};` : '';
                         html += `
@@ -3069,9 +3108,16 @@
                         `;
                     }
                 } else {
-                    let left = visStart * pxPerDay;
-                    let width = (visEnd - visStart) * pxPerDay;
-                    if (width < 4) width = 4;
+                    let left, width;
+                    if (cfg.unit === 'month') {
+                        left  = taskStart < start ? 0 : dateToPxMonth(taskStart);
+                        const rightPx = Math.min(dateToPxMonth(taskEnd), n * cfg.cellWidth);
+                        width = Math.max(rightPx - left, 4);
+                    } else {
+                        left  = visStart * pxPerDay;
+                        width = (visEnd - visStart) * pxPerDay;
+                        if (width < 4) width = 4;
+                    }
 
                     const prog = t[COL.progression] || 0;
                     const dStart = formatDateBar(taskStart);
@@ -3121,7 +3167,8 @@
             // Today line
             const todayOff = getDaysDiff(start, today);
             if (todayOff >= 0 && todayOff < totalDays) {
-                html += `<div class="today-line" style="left: ${todayOff * pxPerDay}px;"></div>`;
+                const todayLeft = cfg.unit === 'month' ? dateToPxMonth(today) : todayOff * pxPerDay;
+                html += `<div class="today-line" style="left: ${todayLeft}px;"></div>`;
             }
 
             grid.innerHTML = html;
@@ -3157,6 +3204,7 @@
             const svg = document.getElementById('dependenciesLayer');
             if (!svg) return;
 
+            const cfg = VIEW_CONFIG[currentView];
             const ROW_H = 44;
             const pxPerDay = getPixelsPerDay();
             let paths = '';
@@ -3192,9 +3240,9 @@
                     const taskStart = getEffectiveStart(t);
                     if (!depEnd || !taskStart) return;
 
-                    const x1 = getDaysDiff(start, depEnd) * pxPerDay;
+                    const x1 = cfg.unit === 'month' ? dateToPxMonth(depEnd)   : getDaysDiff(start, depEnd)   * pxPerDay;
                     const y1 = depIdx * ROW_H + 22;
-                    const x2 = getDaysDiff(start, taskStart) * pxPerDay;
+                    const x2 = cfg.unit === 'month' ? dateToPxMonth(taskStart) : getDaysDiff(start, taskStart) * pxPerDay;
                     const y2 = (rowIndexOf[t.id] ?? i) * ROW_H + 22;
 
                     const midX = (x1 + x2) / 2;
