@@ -91,6 +91,59 @@
             gap: 8px;
         }
 
+        .top-controls-toggle {
+            padding: 6px 9px;
+        }
+
+        .top-controls-toggle svg {
+            transition: transform 0.15s;
+        }
+
+        .header-toggle-strip {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            padding: 6px 12px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .header-toggle-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .header-toggle-title strong {
+            color: var(--primary);
+            font-size: 0.82rem;
+        }
+
+        .header-toggle-period {
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        body.top-controls-collapsed .header,
+        body.top-controls-collapsed .filter-bar {
+            display: none;
+        }
+
+        body.top-controls-collapsed .header-toggle-strip {
+            display: flex;
+        }
+
         .btn {
             padding: 6px 12px;
             border-radius: 6px;
@@ -183,6 +236,18 @@
 
         .filter-btn:hover { background: var(--bg); }
         .filter-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+        .project-update-meta {
+            display: none;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 2px;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+
+        .project-update-meta.visible { display: flex; }
 
         .filter-menu {
             position: absolute;
@@ -1397,6 +1462,7 @@
             :root { --task-list-width: 200px; --cell-width: 28px; }
             .header { flex-direction: column; align-items: stretch; }
             .header-center { justify-content: center; }
+            .header-toggle-strip { align-items: stretch; }
         }
 
         @media (max-width: 600px) {
@@ -1417,6 +1483,19 @@
         </svg>
         <span class="banner-msg" id="missingColsBannerMsg"></span>
         <button class="banner-btn" onclick="openConfigPanel()">Reconfigurer</button>
+    </div>
+
+    <div class="header-toggle-strip" id="headerToggleStrip">
+        <div class="header-toggle-title">
+            <strong>Gantt</strong>
+            <span class="header-toggle-period" id="headerCollapsedPeriod"></span>
+        </div>
+        <button class="btn top-controls-toggle" onclick="setTopControlsCollapsed(false)" title="Afficher les contrôles">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 15 12 9 18 15"></polyline>
+            </svg>
+            Afficher les contrôles
+        </button>
     </div>
 
     <div class="header">
@@ -1462,6 +1541,12 @@
             </div>
         </div>
         <div class="header-right">
+            <button class="btn top-controls-toggle" onclick="setTopControlsCollapsed(true)" title="Masquer les contrôles">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+                Masquer
+            </button>
             <button class="btn primary" onclick="openCreateModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1543,6 +1628,10 @@
                     <label>Date réception</label>
                     <select id="cfg-colOpsDateReception" data-group="ops"></select>
                 </div>
+                <div class="config-field">
+                    <label>Affichage Gantt (booléen)</label>
+                    <select id="cfg-colOpsAffichageGantt" data-group="ops"></select>
+                </div>
             </div>
 
             <!-- Table Phases / Catégories -->
@@ -1618,6 +1707,7 @@
                 <div class="filter-footer"><button class="filter-apply-btn" data-filter-apply="filterAssignee">OK</button></div>
             </div>
         </div>
+        <div class="project-update-meta" id="projectUpdateMeta"></div>
     </div>
 
     <div class="gantt-container">
@@ -1767,7 +1857,8 @@
                     assignees:    'assignees',    // RefList → responsables
                     dependDe:     'dependDe',     // RefList → prédécesseurs
                     dateDebutCalc:'dateDebutCalc',
-                    dateFinCalc:  'dateFinCalc'
+                    dateFinCalc:  'dateFinCalc',
+                    dateDerniereMaj: 'Date_Derniere_Maj'
                 },
                 responsableProjet: {
                     nom:      'Prenom_Nom',  // Nom complet affiché
@@ -1781,7 +1872,8 @@
                     numOpe:         'Num_Projet',
                     statut:         'Statut_Projet',
                     exercice:       'Exercice',
-                    dateReception:  'Date_Reception_Depuis_Gantt'
+                    dateReception:  'Date_Reception_Depuis_Gantt',
+                    affichageGantt: 'Affichage_Gantt'
                 },
                 phases: {
                     nom:      'Nom',        // Nom court
@@ -1850,6 +1942,15 @@
         const resolvePhaseCouleur = (id) => phases.find(x => x.id === id)?.[COL_PHASES.couleur]  || null;
         const resolveOpsNom       = (id, ops) => ops.find(x => x.id === id)?.[COL_OPS.nom]       || String(id || '');
         const resolveResponsableNom      = (id, team) => team.find(x => x.id === id)?.[COL_CHEF.nom]    || String(id || '');
+        const isProjectGanttVisible = (project) => {
+            if (!project || !COL_OPS.affichageGantt) return true;
+            const v = project[COL_OPS.affichageGantt];
+            return v === true || v === 1 || v === 'true' || v === 'True';
+        };
+        const isProjectIdGanttVisible = (projectId) => {
+            if (!projectId) return true;
+            return projects.some(p => String(p.id) === String(projectId) && isProjectGanttVisible(p));
+        };
 
         // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION VUE
@@ -2312,12 +2413,31 @@
             }
             // En mode single avec filtre projet unique, afficher le nom
             if (layoutMode === 'single' && filters.projects !== null && filters.projects.length === 1) {
-                const proj = projects.find(p => String(p.id) === String(filters.projects[0]));
+                const projectId = filters.projects[0];
+                const proj = projects.find(p => String(p.id) === String(projectId));
                 if (proj) text = (proj[COL_OPS.nom] || '') + (text ? ' · ' + text : '');
             } else if (layoutMode === 'single' && filters.projects !== null && filters.projects.length > 1) {
                 text = filters.projects.length + ' opérations · ' + text;
             }
             document.getElementById('currentPeriod').textContent = text;
+            const collapsedPeriod = document.getElementById('headerCollapsedPeriod');
+            if (collapsedPeriod) collapsedPeriod.textContent = text;
+            updateProjectUpdateMeta();
+        }
+
+        function updateProjectUpdateMeta() {
+            const el = document.getElementById('projectUpdateMeta');
+            if (!el) return;
+
+            if (layoutMode !== 'single' || filters.projects === null || filters.projects.length !== 1) {
+                el.classList.remove('visible');
+                el.textContent = '';
+                return;
+            }
+
+            const latestUpdate = getLatestProjectUpdateDate(filters.projects[0]);
+            el.textContent = 'Dernière mise à jour : ' + (latestUpdate ? formatDate(latestUpdate) : '-');
+            el.classList.add('visible');
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -2426,7 +2546,8 @@
         let filterSearch = { projects: '', assignees: '' };
 
         function buildFilterData() {
-            const projRaw = [...new Set(tasks.map(t => t[COL.projet]).filter(Boolean))];
+            const projRaw = [...new Set(tasks.map(t => t[COL.projet]).filter(Boolean))]
+                .filter(isProjectIdGanttVisible);
             filterData.projects = projRaw.map(raw => ({
                 id: String(raw),
                 nom: getTaskProjetNom({ [COL.projet]: raw })
@@ -2542,6 +2663,7 @@
 
         function taskMatchesFilters(t) {
             // null = pas de filtre (tout passe), [] = aucun (tout bloqué)
+            if (!isProjectIdGanttVisible(t[COL.projet])) return false;
             if (filters.projects !== null) {
                 if (filters.projects.length === 0) return false;
                 if (!filters.projects.map(String).includes(String(t[COL.projet]))) return false;
@@ -2555,6 +2677,15 @@
 
         function getFilteredTasks() {
             return tasks.filter(taskMatchesFilters);
+        }
+
+        function getLatestProjectUpdateDate(projectId) {
+            if (!projectId || !COL.dateDerniereMaj) return null;
+            return tasks
+                .filter(t => String(t[COL.projet]) === String(projectId))
+                .map(t => gristToDate(t[COL.dateDerniereMaj]))
+                .filter(Boolean)
+                .sort((a, b) => b.getTime() - a.getTime())[0] || null;
         }
 
         // Retourne la liste ordonnée de "lignes" pour la vue single (et multi).
@@ -2594,6 +2725,19 @@
         // ═══════════════════════════════════════════════════════════════════════
         // RENDER
         // ═══════════════════════════════════════════════════════════════════════
+        function setTopControlsCollapsed(collapsed) {
+            document.body.classList.toggle('top-controls-collapsed', !!collapsed);
+            try { localStorage.setItem(getScopedStorageKey('taskflow_gantt_top_controls_collapsed'), collapsed ? '1' : '0'); } catch(e) {}
+            try { closeAllFilterMenus(); } catch(e) {}
+            setTimeout(() => render(), 0);
+        }
+
+        function loadTopControlsState() {
+            let collapsed = false;
+            try { collapsed = localStorage.getItem(getScopedStorageKey('taskflow_gantt_top_controls_collapsed')) === '1'; } catch(e) {}
+            document.body.classList.toggle('top-controls-collapsed', collapsed);
+        }
+
         function render() {
             updatePeriodLabel();
             if (layoutMode === 'compact') {
@@ -4033,7 +4177,8 @@
                     { id: COL_OPS.numOpe,        type: 'Text' },
                     { id: COL_OPS.statut,        type: 'Choice' },
                     { id: COL_OPS.exercice,      type: 'Text' },
-                    { id: COL_OPS.dateReception, type: 'Date' }
+                    { id: COL_OPS.dateReception, type: 'Date' },
+                    { id: COL_OPS.affichageGantt, type: 'Bool' }
                 ],
                 [TABLE.phases]: [
                     { id: COL_PHASES.nom,      type: 'Text' },
@@ -4265,7 +4410,7 @@
             try {
                 const od = await grist.docApi.fetchTable(TABLE.operations);
                 allMissing.push(...checkMissingCols(od, COL_OPS, TABLE.operations));
-                projects = convert(od);
+                projects = convert(od).filter(isProjectGanttVisible);
             } catch (e) {
                 projects = [];
                 missingTables.push({ name: TABLE.operations, key: 'tableOperations', label: 'Opérations' });
@@ -4375,7 +4520,7 @@
         const CONFIG_OPTION_KEYS = [
             'tableChefProjet', 'tableOperations', 'tablePhases',
             'colChefNom', 'colChefPrenom', 'colChefFonction', 'colChefActif',
-            'colOpsNom', 'colOpsNumOpe', 'colOpsStatut', 'colOpsDateReception',
+            'colOpsNom', 'colOpsNumOpe', 'colOpsStatut', 'colOpsDateReception', 'colOpsAffichageGantt',
             'colPhasesNom', 'colPhasesCouleur', 'colPhasesNumOrder'
         ];
 
@@ -4466,6 +4611,7 @@
             colOpsNumOpe: 'Col_Projet_Num',
             colOpsStatut: 'Col_Projet_Statut',
             colOpsDateReception: 'Col_Projet_Date_Reception',
+            colOpsAffichageGantt: 'Col_Projet_Affichage_Gantt',
             colPhasesNom: 'Col_Categorie_Nom',
             colPhasesCouleur: 'Col_Categorie_Couleur',
             colPhasesNumOrder: 'Col_Categorie_Ordre',
@@ -4486,6 +4632,7 @@
             colOpsNumOpe: ['Col_Projet_Num', 'Col_Operation_Num'],
             colOpsStatut: ['Col_Projet_Statut', 'Col_Operation_Statut'],
             colOpsDateReception: ['Col_Projet_Date_Reception', 'Col_Operation_Date_Reception'],
+            colOpsAffichageGantt: ['Col_Projet_Affichage_Gantt', 'Col_Operation_Affichage_Gantt'],
             colPhasesNom: ['Col_Categorie_Nom'],
             colPhasesCouleur: ['Col_Categorie_Couleur'],
             colPhasesNumOrder: ['Col_Categorie_Ordre'],
@@ -4524,6 +4671,14 @@
                 throw new Error('Colonne manquante dans la table de configuration : ' + aliases.join(' ou '));
             }
             return found;
+        }
+
+        // Les nouvelles colonnes de configuration doivent rester compatibles avec
+        // les documents qui n'ont pas encore mis a jour Tb_Config_Gantt_Widget.
+        function optionalConfigValue(data, key, value) {
+            const aliases = GANTT_CONFIG_COLUMN_ALIASES[key] || [GANTT_CONFIG_COLUMNS[key]];
+            const found = aliases.find(col => Object.prototype.hasOwnProperty.call(data || {}, col));
+            return found ? { [found]: value } : {};
         }
 
         // Lit une valeur de configuration depuis une ligne, en acceptant les anciens
@@ -4567,6 +4722,7 @@
                 colOpsNumOpe: configRowValue(row, 'colOpsNumOpe'),
                 colOpsStatut: configRowValue(row, 'colOpsStatut'),
                 colOpsDateReception: configRowValue(row, 'colOpsDateReception'),
+                colOpsAffichageGantt: configRowValue(row, 'colOpsAffichageGantt'),
                 colPhasesNom: configRowValue(row, 'colPhasesNom'),
                 colPhasesCouleur: configRowValue(row, 'colPhasesCouleur'),
                 colPhasesNumOrder: configRowValue(row, 'colPhasesNumOrder'),
@@ -4590,6 +4746,7 @@
                 [requiredConfigColumn(configTableData, 'colOpsNumOpe')]: options.colOpsNumOpe,
                 [requiredConfigColumn(configTableData, 'colOpsStatut')]: options.colOpsStatut,
                 [requiredConfigColumn(configTableData, 'colOpsDateReception')]: options.colOpsDateReception,
+                ...optionalConfigValue(configTableData, 'colOpsAffichageGantt', options.colOpsAffichageGantt),
                 [requiredConfigColumn(configTableData, 'colPhasesNom')]: options.colPhasesNom,
                 [requiredConfigColumn(configTableData, 'colPhasesCouleur')]: options.colPhasesCouleur,
                 [requiredConfigColumn(configTableData, 'colPhasesNumOrder')]: options.colPhasesNumOrder,
@@ -4665,6 +4822,7 @@
                         { name: 'duree',         title: 'Durée (jours)',                type: 'Numeric', optional: false },
                         { name: 'dateDebutCalc', title: 'Date début calculée',          type: 'Date',    optional: true  },
                         { name: 'dateFinCalc',   title: 'Date fin calculée',            type: 'Date',    optional: true  },
+                        { name: 'dateDerniereMaj', title: 'Date dernière mise à jour',   type: 'Date',    optional: true  },
                         { name: 'projet',        title: 'Opération (Ref)',              type: 'Ref',     optional: true  },
                         { name: 'assignees',     title: 'Responsables',                 type: 'RefList', optional: true  },
                         { name: 'dependDe',      title: 'Dépend de',                    type: 'RefList', optional: true  },
@@ -4686,6 +4844,7 @@
                     if (opts.colOpsNumOpe)         COL_OPS.numOpe        = opts.colOpsNumOpe;
                     if (opts.colOpsStatut)         COL_OPS.statut        = opts.colOpsStatut;
                     if (opts.colOpsDateReception)  COL_OPS.dateReception = opts.colOpsDateReception;
+                    if (opts.colOpsAffichageGantt) COL_OPS.affichageGantt = opts.colOpsAffichageGantt;
                     if (opts.colPhasesNom)      COL_PHASES.nom      = opts.colPhasesNom;
                     if (opts.colPhasesCouleur)  COL_PHASES.couleur  = opts.colPhasesCouleur;
                     if (opts.colPhasesNumOrder) COL_PHASES.numOrder = opts.colPhasesNumOrder;
@@ -4853,9 +5012,9 @@
 
             // Projets (opérations)
             projects = [
-                { id: 1, [COL_OPS.nom]: 'IUT1 Halles GCCD & GMP',    [COL_OPS.numOpe]: '2024_001', [COL_OPS.statut]: 'En cours' },
-                { id: 2, [COL_OPS.nom]: 'Bibliothèque Briffaut',      [COL_OPS.numOpe]: '2023_011', [COL_OPS.statut]: 'En cours' },
-                { id: 3, [COL_OPS.nom]: 'Marguerite Soubeyran - ACC', [COL_OPS.numOpe]: '2024_005', [COL_OPS.statut]: 'Transférée' },
+                { id: 1, [COL_OPS.nom]: 'IUT1 Halles GCCD & GMP',    [COL_OPS.numOpe]: '2024_001', [COL_OPS.statut]: 'En cours', [COL_OPS.affichageGantt]: true },
+                { id: 2, [COL_OPS.nom]: 'Bibliothèque Briffaut',      [COL_OPS.numOpe]: '2023_011', [COL_OPS.statut]: 'En cours', [COL_OPS.affichageGantt]: true },
+                { id: 3, [COL_OPS.nom]: 'Marguerite Soubeyran - ACC', [COL_OPS.numOpe]: '2024_005', [COL_OPS.statut]: 'Transférée', [COL_OPS.affichageGantt]: true },
             ];
 
             // Responsables
@@ -4915,6 +5074,7 @@
             { id: 'cfg-colOpsNumOpe',          optionKey: 'colOpsNumOpe',          default: () => COL_OPS.numOpe },
             { id: 'cfg-colOpsStatut',          optionKey: 'colOpsStatut',          default: () => COL_OPS.statut },
             { id: 'cfg-colOpsDateReception',   optionKey: 'colOpsDateReception',   default: () => COL_OPS.dateReception },
+            { id: 'cfg-colOpsAffichageGantt',  optionKey: 'colOpsAffichageGantt',  default: () => COL_OPS.affichageGantt },
             { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => COL_PHASES.nom },
             { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => COL_PHASES.couleur },
             { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => COL_PHASES.numOrder },
@@ -5019,6 +5179,7 @@
                 colOpsNumOpe: GRIST_CONFIG.columns.operations.numOpe,
                 colOpsStatut: GRIST_CONFIG.columns.operations.statut,
                 colOpsDateReception: GRIST_CONFIG.columns.operations.dateReception,
+                colOpsAffichageGantt: GRIST_CONFIG.columns.operations.affichageGantt,
                 colPhasesNom: GRIST_CONFIG.columns.phases.nom,
                 colPhasesCouleur: GRIST_CONFIG.columns.phases.couleur,
                 colPhasesNumOrder: GRIST_CONFIG.columns.phases.numOrder
@@ -5095,6 +5256,7 @@
             COL_OPS.numOpe        = options.colOpsNumOpe;
             COL_OPS.statut        = options.colOpsStatut;
             COL_OPS.dateReception = options.colOpsDateReception;
+            COL_OPS.affichageGantt = options.colOpsAffichageGantt;
 
             COL_PHASES.nom      = options.colPhasesNom;
             COL_PHASES.couleur  = options.colPhasesCouleur;
@@ -5286,6 +5448,9 @@
                 updateFilterUI();
             }
         }, true);
+
+        // Restaurer l'état du header avant le premier rendu.
+        loadTopControlsState();
 
         // Initialiser le layout compact (mode par défaut)
         setLayoutMode('compact');
