@@ -91,59 +91,6 @@
             gap: 8px;
         }
 
-        .top-controls-toggle {
-            padding: 6px 9px;
-        }
-
-        .top-controls-toggle svg {
-            transition: transform 0.15s;
-        }
-
-        .header-toggle-strip {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-shrink: 0;
-            padding: 6px 12px;
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
-
-        .header-toggle-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-
-        .header-toggle-title strong {
-            color: var(--primary);
-            font-size: 0.82rem;
-        }
-
-        .header-toggle-period {
-            min-width: 0;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        body.top-controls-collapsed .header,
-        body.top-controls-collapsed .filter-bar {
-            display: none;
-        }
-
-        body.top-controls-collapsed .header-toggle-strip {
-            display: flex;
-        }
-
         .btn {
             padding: 6px 12px;
             border-radius: 6px;
@@ -236,18 +183,6 @@
 
         .filter-btn:hover { background: var(--bg); }
         .filter-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-
-        .project-update-meta {
-            display: none;
-            align-items: center;
-            min-height: 28px;
-            padding: 0 2px;
-            color: var(--text-muted);
-            font-size: 0.72rem;
-            font-weight: 500;
-        }
-
-        .project-update-meta.visible { display: flex; }
 
         .filter-menu {
             position: absolute;
@@ -426,16 +361,13 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            overflow-y: hidden;
+            overflow: hidden;
         }
 
         .timeline-header-months {
             display: flex;
             background: var(--bg);
             border-bottom: 1px solid var(--border);
-            overflow: hidden;
-            flex-shrink: 0;
         }
 
         .month-cell {
@@ -445,13 +377,10 @@
             font-weight: 600;
             color: var(--text-muted);
             border-right: 1px solid var(--border);
-            flex-shrink: 0;
         }
 
         .timeline-header-days {
             display: flex;
-            overflow: hidden;
-            flex-shrink: 0;
         }
 
         .day-cell {
@@ -1098,6 +1027,7 @@
         .panel-filter-widget {
             border: 1px solid var(--border);
             border-radius: 6px;
+            overflow: hidden;
             margin-top: 4px;
         }
         .panel-filter-search {
@@ -1112,10 +1042,8 @@
             outline: none;
         }
         .panel-filter-list {
-            height: 180px;
-            overflow-y: scroll;
-            border-top: 1px solid var(--border);
-            background: var(--card-bg);
+            max-height: 140px;
+            overflow-y: auto;
         }
         .panel-filter-item {
             display: flex;
@@ -1462,7 +1390,6 @@
             :root { --task-list-width: 200px; --cell-width: 28px; }
             .header { flex-direction: column; align-items: stretch; }
             .header-center { justify-content: center; }
-            .header-toggle-strip { align-items: stretch; }
         }
 
         @media (max-width: 600px) {
@@ -1485,19 +1412,6 @@
         <button class="banner-btn" onclick="openConfigPanel()">Reconfigurer</button>
     </div>
 
-    <div class="header-toggle-strip" id="headerToggleStrip">
-        <div class="header-toggle-title">
-            <strong>Gantt</strong>
-            <span class="header-toggle-period" id="headerCollapsedPeriod"></span>
-        </div>
-        <button class="btn top-controls-toggle" onclick="setTopControlsCollapsed(false)" title="Afficher les contrôles">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 15 12 9 18 15"></polyline>
-            </svg>
-            Afficher les contrôles
-        </button>
-    </div>
-
     <div class="header">
         <div class="header-left">
             <h1>
@@ -1509,7 +1423,7 @@
                 Gantt
             </h1>
             <div class="layout-controls">
-               <!-- <button class="layout-btn active" data-layout="multi" onclick="setLayoutMode('multi')" title="Vue multi-projets détaillée">Multi</button>-->
+                <button class="layout-btn active" data-layout="multi" onclick="setLayoutMode('multi')" title="Vue multi-projets détaillée">Multi</button>
                 <button class="layout-btn" data-layout="compact" onclick="setLayoutMode('compact')" title="Vue compacte — 1 ligne par projet">Compact</button>
                 <button class="layout-btn" data-layout="single" onclick="setLayoutMode('single')" title="Vue détaillée d'un projet">Projet</button>
             </div>
@@ -1541,12 +1455,6 @@
             </div>
         </div>
         <div class="header-right">
-            <button class="btn top-controls-toggle" onclick="setTopControlsCollapsed(true)" title="Masquer les contrôles">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-                Masquer
-            </button>
             <button class="btn primary" onclick="openCreateModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1605,19 +1513,19 @@
                 </div>
             </div>
 
-            <!-- Table Projets -->
+            <!-- Table Opérations -->
             <div class="config-section">
-                <div class="config-section-title">📁 Table projets</div>
+                <div class="config-section-title">📁 Table opérations</div>
                 <div class="config-field">
                     <label>Table</label>
                     <select id="cfg-tableOperations" onchange="onTableSelect(this, 'ops')"></select>
                 </div>
                 <div class="config-field">
-                    <label>Nom projet</label>
+                    <label>Nom opération</label>
                     <select id="cfg-colOpsNom" data-group="ops"></select>
                 </div>
                 <div class="config-field">
-                    <label>Numéro projet</label>
+                    <label>Numéro opération</label>
                     <select id="cfg-colOpsNumOpe" data-group="ops"></select>
                 </div>
                 <div class="config-field">
@@ -1627,10 +1535,6 @@
                 <div class="config-field">
                     <label>Date réception</label>
                     <select id="cfg-colOpsDateReception" data-group="ops"></select>
-                </div>
-                <div class="config-field">
-                    <label>Affichage Gantt (booléen)</label>
-                    <select id="cfg-colOpsAffichageGantt" data-group="ops"></select>
                 </div>
             </div>
 
@@ -1707,7 +1611,6 @@
                 <div class="filter-footer"><button class="filter-apply-btn" data-filter-apply="filterAssignee">OK</button></div>
             </div>
         </div>
-        <div class="project-update-meta" id="projectUpdateMeta"></div>
     </div>
 
     <div class="gantt-container">
@@ -1822,12 +1725,6 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script>
         // ═══════════════════════════════════════════════════════════════════════
-        // VERSION
-        // ═══════════════════════════════════════════════════════════════════════
-        const WIDGET_VERSION = 'V40';
-        console.log('[GANTT] ══ Widget version', WIDGET_VERSION, '══');
-
-        // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION GRIST
         // Noms de tables et colonnes par défaut.
         // • Les colonnes Tasks sont mappables via le panneau "Colonnes" de Grist
@@ -1841,14 +1738,14 @@
             // Noms des tables Grist — défauts modifiables via Widget Options
             tables: {
                 tasks:      'Tasks',
-                responsableProjet: 'DPPI_User',
-                operations: 'DPPI_Projet',
-                phases:     'DPPI_Categorie_Phase'
+                responsableProjet: 'DPPI_Chef_Projet',
+                operations: 'DPPI_Operations',
+                phases:     'PL_Liste_Phases'
             },
             // Noms des colonnes par défaut (écrasés par le mappage Grist)
             columns: {
                 tasks: {
-                    titre:        'titre',        // Ref → DPPI_Categorie_Phase (catégorie)
+                    titre:        'titre',        // Ref → PL_Liste_Phases (catégorie)
                     titreAdapte:  'titreAdapte',  // Titre personnalisé par opération (optionnel)
                     description:  'description',
                     dateDebut:    'dateDebut',
@@ -1857,8 +1754,7 @@
                     assignees:    'assignees',    // RefList → responsables
                     dependDe:     'dependDe',     // RefList → prédécesseurs
                     dateDebutCalc:'dateDebutCalc',
-                    dateFinCalc:  'dateFinCalc',
-                    dateDerniereMaj: 'Date_Derniere_Maj'
+                    dateFinCalc:  'dateFinCalc'
                 },
                 responsableProjet: {
                     nom:      'Prenom_Nom',  // Nom complet affiché
@@ -1868,12 +1764,11 @@
                     actif:    'Actif'
                 },
                 operations: {
-                    nom:            'Nom_Projet',     // Nom du projet
-                    numOpe:         'Num_Projet',
-                    statut:         'Statut_Projet',
+                    nom:            'Nom_Ope',     // Nom de l'opération
+                    numOpe:         'Num_Ope',
+                    statut:         'Statut_Ope',
                     exercice:       'Exercice',
-                    dateReception:  'Date_Reception_Depuis_Gantt',
-                    affichageGantt: 'Affichage_Gantt'
+                    dateReception:  'Date_Reception'
                 },
                 phases: {
                     nom:      'Nom',        // Nom court
@@ -1898,7 +1793,7 @@
         let TABLE = { ...GRIST_CONFIG.tables };
 
         // Données des tables secondaires chargées en mémoire
-        let phases = [];  // DPPI_Categorie_Phase
+        let phases = [];  // PL_Liste_Phases
 
         // Résolution des Refs Grist
         // fetchTable() retourne l'ID numérique pour les colonnes Ref.
@@ -1942,15 +1837,6 @@
         const resolvePhaseCouleur = (id) => phases.find(x => x.id === id)?.[COL_PHASES.couleur]  || null;
         const resolveOpsNom       = (id, ops) => ops.find(x => x.id === id)?.[COL_OPS.nom]       || String(id || '');
         const resolveResponsableNom      = (id, team) => team.find(x => x.id === id)?.[COL_CHEF.nom]    || String(id || '');
-        const isProjectGanttVisible = (project) => {
-            if (!project || !COL_OPS.affichageGantt) return true;
-            const v = project[COL_OPS.affichageGantt];
-            return v === true || v === 1 || v === 'true' || v === 'True';
-        };
-        const isProjectIdGanttVisible = (projectId) => {
-            if (!projectId) return true;
-            return projects.some(p => String(p.id) === String(projectId) && isProjectGanttVisible(p));
-        };
 
         // ═══════════════════════════════════════════════════════════════════════
         // CONFIGURATION VUE
@@ -1990,12 +1876,12 @@
         let gristReady = false;
         let _mainTableId = null; // Vrai ID Grist de la table principale (mis à jour par onRecords)
         let tasks = [];
-        let team = [];      // DPPI_User
-        let projects = [];  // DPPI_Projet
+        let team = [];      // DPPI_Chef_Projet
+        let projects = [];  // DPPI_Operations
 
         // Modes de layout : 'multi' (défaut), 'compact', 'single'
         let layoutMode = 'compact';
-        // En mode 'single' : ID du projet sélectionné (null = tous)
+        // En mode 'single' : ID de l'opération sélectionnée (null = toutes)
         let selectedProjectId = null;
         let currentView = 'year';
         let viewStartDate = new Date();
@@ -2105,31 +1991,25 @@
             return parts.slice(0, 2).join(' ');
         }
         // Formate des jours en texte, en tenant compte de la date de début
-        // pour exprimer les mois calendaires exacts avec aller-retour stable.
+        // pour exprimer les mois calendaires exacts (ex: 31 jours depuis le 1er = "1 mois").
         function formatDureeTexteFromDate(jours, dateDebut) {
             if (jours === 0) return '0 j (jalon)';
             if (!jours || jours < 0) return '';
             if (!dateDebut) return formatDureeTexte(jours);
-            var fin = new Date(dateDebut);
+            const fin = new Date(dateDebut);
             fin.setDate(fin.getDate() + jours);
-            var ans = fin.getFullYear() - dateDebut.getFullYear();
-            var mois = fin.getMonth() - dateDebut.getMonth();
+            // Calculer les années complètes calendaires
+            let ans = fin.getFullYear() - dateDebut.getFullYear();
+            let mois = fin.getMonth() - dateDebut.getMonth();
             if (mois < 0) { ans--; mois += 12; }
-            // Calcul de l'intermédiaire après soustraction des mois entiers
-            var inter = new Date(dateDebut);
+            // Date intermédiaire après retrait ans et mois
+            const inter = new Date(dateDebut);
             if (ans)  inter.setFullYear(inter.getFullYear() + ans);
             if (mois) inter.setMonth(inter.getMonth() + mois);
-            var restJ = Math.round((fin - inter) / 86400000);
-            // Si restJ < 0 : la fin est avant le même jour du mois → 1 mois de trop
-            if (restJ < 0) {
-                mois--;
-                if (mois < 0) { ans--; mois = 11; }
-                var inter2 = new Date(dateDebut);
-                if (ans)  inter2.setFullYear(inter2.getFullYear() + ans);
-                if (mois) inter2.setMonth(inter2.getMonth() + mois);
-                restJ = Math.round((fin - inter2) / 86400000);
-            }
-            var sem = Math.floor(restJ / 7), j = restJ % 7, parts = [];
+            const restJ = Math.round((fin - inter) / 86400000);
+            const sem = Math.floor(restJ / 7);
+            const j   = restJ % 7;
+            const parts = [];
             if (ans  > 0) parts.push(ans  + ' an'  + (ans  > 1 ? 's' : ''));
             if (mois > 0) parts.push(mois + ' mois');
             if (sem  > 0) parts.push(sem  + ' sem');
@@ -2137,7 +2017,7 @@
             return parts.length ? parts.join(' ') : '0 j';
         }
 
-                const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+        const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
         const isSameDay = (a, b) => a.toDateString() === b.toDateString();
         const getDaysDiff = (a, b) => Math.round((b - a) / 86400000);
         const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
@@ -2153,7 +2033,7 @@
 
         function getInitials(n) { return n ? n.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) : '?'; }
 
-        // Résolution du titre d'une tâche : la colonne titre est une Ref vers DPPI_Categorie_Phase.
+        // Résolution du titre d'une tâche : la colonne titre est une Ref vers PL_Liste_Phases.
         // Nom court (Nom) — pour les barres, tooltip, menu contextuel
         // Résolution du titre affiché d'une tâche.
         // titreAdapte (colonne Tasks) est prioritaire sur la Ref vers phases.
@@ -2189,10 +2069,10 @@
             return court;
         }
 
-        // Couleur de la barre : issue de DPPI_Categorie_Phase via la Ref titre,
+        // Couleur de la barre : issue de PL_Liste_Phases via la Ref titre,
         // ou de la colonne couleur directe si présente.
         function getTaskCouleur(t) {
-            // La couleur vient de DPPI_Categorie_Phase via la Ref titre → DPPI_Categorie_Phase.Couleur
+            // La couleur vient de PL_Liste_Phases via la Ref titre → PL_Liste_Phases.Couleur
             const phaseId = t._phaseId ?? (() => {
                 const val = t[COL.titre];
                 return (typeof val === 'number') ? val :
@@ -2201,7 +2081,7 @@
             return phaseId ? (resolvePhaseCouleur(phaseId) || null) : null;
         }
 
-        // Résolution du nom du projet (DPPI_Projet)
+        // Résolution du nom du projet (DPPI_Operations)
         function getTaskProjetNom(t) {
             const val = t[COL.projet];
             if (!val) return '';
@@ -2211,7 +2091,7 @@
             return String(val);
         }
 
-        // Résolution des noms des responsables (RefList → DPPI_User)
+        // Résolution des noms des responsables (RefList → DPPI_Chef_Projet)
         function getTaskAssigneesNoms(t) {
             return getAssigneesArray(t).map(id => resolveResponsableNom(id, team)).filter(Boolean);
         }
@@ -2263,47 +2143,17 @@
             const cfg = VIEW_CONFIG[currentView];
             const n = getViewCellCount();
             if (cfg.unit === 'day')   return n;
-            if (cfg.unit === 'sem6')  return n * 30; // approximation pour les checks de visibilité
-            if (cfg.unit === 'month') {
-                // Compter les vrais jours sur les n mois depuis le début de la vue
-                const start = getViewStartDate();
-                let days = 0;
-                for (let i = 0; i < n; i++) {
-                    const m = new Date(start.getFullYear(), start.getMonth() + i + 1, 0);
-                    days += m.getDate();
-                }
-                return days;
-            }
+            if (cfg.unit === 'sem6')  return n * 30; // n = nb mois
+            if (cfg.unit === 'month') return n * 30;
             return n;
         }
 
         function getPixelsPerDay() {
-            // Pour les vues en jours : 1 cellule = 1 jour → simple
-            // Pour les vues en mois : valeur MOYENNE (utilisée seulement pour la ligne today et les checks)
             const cfg = VIEW_CONFIG[currentView];
             if (cfg.unit === 'day')   return cfg.cellWidth;
             if (cfg.unit === 'sem6')  return cfg.cellWidth / 30;
-            if (cfg.unit === 'month') return cfg.cellWidth / 30; // moyenne, ne pas utiliser pour positionner
+            if (cfg.unit === 'month') return cfg.cellWidth / 30;
             return cfg.cellWidth;
-        }
-
-        // Convertit une date en position X en pixels pour les vues en mois.
-        // Chaque cellule = 1 mois de largeur fixe cfg.cellWidth.
-        // La date est positionnée proportionnellement dans son mois (jours réels).
-        function dateToPxMonth(date) {
-            const cfg = VIEW_CONFIG[currentView];
-            const start = getViewStartDate();
-            const n = getViewCellCount();
-            // Index du mois de la date par rapport au mois de début
-            const monthIndex = (date.getFullYear() - start.getFullYear()) * 12
-                             + (date.getMonth()    - start.getMonth());
-            if (monthIndex < 0) return 0;
-            if (monthIndex >= n) return n * cfg.cellWidth;
-            // Jours dans ce mois
-            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-            // Position dans le mois (0-based)
-            const dayInMonth = date.getDate() - 1;
-            return monthIndex * cfg.cellWidth + (dayInMonth / daysInMonth) * cfg.cellWidth;
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -2325,9 +2175,7 @@
             currentView = view;
             document.querySelectorAll('.view-controls .btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
             document.documentElement.style.setProperty('--cell-width', VIEW_CONFIG[view].cellWidth + 'px');
-            // La vue est mémorisée par table source pour éviter qu'un autre Gantt
-            // du même document reprenne automatiquement le même niveau de zoom.
-            localStorage.setItem(getScopedStorageKey('taskflow_gantt_view'), view);
+            localStorage.setItem('taskflow_gantt_view', view);
 
             // 3. Calculer viewStartDate pour centrer sur centerDate dans la NOUVELLE vue
             const newCfg   = VIEW_CONFIG[view];
@@ -2413,31 +2261,12 @@
             }
             // En mode single avec filtre projet unique, afficher le nom
             if (layoutMode === 'single' && filters.projects !== null && filters.projects.length === 1) {
-                const projectId = filters.projects[0];
-                const proj = projects.find(p => String(p.id) === String(projectId));
+                const proj = projects.find(p => String(p.id) === String(filters.projects[0]));
                 if (proj) text = (proj[COL_OPS.nom] || '') + (text ? ' · ' + text : '');
             } else if (layoutMode === 'single' && filters.projects !== null && filters.projects.length > 1) {
                 text = filters.projects.length + ' opérations · ' + text;
             }
             document.getElementById('currentPeriod').textContent = text;
-            const collapsedPeriod = document.getElementById('headerCollapsedPeriod');
-            if (collapsedPeriod) collapsedPeriod.textContent = text;
-            updateProjectUpdateMeta();
-        }
-
-        function updateProjectUpdateMeta() {
-            const el = document.getElementById('projectUpdateMeta');
-            if (!el) return;
-
-            if (layoutMode !== 'single' || filters.projects === null || filters.projects.length !== 1) {
-                el.classList.remove('visible');
-                el.textContent = '';
-                return;
-            }
-
-            const latestUpdate = getLatestProjectUpdateDate(filters.projects[0]);
-            el.textContent = 'Dernière mise à jour : ' + (latestUpdate ? formatDate(latestUpdate) : '-');
-            el.classList.add('visible');
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -2492,14 +2321,12 @@
         // ═══════════════════════════════════════════════════════════════════════
         function loadFilters() {
             try {
-                // Les filtres et la vue sont relus avec la même clé scopée que la
-                // configuration, afin que chaque table source garde son état local.
-                const s = localStorage.getItem(getScopedStorageKey('taskflow_gantt_filters'));
+                const s = localStorage.getItem('taskflow_gantt_filters');
                 try { const saved = JSON.parse(s); if (saved && typeof saved === 'object') {
                     filters.projects = Array.isArray(saved.projects) ? saved.projects : null;
                     filters.assignees = Array.isArray(saved.assignees) ? saved.assignees : null;
                 }} catch(e) {}
-                const v = localStorage.getItem(getScopedStorageKey('taskflow_gantt_view'));
+                const v = localStorage.getItem('taskflow_gantt_view');
                 if (v && VIEW_CONFIG[v]) currentView = v;
             } catch (e) {}
         }
@@ -2546,8 +2373,7 @@
         let filterSearch = { projects: '', assignees: '' };
 
         function buildFilterData() {
-            const projRaw = [...new Set(tasks.map(t => t[COL.projet]).filter(Boolean))]
-                .filter(isProjectIdGanttVisible);
+            const projRaw = [...new Set(tasks.map(t => t[COL.projet]).filter(Boolean))];
             filterData.projects = projRaw.map(raw => ({
                 id: String(raw),
                 nom: getTaskProjetNom({ [COL.projet]: raw })
@@ -2663,7 +2489,6 @@
 
         function taskMatchesFilters(t) {
             // null = pas de filtre (tout passe), [] = aucun (tout bloqué)
-            if (!isProjectIdGanttVisible(t[COL.projet])) return false;
             if (filters.projects !== null) {
                 if (filters.projects.length === 0) return false;
                 if (!filters.projects.map(String).includes(String(t[COL.projet]))) return false;
@@ -2677,15 +2502,6 @@
 
         function getFilteredTasks() {
             return tasks.filter(taskMatchesFilters);
-        }
-
-        function getLatestProjectUpdateDate(projectId) {
-            if (!projectId || !COL.dateDerniereMaj) return null;
-            return tasks
-                .filter(t => String(t[COL.projet]) === String(projectId))
-                .map(t => gristToDate(t[COL.dateDerniereMaj]))
-                .filter(Boolean)
-                .sort((a, b) => b.getTime() - a.getTime())[0] || null;
         }
 
         // Retourne la liste ordonnée de "lignes" pour la vue single (et multi).
@@ -2725,19 +2541,6 @@
         // ═══════════════════════════════════════════════════════════════════════
         // RENDER
         // ═══════════════════════════════════════════════════════════════════════
-        function setTopControlsCollapsed(collapsed) {
-            document.body.classList.toggle('top-controls-collapsed', !!collapsed);
-            try { localStorage.setItem(getScopedStorageKey('taskflow_gantt_top_controls_collapsed'), collapsed ? '1' : '0'); } catch(e) {}
-            try { closeAllFilterMenus(); } catch(e) {}
-            setTimeout(() => render(), 0);
-        }
-
-        function loadTopControlsState() {
-            let collapsed = false;
-            try { collapsed = localStorage.getItem(getScopedStorageKey('taskflow_gantt_top_controls_collapsed')) === '1'; } catch(e) {}
-            document.body.classList.toggle('top-controls-collapsed', collapsed);
-        }
-
         function render() {
             updatePeriodLabel();
             if (layoutMode === 'compact') {
@@ -3038,16 +2841,8 @@
                     const s0 = getDaysDiff(start, tStart);
                     const e0 = getDaysDiff(start, tEnd);
                     if (e0 < 0 || s0 > totalDays) return;
-                    // Positionnement précis : utiliser dateToPxMonth pour les vues en mois
-                    let left, right;
-                    if (cfg.unit === 'month') {
-                        left  = tStart < start ? 0 : dateToPxMonth(tStart);
-                        right = dateToPxMonth(tEnd);
-                        right = Math.min(right, n * cfg.cellWidth);
-                    } else {
-                        left  = Math.max(0, s0) * pxPerDay;
-                        right = Math.min(e0, totalDays) * pxPerDay;
-                    }
+                    const left  = Math.max(0, s0) * pxPerDay;
+                    const right = Math.min(e0, totalDays) * pxPerDay;
                     const width = Math.max(right - left, 4);
                     const colour = getTaskCouleur(t) || 'var(--primary)';
                     const titre  = escapeHtml(getTaskTitre(t));
@@ -3076,9 +2871,8 @@
             }
 
             const todayOff = getDaysDiff(start, today);
-            const todayLeft = cfg.unit === 'month' ? dateToPxMonth(today) : todayOff * pxPerDay;
             const todayLine = todayOff >= 0 && todayOff < totalDays
-                ? `<div class="compact-today-line" style="left:${todayLeft}px"></div>` : '';
+                ? `<div class="compact-today-line" style="left:${todayOff * pxPerDay}px"></div>` : '';
 
             // ── Construire l'en-tête compact ──────────────────────────────────────
             // Mois + jours alignés sur la zone timeline (après le label)
@@ -3129,6 +2923,7 @@
                     <div class="compact-label" style="width:${LW}px;min-width:${LW}px;position:sticky;left:0;z-index:3;background:var(--card-bg);border-right:1px solid var(--border);"
                          onclick="selectCompactProject(${proj.id})">
                         <div class="compact-label-nom">${escapeHtml(proj[COL_OPS.nom])}</div>
+                        <div class="compact-label-meta">${proj[COL_OPS.numOpe] || ''} · ${pts.length} phase${pts.length > 1 ? 's' : ''}</div>
                     </div>
                     <div class="compact-grid" style="position:relative;width:${totalWidth}px;min-width:${totalWidth}px;height:${ROW_H}px;overflow:hidden;display:flex;">
                         ${makeCells()}
@@ -3243,7 +3038,7 @@
                 const barStyle = barColor ? `background:${barColor};` : '';
 
                 if (isJalon(t)) {
-                    const left = cfg.unit === 'month' ? dateToPxMonth(taskStart) : startOff * pxPerDay;
+                    const left = startOff * pxPerDay;
                     if (startOff >= 0 && startOff < totalDays) {
                         const diamondStyle = barColor ? `background:${barColor};` : '';
                         html += `
@@ -3255,45 +3050,28 @@
                         `;
                     }
                 } else {
-                    let left, width;
-                    if (cfg.unit === 'month') {
-                        left  = taskStart < start ? 0 : dateToPxMonth(taskStart);
-                        const rightPx = Math.min(dateToPxMonth(taskEnd), n * cfg.cellWidth);
-                        width = Math.max(rightPx - left, 4);
-                    } else {
-                        left  = visStart * pxPerDay;
-                        width = (visEnd - visStart) * pxPerDay;
-                        if (width < 4) width = 4;
-                    }
+                    let left = visStart * pxPerDay;
+                    let width = (visEnd - visStart) * pxPerDay;
+                    if (width < 4) width = 4;
 
                     const prog = t[COL.progression] || 0;
                     const dStart = formatDateBar(taskStart);
                     const dEnd   = formatDateBar(getDisplayEnd(t));
                     const dureeStr = formatDureeTexteFromDate(t[COL.duree], taskStart);
-
-                    // Estimation de la place disponible et de la largeur du texte.
-                    // On réserve ~30px pour les dates de début/fin à l'intérieur de la barre.
-                    const availableInside = width - 30;
-                    // Approximation : 0.55rem ≈ ~6.6px/char à font-size 0.68rem (11px env.)
-                    const PX_PER_CHAR = 6.6;
-                    const labelWithDuree = titre + ' - ' + dureeStr;
-                    const labelSimple    = titre;
-                    const wLabelWithDuree = labelWithDuree.length * PX_PER_CHAR;
-                    const wLabelSimple    = labelSimple.length    * PX_PER_CHAR;
-
+                    // Décision d'affichage selon largeur
                     let barInner;
-                    if (dureeStr && wLabelWithDuree <= availableInside) {
-                        // Titre + durée tiennent à l'intérieur
+                    if (width >= 120 && dureeStr) {
+                        // Barre large : nom + durée à l'intérieur
                         barInner = `<span class="bar-date bar-date-start">${dStart}</span>
-                            <span class="bar-label">${escapeHtml(labelWithDuree)}</span>
+                            <span class="bar-label">${escapeHtml(titre + ' - ' + dureeStr)}</span>
                             <span class="bar-date bar-date-end">${dEnd}</span>`;
-                    } else if (wLabelSimple <= availableInside) {
-                        // Titre seul tient à l'intérieur
+                    } else if (width >= 60) {
+                        // Barre moyenne : nom seul à l'intérieur
                         barInner = `<span class="bar-date bar-date-start">${dStart}</span>
                             <span class="bar-label">${escapeHtml(titre)}</span>
                             <span class="bar-date bar-date-end">${dEnd}</span>`;
                     } else {
-                        // Le titre ne tient pas : date de fin puis titre à l'extérieur
+                        // Barre courte : date fin puis nom à l'extérieur (après la date)
                         barInner = `<span class="bar-date bar-date-start">${dStart}</span>
                             <span class="bar-label"></span>
                             <span class="bar-date bar-date-end">${dEnd}</span>
@@ -3314,8 +3092,7 @@
             // Today line
             const todayOff = getDaysDiff(start, today);
             if (todayOff >= 0 && todayOff < totalDays) {
-                const todayLeft = cfg.unit === 'month' ? dateToPxMonth(today) : todayOff * pxPerDay;
-                html += `<div class="today-line" style="left: ${todayLeft}px;"></div>`;
+                html += `<div class="today-line" style="left: ${todayOff * pxPerDay}px;"></div>`;
             }
 
             grid.innerHTML = html;
@@ -3351,7 +3128,6 @@
             const svg = document.getElementById('dependenciesLayer');
             if (!svg) return;
 
-            const cfg = VIEW_CONFIG[currentView];
             const ROW_H = 44;
             const pxPerDay = getPixelsPerDay();
             let paths = '';
@@ -3387,9 +3163,9 @@
                     const taskStart = getEffectiveStart(t);
                     if (!depEnd || !taskStart) return;
 
-                    const x1 = cfg.unit === 'month' ? dateToPxMonth(depEnd)   : getDaysDiff(start, depEnd)   * pxPerDay;
+                    const x1 = getDaysDiff(start, depEnd) * pxPerDay;
                     const y1 = depIdx * ROW_H + 22;
-                    const x2 = cfg.unit === 'month' ? dateToPxMonth(taskStart) : getDaysDiff(start, taskStart) * pxPerDay;
+                    const x2 = getDaysDiff(start, taskStart) * pxPerDay;
                     const y2 = (rowIndexOf[t.id] ?? i) * ROW_H + 22;
 
                     const midX = (x1 + x2) / 2;
@@ -3500,75 +3276,68 @@
                 retardHtml = `<div class="retard-badge">⚠️ En retard de ${d} jour${d > 1 ? 's' : ''}</div>`;
             }
 
-            function _normIds(val) {
-                if (!val) return [];
-                if (Array.isArray(val)) {
-                    var arr = (val[0] === 'L') ? val.slice(1) : val;
-                    return arr.map(function(x){return parseInt(x);}).filter(function(x){return !isNaN(x);});
-                }
-                if (typeof val === 'number' && !isNaN(val)) return [val];
-                if (typeof val === 'string') { var n=parseInt(val); return isNaN(n)?[]:[n]; }
-                return [];
-            }
+            // Dépendances
+            const depIds = !taskDependDe ? [] :
+                Array.isArray(taskDependDe) ? (taskDependDe[0] === 'L' ? taskDependDe.slice(1) : taskDependDe) : [taskDependDe];
+            const dependents = tasks.filter(t => {
+                const dd = t[COL.dependDe];
+                if (!dd) return false;
+                const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                return ids.includes(task.id);
+            });
 
-            var taskId_int = parseInt(task.id);
-            var depIds = _normIds(taskDependDe);
-
-            var successorIds = new Set();
-            function collectSuccessors(id) {
-                tasks.forEach(function(t) {
-                    if (successorIds.has(parseInt(t.id))) return;
-                    if (_normIds(t[COL.dependDe]).indexOf(id) !== -1) {
-                        successorIds.add(parseInt(t.id));
-                        collectSuccessors(parseInt(t.id));
+            // Liste des tâches pouvant être prédécesseurs (toutes sauf cette tâche et ses successeurs)
+            const successorIds = new Set();
+            const collectSuccessors = (id) => {
+                tasks.forEach(t => {
+                    const dd = t[COL.dependDe];
+                    if (!dd) return;
+                    const ids = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
+                    if (ids.includes(id) && !successorIds.has(t.id)) {
+                        successorIds.add(t.id);
+                        collectSuccessors(t.id);
                     }
                 });
-            }
-            collectSuccessors(taskId_int);
+            };
+            collectSuccessors(task.id);
 
-            var dependents = tasks.filter(function(t) {
-                return _normIds(t[COL.dependDe]).indexOf(taskId_int) !== -1;
-            });
-
-            var candidats = tasks.filter(function(t) {
-                var tid = parseInt(t.id);
-                return tid !== taskId_int && !successorIds.has(tid) && depIds.indexOf(tid) === -1;
-            });
+            const candidats = tasks.filter(t =>
+                t.id !== task.id &&                          // pas elle-même
+                String(t[COL.projet]) === String(task[COL.projet]) && // même projet
+                !successorIds.has(t.id) &&                  // pas un successeur
+                !depIds.includes(t.id)                      // pas déjà prédécesseur
+            );
 
             // Prédécesseurs — widget filtre avec recherche + cases cochées
             // candidats déjà triés par projet, on les affiche tous cochables
             const allPredCandidats = [...candidats];
             // Ajouter les déjà-prédécesseurs en tête (cochés)
-            var allPredItems = [
-                ...depIds.map(function(id) {
-                    return tasks.find(function(t) { return parseInt(t.id) === id; });
-                }).filter(Boolean),
+            const allPredItems = [
+                ...depIds.map(id => tasks.find(t => t.id === id)).filter(Boolean),
                 ...allPredCandidats
             ];
 
-            var predItemsHtml = allPredItems.map(function(pt) {
-                var chk = depIds.indexOf(parseInt(pt.id)) !== -1 ? ' checked' : '';
-                return '<label class="panel-filter-item" data-pred-id="' + pt.id +
-                    '" data-pred-nom="' + escapeHtml(getTaskTitreOrder(pt)).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + pt.id + '"' + chk + '>' +
-                    escapeHtml(getTaskTitreOrder(pt)) + '</label>';
-            }).join('');
+            const predsWidgetHtml = `<div class="panel-filter-widget" id="dp-pred-widget">
+                <input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-pred-list">
+                    ${allPredItems.map(function(t) {
+                        const checked = depIds.includes(t.id);
+                        return '<label class="panel-filter-item" data-pred-id="' + t.id + '" data-pred-nom="' + escapeHtml(getTaskTitreOrder(t)).toLowerCase() + '">' +
+                            '<input type="checkbox" value="' + t.id + '"' + (checked ? ' checked' : '') + '>' +
+                            escapeHtml(getTaskTitreOrder(t)) +
+                            '</label>';
+                    }).join('')}
+                </div>
+            </div>`;
 
-            var predsWidgetHtml = allPredItems.length
-                ? '<div class="panel-filter-widget" id="dp-pred-widget">' +
-                    '<input class="panel-filter-search" id="dp-pred-search" placeholder="Rechercher un prédécesseur…" autocomplete="off">' +
-                    '<div class="panel-filter-list" id="dp-pred-list">' + predItemsHtml + '</div></div>'
-                : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>';
+            // Successeurs (lecture seule)
+            const succsHtml = dependents.map(dep =>
+                `<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ${escapeHtml(getTaskTitre(dep))}</div>`
+            ).join('');
 
-            var succsHtml = dependents.map(function(dep) {
-                return '<div class="assignee-item" style="color:var(--text-muted);font-size:0.72rem;">→ ' +
-                    escapeHtml(getTaskTitre(dep)) + '</div>';
-            }).join('');
-
-            var depsHtml = '<div class="panel-section-title">Prédécesseurs</div>' +
-                predsWidgetHtml +
-                (succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div>' +
-                    '<div class="assignee-list">' + succsHtml + '</div>' : '');
+            let depsHtml = `<div class="panel-section-title">Prédécesseurs</div>
+                ${allPredItems.length ? predsWidgetHtml : '<div style="font-size:0.7rem;color:var(--text-muted);padding:2px 0;">Aucune tâche disponible dans ce projet</div>'}
+                ${succsHtml ? '<div class="panel-section-title" style="margin-top:8px;">Successeurs</div><div class="assignee-list">'+succsHtml+'</div>' : ''}`;
 
             // Assignés — widget filtre avec recherche, actifs d'abord
             const assigneeIds = getAssigneesArray(task);
@@ -3578,18 +3347,20 @@
                 if (aActif !== bActif) return aActif ? -1 : 1;
                 return String(a[COL_CHEF.nom]).localeCompare(String(b[COL_CHEF.nom]));
             });
-            var chefItemsHtml = teamSorted.map(function(m) {
-                var actif = m[COL_CHEF.actif] !== false;
-                var chk = assigneeIds.includes(m.id) ? ' checked' : '';
-                var cls = 'panel-filter-item' + (actif ? '' : ' inactive');
-                return '<label class="' + cls + '" data-responsable-id="' + m.id +
-                    '" data-responsable-nom="' + escapeHtml(m[COL_CHEF.nom]).toLowerCase() + '">' +
-                    '<input type="checkbox" value="' + m.id + '"' + chk + '>' +
-                    escapeHtml(m[COL_CHEF.nom]) + (actif ? '' : ' (inactif)') + '</label>';
-            }).join('');
-            var assigneesHtml = '<div class="panel-filter-widget" id="dp-chef-widget">' +
-                '<input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">' +
-                '<div class="panel-filter-list" id="dp-chef-list">' + chefItemsHtml + '</div></div>';
+            const assigneesHtml = `<div class="panel-filter-widget" id="dp-chef-widget">
+                <input class="panel-filter-search" id="dp-chef-search" placeholder="Rechercher…" autocomplete="off">
+                <div class="panel-filter-list" id="dp-chef-list">
+                    ${teamSorted.map(function(m) {
+                        const actif = m[COL_CHEF.actif] !== false;
+                        const checked = assigneeIds.includes(m.id);
+                        const cls = 'panel-filter-item' + (actif ? '' : ' inactive');
+                        return '<label class="' + cls + '" data-responsable-id="' + m.id + '" data-responsable-nom="' + escapeHtml(m[COL_CHEF.nom]).toLowerCase() + '">' +
+                            '<input type="checkbox" value="' + m.id + '"' + (checked ? ' checked' : '') + '>' +
+                            escapeHtml(m[COL_CHEF.nom]) + (actif ? '' : ' (inactif)') +
+                            '</label>';
+                    }).join('')}
+                </div>
+            </div>`;
 
             const toDateInput = (d) => d ? d.toISOString().slice(0, 10) : '';
             const hasPreds = hasPredecesseurs(task);
@@ -3713,8 +3484,7 @@
         function getDepIds(task) {
             const dd = task[COL.dependDe];
             if (!dd) return [];
-            const raw = Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
-            return raw.map(function(id) { return parseInt(id); }).filter(function(id) { return !isNaN(id); });
+            return Array.isArray(dd) ? (dd[0] === 'L' ? dd.slice(1) : dd) : [dd];
         }
 
         function buildDepGristValue(ids) {
@@ -4177,8 +3947,7 @@
                     { id: COL_OPS.numOpe,        type: 'Text' },
                     { id: COL_OPS.statut,        type: 'Choice' },
                     { id: COL_OPS.exercice,      type: 'Text' },
-                    { id: COL_OPS.dateReception, type: 'Date' },
-                    { id: COL_OPS.affichageGantt, type: 'Bool' }
+                    { id: COL_OPS.dateReception, type: 'Date' }
                 ],
                 [TABLE.phases]: [
                     { id: COL_PHASES.nom,      type: 'Text' },
@@ -4410,7 +4179,7 @@
             try {
                 const od = await grist.docApi.fetchTable(TABLE.operations);
                 allMissing.push(...checkMissingCols(od, COL_OPS, TABLE.operations));
-                projects = convert(od).filter(isProjectGanttVisible);
+                projects = convert(od);
             } catch (e) {
                 projects = [];
                 missingTables.push({ name: TABLE.operations, key: 'tableOperations', label: 'Opérations' });
@@ -4492,319 +4261,23 @@
                 });
             } catch(e) { tasks = []; }
 
-            await loadSecondaryData();
             gristReady = true;
+            await loadSecondaryData();
             sortTasks();
             updateFilterMenus();
             render();
         }
 
         // ── Cache localStorage : fallback si Grist efface les options ──────────
-        // Le cache est isolé par table source Grist afin que deux Gantt utilisant
-        // le même URL mais des tables source différentes ne partagent pas la config.
-        const LS_BASE_KEY = (location.hostname + location.pathname).replace(/[^a-z0-9]/gi, '_');
+        // Grist peut appeler setOptions(null) quand une table référencée est renommée/supprimée.
+        // On garde une copie dans localStorage comme filet de sécurité.
+        const LS_KEY = 'gantt_config_' + (location.hostname + location.pathname).replace(/[^a-z0-9]/gi, '_');
 
-        // Retourne l'identifiant utilisé pour isoler la configuration d'un Gantt.
-        // Aujourd'hui, ce scope correspond à la table source Grist du widget.
-        function getStorageScope() {
-            return String(TABLE.tasks || _mainTableId || 'unknown').replace(/[^a-z0-9]/gi, '_');
-        }
-
-        // Construit une clé localStorage stable et isolée par URL de widget + table source.
-        // Cela évite qu'un Gantt basé sur une autre table récupère la même config locale.
-        function getScopedStorageKey(prefix) {
-            return prefix + '_' + LS_BASE_KEY + '_' + getStorageScope();
-        }
-
-        const PROFILED_OPTIONS_VERSION = 1;
-        const CONFIG_OPTION_KEYS = [
-            'tableChefProjet', 'tableOperations', 'tablePhases',
-            'colChefNom', 'colChefPrenom', 'colChefFonction', 'colChefActif',
-            'colOpsNom', 'colOpsNumOpe', 'colOpsStatut', 'colOpsDateReception', 'colOpsAffichageGantt',
-            'colPhasesNom', 'colPhasesCouleur', 'colPhasesNumOrder'
-        ];
-
-        // Récupère une seule fois l'ID réel de la table source sélectionnée dans Grist.
-        // Cet ID sert ensuite à choisir le bon profil de configuration.
-        async function ensureMainTableId() {
-            if (_mainTableId) return _mainTableId;
-            try { _mainTableId = await grist.selectedTable.getTableId(); } catch(e) {}
-            if (_mainTableId) TABLE.tasks = _mainTableId;
-            return _mainTableId;
-        }
-
-        // Détecte l'ancien format de configuration, où les options étaient stockées
-        // directement à la racine de l'objet Grist.
-        function isFlatConfigOptions(options) {
-            return !!(options && typeof options === 'object' &&
-                CONFIG_OPTION_KEYS.some(k => Object.prototype.hasOwnProperty.call(options, k)));
-        }
-
-        // Détecte le nouveau format, dans lequel chaque table source possède
-        // son propre profil dans options.profiles.
-        function isProfiledOptions(options) {
-            return !!(options && typeof options === 'object' && options.profiles &&
-                typeof options.profiles === 'object');
-        }
-
-        // Extrait la configuration qui correspond à la table source courante.
-        // Si l'ancien format plat est reçu, il est accepté pour garder la compatibilité.
-        function getProfileOptions(options) {
-            if (isProfiledOptions(options)) {
-                return options.profiles[getStorageScope()] || null;
-            }
-            return isFlatConfigOptions(options) ? options : null;
-        }
-
-        // Prépare le conteneur d'options avant sauvegarde dans Grist.
-        // Les profils existants sont conservés, puis seul le profil courant est remplacé.
-        function normalizeOptionsContainer(options) {
-            if (isProfiledOptions(options)) {
-                return {
-                    ...options,
-                    _ganttConfigVersion: options._ganttConfigVersion || PROFILED_OPTIONS_VERSION,
-                    profiles: { ...options.profiles }
-                };
-            }
-            return {
-                _ganttConfigVersion: PROFILED_OPTIONS_VERSION,
-                profiles: {}
-            };
-        }
-
-        // Lit les options actuellement persistées par Grist sans interrompre le widget
-        // si l'appel échoue ou retourne null.
-        async function getCurrentGristOptions() {
-            try { return await grist.getOptions(); } catch(e) { return null; }
-        }
-
-        // Sauvegarde une copie locale de secours du profil courant.
-        // La clé est scopée par table source, contrairement à l'ancien cache global.
         function lsSaveOptions(options) {
-            try { localStorage.setItem(getScopedStorageKey('gantt_config'), JSON.stringify(options)); } catch(e) {}
+            try { localStorage.setItem(LS_KEY, JSON.stringify(options)); } catch(e) {}
         }
-
-        // Recharge la copie locale du profil courant quand Grist ne renvoie pas d'options.
         function lsLoadOptions() {
-            try {
-                const v = localStorage.getItem(getScopedStorageKey('gantt_config'));
-                return v ? JSON.parse(v) : null;
-            } catch(e) { return null; }
-        }
-
-        // Table Grist utilisée comme source principale de configuration partagée.
-        // Contrairement au localStorage, ces valeurs sont communes à tous les utilisateurs.
-        const GANTT_CONFIG_TABLE = 'Tb_Config_Gantt_Widget';
-        const GANTT_CONFIG_TABLE_ALIASES = [GANTT_CONFIG_TABLE, 'DPPI_Gantt_Config'];
-
-        // Correspondance entre les noms internes du widget et les colonnes de
-        // Tb_Config_Gantt_Widget. Modifier ces valeurs si le schéma de la table change.
-        const GANTT_CONFIG_COLUMNS = {
-            sourceTable: 'Source_Table',
-            tableChefProjet: 'Table_Responsables',
-            tableOperations: 'Table_Projets',
-            tablePhases: 'Table_Categorie_Phase',
-            colChefNom: 'Col_Resp_Nom',
-            colChefFonction: 'Col_Resp_Fonction',
-            colChefActif: 'Col_Resp_Actif',
-            colOpsNom: 'Col_Projet_Nom',
-            colOpsNumOpe: 'Col_Projet_Num',
-            colOpsStatut: 'Col_Projet_Statut',
-            colOpsDateReception: 'Col_Projet_Date_Reception',
-            colOpsAffichageGantt: 'Col_Projet_Affichage_Gantt',
-            colPhasesNom: 'Col_Categorie_Nom',
-            colPhasesCouleur: 'Col_Categorie_Couleur',
-            colPhasesNumOrder: 'Col_Categorie_Ordre',
-            active: 'Active'
-        };
-
-        // Alias acceptés pendant la migration des libellés "opérations" vers "projets".
-        // Le widget lit et écrit dans la colonne réellement présente dans Grist.
-        const GANTT_CONFIG_COLUMN_ALIASES = {
-            sourceTable: ['Source_Table'],
-            tableChefProjet: ['Table_Responsables'],
-            tableOperations: ['Table_Projets', 'Table_Operations'],
-            tablePhases: ['Table_Categorie_Phase'],
-            colChefNom: ['Col_Resp_Nom'],
-            colChefFonction: ['Col_Resp_Fonction'],
-            colChefActif: ['Col_Resp_Actif'],
-            colOpsNom: ['Col_Projet_Nom', 'Col_Operation_Nom'],
-            colOpsNumOpe: ['Col_Projet_Num', 'Col_Operation_Num'],
-            colOpsStatut: ['Col_Projet_Statut', 'Col_Operation_Statut'],
-            colOpsDateReception: ['Col_Projet_Date_Reception', 'Col_Operation_Date_Reception'],
-            colOpsAffichageGantt: ['Col_Projet_Affichage_Gantt', 'Col_Operation_Affichage_Gantt'],
-            colPhasesNom: ['Col_Categorie_Nom'],
-            colPhasesCouleur: ['Col_Categorie_Couleur'],
-            colPhasesNumOrder: ['Col_Categorie_Ordre'],
-            active: ['Active']
-        };
-
-        // Récupère la première table de configuration disponible parmi les noms connus.
-        // Cela permet de conserver les documents qui utilisent encore l'ancien nom.
-        async function fetchFirstAvailableTable(tableNames) {
-            let lastError = null;
-            for (const tableName of tableNames) {
-                try {
-                    const data = await grist.docApi.fetchTable(tableName);
-                    return { tableName, data };
-                } catch (e) {
-                    lastError = e;
-                }
-            }
-            throw lastError || new Error('Table de configuration introuvable');
-        }
-
-        // Retourne la colonne de configuration existante pour une clé logique,
-        // avec un fallback vers le nouveau nom attendu.
-        function configColumn(data, key) {
-            const aliases = GANTT_CONFIG_COLUMN_ALIASES[key] || [GANTT_CONFIG_COLUMNS[key]];
-            const found = aliases.find(col => Object.prototype.hasOwnProperty.call(data || {}, col));
-            return found || GANTT_CONFIG_COLUMNS[key];
-        }
-
-        // Variante stricte utilisée avant écriture : si aucune colonne compatible
-        // n'existe, on remonte une erreur explicite à l'utilisateur.
-        function requiredConfigColumn(data, key) {
-            const aliases = GANTT_CONFIG_COLUMN_ALIASES[key] || [GANTT_CONFIG_COLUMNS[key]];
-            const found = aliases.find(col => Object.prototype.hasOwnProperty.call(data || {}, col));
-            if (!found) {
-                throw new Error('Colonne manquante dans la table de configuration : ' + aliases.join(' ou '));
-            }
-            return found;
-        }
-
-        // Les nouvelles colonnes de configuration doivent rester compatibles avec
-        // les documents qui n'ont pas encore mis a jour Tb_Config_Gantt_Widget.
-        function optionalConfigValue(data, key, value) {
-            const aliases = GANTT_CONFIG_COLUMN_ALIASES[key] || [GANTT_CONFIG_COLUMNS[key]];
-            const found = aliases.find(col => Object.prototype.hasOwnProperty.call(data || {}, col));
-            return found ? { [found]: value } : {};
-        }
-
-        // Lit une valeur de configuration depuis une ligne, en acceptant les anciens
-        // et nouveaux noms de colonnes pour le même champ logique.
-        function configRowValue(row, key) {
-            const aliases = GANTT_CONFIG_COLUMN_ALIASES[key] || [GANTT_CONFIG_COLUMNS[key]];
-            for (const col of aliases) {
-                if (row && row[col] !== undefined) return row[col];
-            }
-            return undefined;
-        }
-
-        // Normalise les booléens venant de Grist, qui peuvent être reçus sous
-        // forme de booléen, nombre ou texte selon le contexte d'appel.
-        function gristBool(value) {
-            return value === true || value === 1 || value === 'true' || value === 'True';
-        }
-
-        // Convertit une ligne du format colonne-par-colonne renvoyé par fetchTable
-        // en objet classique { colonne: valeur } pour simplifier les mappings.
-        function configRowFromTable(data, index) {
-            const row = {};
-            Object.keys(data || {}).forEach(col => {
-                row[col] = data[col][index];
-            });
-            return row;
-        }
-
-        // Transforme une ligne Tb_Config_Gantt_Widget en objet d'options compris par
-        // le reste du widget (TABLE, COL_CHEF, COL_OPS, COL_PHASES).
-        function optionsFromConfigRow(row) {
-            if (!row) return null;
-            return {
-                tableChefProjet: configRowValue(row, 'tableChefProjet'),
-                tableOperations: configRowValue(row, 'tableOperations'),
-                tablePhases: configRowValue(row, 'tablePhases'),
-                colChefNom: configRowValue(row, 'colChefNom'),
-                colChefFonction: configRowValue(row, 'colChefFonction'),
-                colChefActif: configRowValue(row, 'colChefActif'),
-                colOpsNom: configRowValue(row, 'colOpsNom'),
-                colOpsNumOpe: configRowValue(row, 'colOpsNumOpe'),
-                colOpsStatut: configRowValue(row, 'colOpsStatut'),
-                colOpsDateReception: configRowValue(row, 'colOpsDateReception'),
-                colOpsAffichageGantt: configRowValue(row, 'colOpsAffichageGantt'),
-                colPhasesNom: configRowValue(row, 'colPhasesNom'),
-                colPhasesCouleur: configRowValue(row, 'colPhasesCouleur'),
-                colPhasesNumOrder: configRowValue(row, 'colPhasesNumOrder'),
-                _configured: true,
-                _source: 'configTable'
-            };
-        }
-
-        // Fait l'opération inverse : transforme les options courantes du widget
-        // en valeurs prêtes à être écrites dans Tb_Config_Gantt_Widget.
-        function configValuesFromOptions(options, configTableData) {
-            return {
-                [requiredConfigColumn(configTableData, 'sourceTable')]: TABLE.tasks || _mainTableId,
-                [requiredConfigColumn(configTableData, 'tableChefProjet')]: options.tableChefProjet,
-                [requiredConfigColumn(configTableData, 'tableOperations')]: options.tableOperations,
-                [requiredConfigColumn(configTableData, 'tablePhases')]: options.tablePhases,
-                [requiredConfigColumn(configTableData, 'colChefNom')]: options.colChefNom,
-                [requiredConfigColumn(configTableData, 'colChefFonction')]: options.colChefFonction,
-                [requiredConfigColumn(configTableData, 'colChefActif')]: options.colChefActif,
-                [requiredConfigColumn(configTableData, 'colOpsNom')]: options.colOpsNom,
-                [requiredConfigColumn(configTableData, 'colOpsNumOpe')]: options.colOpsNumOpe,
-                [requiredConfigColumn(configTableData, 'colOpsStatut')]: options.colOpsStatut,
-                [requiredConfigColumn(configTableData, 'colOpsDateReception')]: options.colOpsDateReception,
-                ...optionalConfigValue(configTableData, 'colOpsAffichageGantt', options.colOpsAffichageGantt),
-                [requiredConfigColumn(configTableData, 'colPhasesNom')]: options.colPhasesNom,
-                [requiredConfigColumn(configTableData, 'colPhasesCouleur')]: options.colPhasesCouleur,
-                [requiredConfigColumn(configTableData, 'colPhasesNumOrder')]: options.colPhasesNumOrder,
-                [requiredConfigColumn(configTableData, 'active')]: true
-            };
-        }
-
-        // Lit Tb_Config_Gantt_Widget et retourne la configuration correspondant à la
-        // table source du widget courant. Une ligne inactive est ignorée.
-        async function loadGanttConfigTableOptions() {
-            await ensureMainTableId();
-            const sourceTable = TABLE.tasks || _mainTableId;
-            if (!sourceTable) return null;
-
-            try {
-                const { data } = await fetchFirstAvailableTable(GANTT_CONFIG_TABLE_ALIASES);
-                const sources = data[configColumn(data, 'sourceTable')] || [];
-                const ids = data.id || [];
-
-                for (let i = 0; i < sources.length; i++) {
-                    if (String(sources[i]) !== String(sourceTable)) continue;
-                    const activeValues = data[configColumn(data, 'active')];
-                    if (activeValues && activeValues[i] !== undefined && !gristBool(activeValues[i])) continue;
-                    const row = configRowFromTable(data, i);
-                    row.id = ids[i];
-                    return optionsFromConfigRow(row);
-                }
-            } catch (e) {
-                console.warn('[GANTT] Config table indisponible:', e);
-            }
-            return null;
-        }
-
-        // Sauvegarde le panneau de configuration dans Tb_Config_Gantt_Widget.
-        // Si une ligne existe déjà pour la table source, elle est mise à jour ;
-        // sinon le widget crée une nouvelle ligne de configuration.
-        async function saveGanttConfigTableOptions(options) {
-            await ensureMainTableId();
-            const sourceTable = TABLE.tasks || _mainTableId;
-            if (!sourceTable) throw new Error('Table source introuvable');
-
-            const { tableName, data } = await fetchFirstAvailableTable(GANTT_CONFIG_TABLE_ALIASES);
-            const values = configValuesFromOptions(options, data);
-            const sources = data[configColumn(data, 'sourceTable')] || [];
-            const ids = data.id || [];
-            let existingId = null;
-
-            for (let i = 0; i < sources.length; i++) {
-                if (String(sources[i]) === String(sourceTable)) {
-                    existingId = ids[i];
-                    break;
-                }
-            }
-
-            const action = existingId
-                ? ['UpdateRecord', tableName, existingId, values]
-                : ['AddRecord', tableName, null, values];
-            await grist.docApi.applyUserActions([action]);
+            try { const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; } catch(e) { return null; }
         }
 
         async function initGrist() {
@@ -4814,7 +4287,6 @@
                 // colonne de sa table. Les 3 premiers champs sont obligatoires.
                 grist.ready({
                     requiredAccess: 'full',
-                    hasCustomOptions: true,
                     columns: [
                         { name: 'titre',         title: 'Catégorie (Ref phases)',       type: 'Ref',     optional: false },
                         { name: 'titreAdapte',   title: 'Titre adapté par opération',   type: 'Text',    optional: true  },
@@ -4822,7 +4294,6 @@
                         { name: 'duree',         title: 'Durée (jours)',                type: 'Numeric', optional: false },
                         { name: 'dateDebutCalc', title: 'Date début calculée',          type: 'Date',    optional: true  },
                         { name: 'dateFinCalc',   title: 'Date fin calculée',            type: 'Date',    optional: true  },
-                        { name: 'dateDerniereMaj', title: 'Date dernière mise à jour',   type: 'Date',    optional: true  },
                         { name: 'projet',        title: 'Opération (Ref)',              type: 'Ref',     optional: true  },
                         { name: 'assignees',     title: 'Responsables',                 type: 'RefList', optional: true  },
                         { name: 'dependDe',      title: 'Dépend de',                    type: 'RefList', optional: true  },
@@ -4844,7 +4315,6 @@
                     if (opts.colOpsNumOpe)         COL_OPS.numOpe        = opts.colOpsNumOpe;
                     if (opts.colOpsStatut)         COL_OPS.statut        = opts.colOpsStatut;
                     if (opts.colOpsDateReception)  COL_OPS.dateReception = opts.colOpsDateReception;
-                    if (opts.colOpsAffichageGantt) COL_OPS.affichageGantt = opts.colOpsAffichageGantt;
                     if (opts.colPhasesNom)      COL_PHASES.nom      = opts.colPhasesNom;
                     if (opts.colPhasesCouleur)  COL_PHASES.couleur  = opts.colPhasesCouleur;
                     if (opts.colPhasesNumOrder) COL_PHASES.numOrder = opts.colPhasesNumOrder;
@@ -4865,7 +4335,8 @@
                     // Capturer le vrai ID Grist de la table principale (une seule fois suffit)
                     if (_firstOnRecords) {
                         _firstOnRecords = false;
-                        await ensureMainTableId();
+                        try { _mainTableId = await grist.selectedTable.getTableId(); } catch(e) {}
+                        if (_mainTableId) TABLE.tasks = _mainTableId;
                     }
                     applyMappings(mappings);
                     clearTimeout(_onRecordsDebounceTimer);
@@ -4887,102 +4358,39 @@
                 });
 
                 // ── Options du widget (panneau "Options" de Grist) ───────────────────────
-                // Quand Grist envoie null (premier chargement sur un nouveau navigateur,
-                // hard refresh, ou table renommée), on rappelle explicitement grist.getOptions()
-                // qui retourne les options persistées dans le document Grist — partagées entre
-                // tous les utilisateurs. Le localStorage n'est conservé qu'en dernier recours
-                // pour les cas où getOptions() échoue aussi (réseau, erreur API).
+                // Grist peut effacer les options (onOptions null) quand une table référencée
+                // est renommée. On utilise localStorage comme cache de secours.
                 let _firstOnOptions = true;
                 grist.onOptions(async (gristOptions) => {
                     const isFirstCall = _firstOnOptions;
                     _firstOnOptions = false;
 
                     if (isFirstCall) {
-                        console.log('[GANTT] onOptions PREMIER APPEL — gristOptions:', JSON.stringify(gristOptions));
-
-                        // La table Tb_Config_Gantt_Widget est la source partagée prioritaire :
-                        // elle suit le document Grist, pas le navigateur de l'utilisateur.
-                        await ensureMainTableId();
-                        let scopedOpts = await loadGanttConfigTableOptions();
-
-                        if (!scopedOpts) {
-                            // Compatibilité : si aucune ligne n'existe dans la table config,
-                            // on retombe sur les anciennes options Grist puis le cache local.
-                            let opts = gristOptions;
-                            if (!opts) {
-                                console.log('[GANTT] gristOptions null → appel grist.getOptions()...');
-                                try {
-                                    opts = await grist.getOptions();
-                                    console.log('[GANTT] grist.getOptions() retourne:', JSON.stringify(opts));
-                                } catch(e) {
-                                    console.warn('[GANTT] grist.getOptions() erreur:', e);
-                                }
-                            }
-                            if (!opts) {
-                                opts = lsLoadOptions();
-                                console.log('[GANTT] localStorage fallback:', JSON.stringify(opts));
-                            }
-
-                            scopedOpts = getProfileOptions(opts);
-                            if (!scopedOpts || isFlatConfigOptions(opts)) {
-                                const cachedOpts = lsLoadOptions();
-                                if (cachedOpts) scopedOpts = cachedOpts;
-                            }
-                        }
-                        console.log('[GANTT] opts final utilisé:', JSON.stringify(scopedOpts));
-                        const hasConfig = scopedOpts && (
-                            scopedOpts.tableChefProjet || scopedOpts.tableOperations || scopedOpts.tablePhases
+                        // Grist peut envoyer null lors d'un hard refresh → fallback localStorage
+                        const opts = gristOptions ?? lsLoadOptions();
+                        const hasConfig = opts && (
+                            opts.tableChefProjet || opts.tableOperations || opts.tablePhases
                         );
-                        console.log('[GANTT] hasConfig:', hasConfig,
-                            '| tableChefProjet:', scopedOpts?.tableChefProjet,
-                            '| tableOperations:', scopedOpts?.tableOperations,
-                            '| tablePhases:', scopedOpts?.tablePhases);
-
                         if (hasConfig) {
-                            applyOptions(scopedOpts);
-                            // Mettre à jour le cache local pour les appels suivants
-                            lsSaveOptions(scopedOpts);
-                            console.log('[GANTT] après applyOptions initial, TABLE.responsableProjet=', TABLE.responsableProjet, 'TABLE.phases=', TABLE.phases);
+                            applyOptions(opts);
+                            console.log('[GANTT] après applyOptions initial, TABLE.phases=', TABLE.phases);
                         }
                         // Débloquer onRecords dans tous les cas
                         resolveOptionsReady();
                         // Vérifier / créer le schéma si nécessaire
-                        await ensureSchema(scopedOpts);
+                        await ensureSchema(opts);
 
-                        // Ne pas ouvrir le panel de config automatiquement :
-                        // loadSecondaryData() l'ouvrira si une table/colonne est introuvable.
-                        // Cela évite l'ouverture intempestive pour les nouveaux utilisateurs
-                        // dont les tables par défaut existent et sont accessibles.
+                        if (!hasConfig) {
+                            // Vraie première utilisation : aucune config nulle part
+                            setTimeout(() => openConfigPanel(), 400);
+                        }
                     } else {
                         // Appel suivant (changement d'options en live ou après setOptions)
-                        // Même stratégie : getOptions() si null, localStorage en dernier recours
-                        console.log('[GANTT] onOptions APPEL SUIVANT — gristOptions:', JSON.stringify(gristOptions));
-                        await ensureMainTableId();
-                        let scopedOptions = await loadGanttConfigTableOptions();
-
-                        if (!scopedOptions) {
-                            let options = gristOptions;
-                            if (!options) {
-                                try {
-                                    options = await grist.getOptions();
-                                    console.log('[GANTT] getOptions() fallback suivant:', JSON.stringify(options));
-                                } catch(e) {}
-                            }
-                            if (!options) {
-                                options = lsLoadOptions();
-                            }
-                            // Compatibilité avec les anciens profils par table source.
-                            scopedOptions = getProfileOptions(options);
-                            if (!scopedOptions || isFlatConfigOptions(options)) {
-                                const cachedOptions = lsLoadOptions();
-                                if (cachedOptions) scopedOptions = cachedOptions;
-                            }
-                        }
-                        console.log('[GANTT] onOptions suivant — retenu:', JSON.stringify(scopedOptions));
-                        if (scopedOptions) {
-                            applyOptions(scopedOptions);
-                            lsSaveOptions(scopedOptions);
-                        }
+                        const cachedOptions = lsLoadOptions();
+                        const options = gristOptions ?? cachedOptions;
+                        console.log('[GANTT] onOptions suivant — grist:', JSON.stringify(gristOptions),
+                                    '| retenu:', JSON.stringify(options));
+                        if (options) applyOptions(options);
                         await loadAllData();
                     }
                 });
@@ -5012,9 +4420,9 @@
 
             // Projets (opérations)
             projects = [
-                { id: 1, [COL_OPS.nom]: 'IUT1 Halles GCCD & GMP',    [COL_OPS.numOpe]: '2024_001', [COL_OPS.statut]: 'En cours', [COL_OPS.affichageGantt]: true },
-                { id: 2, [COL_OPS.nom]: 'Bibliothèque Briffaut',      [COL_OPS.numOpe]: '2023_011', [COL_OPS.statut]: 'En cours', [COL_OPS.affichageGantt]: true },
-                { id: 3, [COL_OPS.nom]: 'Marguerite Soubeyran - ACC', [COL_OPS.numOpe]: '2024_005', [COL_OPS.statut]: 'Transférée', [COL_OPS.affichageGantt]: true },
+                { id: 1, [COL_OPS.nom]: 'IUT1 Halles GCCD & GMP',    [COL_OPS.numOpe]: '2024_001', [COL_OPS.statut]: 'En cours' },
+                { id: 2, [COL_OPS.nom]: 'Bibliothèque Briffaut',      [COL_OPS.numOpe]: '2023_011', [COL_OPS.statut]: 'En cours' },
+                { id: 3, [COL_OPS.nom]: 'Marguerite Soubeyran - ACC', [COL_OPS.numOpe]: '2024_005', [COL_OPS.statut]: 'Transférée' },
             ];
 
             // Responsables
@@ -5074,7 +4482,6 @@
             { id: 'cfg-colOpsNumOpe',          optionKey: 'colOpsNumOpe',          default: () => COL_OPS.numOpe },
             { id: 'cfg-colOpsStatut',          optionKey: 'colOpsStatut',          default: () => COL_OPS.statut },
             { id: 'cfg-colOpsDateReception',   optionKey: 'colOpsDateReception',   default: () => COL_OPS.dateReception },
-            { id: 'cfg-colOpsAffichageGantt',  optionKey: 'colOpsAffichageGantt',  default: () => COL_OPS.affichageGantt },
             { id: 'cfg-colPhasesNom',      optionKey: 'colPhasesNom',      default: () => COL_PHASES.nom },
             { id: 'cfg-colPhasesCouleur',  optionKey: 'colPhasesCouleur',  default: () => COL_PHASES.couleur },
             { id: 'cfg-colPhasesNumOrder', optionKey: 'colPhasesNumOrder', default: () => COL_PHASES.numOrder },
@@ -5087,14 +4494,12 @@
             phases: { tableId: 'cfg-tablePhases',      curTable: () => TABLE.phases },
         };
 
-        // Ferme le panneau latéral sans modifier la configuration active.
         function closeConfigPanel() {
             document.getElementById('configPanel').classList.remove('open');
             document.getElementById('configOverlay').classList.remove('visible');
             document.getElementById('configBtn').classList.remove('active');
         }
 
-        // Ouvre le panneau et recharge les listes depuis les tables Grist actuelles.
         async function openConfigPanel() {
             document.getElementById('configPanel').classList.add('open');
             document.getElementById('configOverlay').classList.add('visible');
@@ -5102,7 +4507,6 @@
             await populateConfigSelects();
         }
 
-        // Reconstruit les selects de tables/colonnes en conservant les valeurs saisies.
         async function populateConfigSelects() {
             // Récupérer toutes les tables du document
             let allTables = [];
@@ -5110,9 +4514,7 @@
 
             // Exclure la table tâches (table principale, gérée par le panel natif Grist)
             const tasksId = TABLE.tasks || _mainTableId || '';
-            const allTablesFiltered = (tasksId ? allTables.filter(t => t !== tasksId) : allTables)
-                .slice()
-                .sort((a, b) => String(a).localeCompare(String(b), 'fr', { sensitivity: 'base' }));
+            const allTablesFiltered = tasksId ? allTables.filter(t => t !== tasksId) : allTables;
 
             // Valeurs courantes sauvegardées
             const current = {};
@@ -5133,15 +4535,12 @@
             }
         }
 
-        // Charge les colonnes d'une table et signale les anciennes valeurs introuvables.
         async function loadColumnsForGroup(group, tableName, current) {
             if (!tableName) return;
             let cols = [];
             try {
                 const data = await grist.docApi.fetchTable(tableName);
-                cols = Object.keys(data)
-                    .filter(c => c !== 'manualSort' && c !== 'id')
-                    .sort((a, b) => String(a).localeCompare(String(b), 'fr', { sensitivity: 'base' }));
+                cols = Object.keys(data).filter(c => c !== 'manualSort' && c !== 'id');
             } catch(e) { return; }
 
             document.querySelectorAll('[data-group="' + group + '"]').forEach(function(sel) {
@@ -5160,52 +4559,19 @@
             });
         }
 
-        // Recharge les colonnes disponibles quand l'utilisateur change une table.
         async function onTableSelect(tableSelectEl, group) {
             await loadColumnsForGroup(group, tableSelectEl.value, null);
         }
 
-        // Centralise les valeurs par défaut pour éviter d'appliquer le reset en mémoire
-        // avant que l'utilisateur enregistre réellement la configuration.
-        function getDefaultConfigOptions() {
-            return {
-                tableChefProjet: GRIST_CONFIG.tables.responsableProjet,
-                tableOperations: GRIST_CONFIG.tables.operations,
-                tablePhases: GRIST_CONFIG.tables.phases,
-                colChefNom: GRIST_CONFIG.columns.responsableProjet.nom,
-                colChefFonction: GRIST_CONFIG.columns.responsableProjet.fonction,
-                colChefActif: GRIST_CONFIG.columns.responsableProjet.actif,
-                colOpsNom: GRIST_CONFIG.columns.operations.nom,
-                colOpsNumOpe: GRIST_CONFIG.columns.operations.numOpe,
-                colOpsStatut: GRIST_CONFIG.columns.operations.statut,
-                colOpsDateReception: GRIST_CONFIG.columns.operations.dateReception,
-                colOpsAffichageGantt: GRIST_CONFIG.columns.operations.affichageGantt,
-                colPhasesNom: GRIST_CONFIG.columns.phases.nom,
-                colPhasesCouleur: GRIST_CONFIG.columns.phases.couleur,
-                colPhasesNumOrder: GRIST_CONFIG.columns.phases.numOrder
-            };
-        }
-
-        // Remet les champs du panneau aux valeurs par défaut sans toucher au Gantt actif.
         async function resetConfigToDefaults() {
-            const defaults = getDefaultConfigOptions();
-
-            const tableChef = document.getElementById('cfg-tableChefProjet');
-            const tableOps = document.getElementById('cfg-tableOperations');
-            const tablePhases = document.getElementById('cfg-tablePhases');
-
-            if (tableChef) tableChef.value = defaults.tableChefProjet;
-            if (tableOps) tableOps.value = defaults.tableOperations;
-            if (tablePhases) tablePhases.value = defaults.tablePhases;
-
-            await loadColumnsForGroup('chef', defaults.tableChefProjet, defaults);
-            await loadColumnsForGroup('ops', defaults.tableOperations, defaults);
-            await loadColumnsForGroup('phases', defaults.tablePhases, defaults);
-
-            CONFIG_FIELDS.forEach(f => {
-                const el = document.getElementById(f.id);
-                if (el && defaults[f.optionKey] !== undefined) el.value = defaults[f.optionKey];
-            });
+            // Réinitialiser TABLE/COL aux défauts GRIST_CONFIG
+            TABLE.responsableProjet = GRIST_CONFIG.tables.responsableProjet;
+            TABLE.operations        = GRIST_CONFIG.tables.operations;
+            TABLE.phases            = GRIST_CONFIG.tables.phases;
+            COL_CHEF   = { ...GRIST_CONFIG.columns.responsableProjet };
+            COL_OPS    = { ...GRIST_CONFIG.columns.operations };
+            COL_PHASES = { ...GRIST_CONFIG.columns.phases };
+            await populateConfigSelects();
         }
 
                 async function saveConfig() {
@@ -5219,31 +4585,7 @@
                 el.style.boxShadow = '';
             });
 
-            // Marquer que le widget a été configuré au moins une fois (sentinel)
-            options._configured = true;
-
-            // Persister dans Grist si disponible
-            if (gristReady) {
-                try {
-                    await ensureMainTableId();
-                    // La configuration est enregistrée dans une vraie table Grist
-                    // pour être commune à tous les utilisateurs et navigateurs.
-                    await saveGanttConfigTableOptions(options);
-                    lsSaveOptions(options);  // cache local uniquement en secours
-                    showToast('Configuration enregistrée', 'success');
-                    document.getElementById('missingColsBanner')?.classList.remove('visible');
-                } catch (e) {
-                    console.error('save config table error:', e);
-                    showToast("Erreur lors de l'enregistrement : " + (e.message || e), 'error', 6000);
-                    await populateConfigSelects();
-                    return;
-                }
-            } else {
-                // Mode démo : appliquer sans persister
-                showToast('Configuration appliquée (mode démo)', 'info');
-            }
-
-            // Appliquer les nouvelles valeurs uniquement après une sauvegarde réussie.
+            // Appliquer immédiatement les nouvelles valeurs aux variables actives
             TABLE.responsableProjet = options.tableChefProjet;
             TABLE.operations = options.tableOperations;
             TABLE.phases     = options.tablePhases;
@@ -5256,11 +4598,33 @@
             COL_OPS.numOpe        = options.colOpsNumOpe;
             COL_OPS.statut        = options.colOpsStatut;
             COL_OPS.dateReception = options.colOpsDateReception;
-            COL_OPS.affichageGantt = options.colOpsAffichageGantt;
 
             COL_PHASES.nom      = options.colPhasesNom;
             COL_PHASES.couleur  = options.colPhasesCouleur;
             COL_PHASES.numOrder = options.colPhasesNumOrder;
+
+
+
+            // Marquer que le widget a été configuré au moins une fois (sentinel)
+            options._configured = true;
+
+            // Persister dans Grist si disponible
+            if (gristReady) {
+                try {
+                    console.log('[GANTT] setOptions appelé avec:', JSON.stringify(options));
+                    lsSaveOptions(options);  // cache local en cas d'effacement par Grist
+                    await grist.setOptions(options);
+                    console.log('[GANTT] setOptions OK');
+                    showToast('Configuration enregistrée', 'success');
+                    document.getElementById('missingColsBanner')?.classList.remove('visible');
+                } catch (e) {
+                    console.error('setOptions error:', e);
+                    showToast("Erreur lors de l'enregistrement", 'error');
+                }
+            } else {
+                // Mode démo : appliquer sans persister
+                showToast('Configuration appliquée (mode démo)', 'info');
+            }
 
             closeConfigPanel();
 
@@ -5448,9 +4812,6 @@
                 updateFilterUI();
             }
         }, true);
-
-        // Restaurer l'état du header avant le premier rendu.
-        loadTopControlsState();
 
         // Initialiser le layout compact (mode par défaut)
         setLayoutMode('compact');

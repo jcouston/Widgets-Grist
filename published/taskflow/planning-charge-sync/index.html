@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synchronisation charge planning</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --success: #059669;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .panel {
+      max-width: 720px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .hint {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
+      margin-bottom: 14px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 8px;
+      font-size: 0.82rem;
+      color: var(--text);
+      background: white;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: white;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: white;
+      color: var(--primary);
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+    .status {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      min-height: 40px;
+    }
+    .status.error {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: var(--danger);
+    }
+    .status.success {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: var(--success);
+    }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Synchronisation charge planning</h1>
+    <p class="hint">
+      Génère les lignes graph par mois et responsable.
+      Ajoute aussi des lignes operation_area 0/1 par opération, limitées à la plage utile.
+      Les lignes existantes de la table cible sont supprimées avant régénération.
+    </p>
+
+    <div class="grid">
+      <label>Table source phases
+        <input id="sourceTable" value="DPPI_Phase">
+      </label>
+      <label>Table cible charge
+        <input id="targetTable" value="DPPI_Planning_Charge">
+      </label>
+      <label>Colonne source opération
+        <input id="srcOperation" value="Operation">
+      </label>
+      <label>Colonne source responsables
+        <input id="srcResponsables" value="Responsables">
+      </label>
+      <label>Colonne source début calculé
+        <input id="srcStart" value="Date_Debut_Calculee">
+      </label>
+      <label>Colonne source fin calculée
+        <input id="srcEnd" value="Date_Fin_Calculee">
+      </label>
+      <label>Colonne cible mois
+        <input id="dstMonth" value="Mois">
+      </label>
+      <label>Colonne cible personne
+        <input id="dstPerson" value="Personne">
+      </label>
+      <label>Colonne cible opération
+        <input id="dstOperation" value="Operation">
+      </label>
+      <label>Colonne cible phase source
+        <input id="dstSourcePhase" value="Source_Phase">
+      </label>
+      <label>Colonne cible type ligne
+        <input id="dstLineType" value="Type_Ligne">
+      </label>
+      <label>Colonne cible valeur graphique
+        <input id="dstGraphValue" value="Nb_Ope_Graph">
+      </label>
+      <label>Colonne cible valeur opération
+        <input id="dstOperationValue" value="Valeur_Operation">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="syncBtn" onclick="syncPlanningCharge()">Régénérer la charge</button>
+      <button class="secondary" id="saveBtn" onclick="saveConfig()">Enregistrer les paramètres</button>
+    </div>
+
+    <div id="status" class="status">Prêt.</div>
+  </div>
+
+  <script>
+    const FIELD_IDS = [
+      'sourceTable', 'targetTable',
+      'srcOperation', 'srcResponsables', 'srcStart', 'srcEnd',
+      'dstMonth', 'dstPerson', 'dstOperation', 'dstSourcePhase', 'dstLineType',
+      'dstGraphValue', 'dstOperationValue'
+    ];
+
+    function setStatus(message, type) {
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function setBusy(busy) {
+      document.getElementById('syncBtn').disabled = busy;
+      document.getElementById('saveBtn').disabled = busy;
+    }
+
+    function getConfig() {
+      const cfg = {};
+      FIELD_IDS.forEach(id => {
+        cfg[id] = document.getElementById(id).value.trim();
+      });
+      return cfg;
+    }
+
+    function applyConfig(cfg) {
+      FIELD_IDS.forEach(id => {
+        if (cfg && cfg[id]) document.getElementById(id).value = cfg[id];
+      });
+    }
+
+    async function saveConfig() {
+      try {
+        await grist.setOptions({ planningChargeSync: getConfig() });
+        setStatus('Paramètres enregistrés.', 'success');
+      } catch (e) {
+        setStatus("Impossible d'enregistrer les paramètres : " + (e.message || e), 'error');
+      }
+    }
+
+    function convertTable(data) {
+      const cols = Object.keys(data || {});
+      const rowCount = cols.length ? (data[cols[0]] || []).length : 0;
+      const rows = [];
+      for (let i = 0; i < rowCount; i++) {
+        const row = {};
+        cols.forEach(col => { row[col] = data[col][i]; });
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function refListIds(value) {
+      if (!Array.isArray(value)) return [];
+      return value[0] === 'L' ? value.slice(1).filter(Boolean) : value.filter(Boolean);
+    }
+
+    function parseGristDate(value) {
+      if (value == null || value === '') return null;
+      if (value instanceof Date) return value;
+      if (typeof value === 'number') return new Date(value * 1000);
+      if (typeof value === 'string') {
+        const d = new Date(value + (value.length === 10 ? 'T00:00:00' : ''));
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+      return null;
+    }
+
+    function toMonthDate(date) {
+      return new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+
+    function toGristDate(date) {
+      return Math.floor(date.getTime() / 1000);
+    }
+
+    function monthKey(date) {
+      return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+    }
+
+    function monthIndex(date) {
+      return date.getFullYear() * 12 + date.getMonth();
+    }
+
+    function monthFromIndex(index) {
+      const year = Math.floor(index / 12);
+      const month = index - year * 12;
+      return new Date(year, month, 1);
+    }
+
+    function graphKey(personId, month) {
+      return String(personId) + '|' + monthKey(month);
+    }
+
+    function operationAreaIndexKey(personId, operationId, index) {
+      return String(personId) + '|' + String(operationId) + '|' + String(index);
+    }
+
+    function personOperationKey(personId, operationId) {
+      return String(personId) + '|' + String(operationId);
+    }
+
+    function monthStartsBetween(start, end) {
+      const months = [];
+      const current = toMonthDate(start);
+      const last = toMonthDate(end);
+      while (current <= last) {
+        months.push(new Date(current));
+        current.setMonth(current.getMonth() + 1);
+      }
+      return months;
+    }
+
+    function buildFullMonthRange(monthDates) {
+      if (!monthDates.length) return [];
+
+      const sorted = monthDates
+        .map(date => toMonthDate(date))
+        .sort((a, b) => a.getTime() - b.getTime());
+
+      return monthStartsBetween(sorted[0], sorted[sorted.length - 1]);
+    }
+
+    function rememberOperation(operationSetsByPersonMonth, personId, month, operationId) {
+      const key = graphKey(personId, month);
+      if (!operationSetsByPersonMonth.has(key)) {
+        operationSetsByPersonMonth.set(key, new Set());
+      }
+      operationSetsByPersonMonth.get(key).add(operationId);
+    }
+
+    function rememberPersonOperation(personOperations, personId, operationId) {
+      const key = String(personId);
+      if (!personOperations.has(key)) {
+        personOperations.set(key, new Set());
+      }
+      personOperations.get(key).add(operationId);
+    }
+
+    function rememberOperationMonthBounds(operationMonthBounds, personId, operationId, month) {
+      const key = personOperationKey(personId, operationId);
+      const index = monthIndex(month);
+      const current = operationMonthBounds.get(key);
+      if (!current) {
+        operationMonthBounds.set(key, { min: index, max: index });
+        return;
+      }
+      current.min = Math.min(current.min, index);
+      current.max = Math.max(current.max, index);
+    }
+
+    function rememberActiveOperationValue(activeOperationValues, personId, operationId, month, value) {
+      const key = operationAreaIndexKey(personId, operationId, monthIndex(month));
+      const current = activeOperationValues.get(key);
+      activeOperationValues.set(key, current == null ? value : Math.max(current, value));
+    }
+
+    function operationAreaValue(activeOperationValues, personId, operationId, index) {
+      const currentKey = operationAreaIndexKey(personId, operationId, index);
+      const current = activeOperationValues.get(currentKey);
+      if (current != null) return { value: current, smoothed: false };
+
+      const previous = activeOperationValues.get(operationAreaIndexKey(personId, operationId, index - 1));
+      const next = activeOperationValues.get(operationAreaIndexKey(personId, operationId, index + 1));
+      if (previous != null && next != null) {
+        return { value: (previous + next) / 2, smoothed: true };
+      }
+
+      return { value: 0, smoothed: false };
+    }
+
+    function interpolateGraphValue(month, knownPoints, operationSetsByPersonMonth, personId) {
+      const key = graphKey(personId, month);
+      const actualOperations = operationSetsByPersonMonth.get(key);
+      if (actualOperations) return actualOperations.size;
+
+      const currentIndex = monthIndex(month);
+      let previous = null;
+      let next = null;
+
+      for (const point of knownPoints) {
+        if (point.index < currentIndex) previous = point;
+        if (point.index > currentIndex) {
+          next = point;
+          break;
+        }
+      }
+
+      if (!previous || !next) return 0;
+
+      const distance = next.index - previous.index;
+      const progress = (currentIndex - previous.index) / distance;
+      return Math.round(previous.value + (next.value - previous.value) * progress);
+    }
+
+    function addGraphRows(rows, cfg, personIds, monthDates, operationSetsByPersonMonth) {
+      const allMonths = buildFullMonthRange(monthDates);
+      const values = [];
+
+      personIds.forEach(personId => {
+        const knownPoints = allMonths
+          .map(month => {
+            const operations = operationSetsByPersonMonth.get(graphKey(personId, month));
+            return operations ? { index: monthIndex(month), value: operations.size } : null;
+          })
+          .filter(Boolean);
+
+        allMonths.forEach(month => {
+          const graphValue = interpolateGraphValue(month, knownPoints, operationSetsByPersonMonth, personId);
+          values.push(graphValue);
+
+          rows.push({
+            [cfg.dstMonth]: toGristDate(month),
+            [cfg.dstPerson]: personId,
+            [cfg.dstOperation]: null,
+            [cfg.dstSourcePhase]: null,
+            [cfg.dstLineType]: 'graph',
+            [cfg.dstGraphValue]: graphValue,
+            [cfg.dstOperationValue]: 0
+          });
+        });
+      });
+
+      return {
+        count: values.length,
+        min: values.length ? Math.min(...values) : 0,
+        max: values.length ? Math.max(...values) : 0,
+        nonZero: values.filter(value => value !== 0).length
+      };
+    }
+
+    function addOperationAreaRows(rows, cfg, personOperations, operationMonthBounds, activeOperationValues) {
+      let activeCount = 0;
+      let inactiveCount = 0;
+      let smoothedCount = 0;
+
+      personOperations.forEach((operationIds, personId) => {
+        operationIds.forEach(operationId => {
+          const bounds = operationMonthBounds.get(personOperationKey(personId, operationId));
+          if (!bounds) return;
+
+          for (let index = bounds.min - 1; index <= bounds.max + 1; index++) {
+            const month = monthFromIndex(index);
+            const area = operationAreaValue(activeOperationValues, personId, operationId, index);
+            if (area.value) activeCount++;
+            else inactiveCount++;
+            if (area.smoothed) smoothedCount++;
+
+            rows.push({
+              [cfg.dstMonth]: toGristDate(month),
+              [cfg.dstPerson]: Number(personId),
+              [cfg.dstOperation]: operationId,
+              [cfg.dstSourcePhase]: null,
+              [cfg.dstLineType]: 'operation_area',
+              [cfg.dstGraphValue]: null,
+              [cfg.dstOperationValue]: area.value
+            });
+          }
+        });
+      });
+
+      return {
+        active: activeCount,
+        inactive: inactiveCount,
+        smoothed: smoothedCount,
+        total: activeCount + inactiveCount
+      };
+    }
+
+    async function clearTargetTable(tableName) {
+      const data = await grist.docApi.fetchTable(tableName);
+      const ids = data.id || [];
+      if (!ids.length) return 0;
+
+      const actions = [];
+      for (let i = 0; i < ids.length; i += 200) {
+        actions.push(['BulkRemoveRecord', tableName, ids.slice(i, i + 200)]);
+      }
+      await grist.docApi.applyUserActions(actions);
+      return ids.length;
+    }
+
+    async function addRows(tableName, rows) {
+      if (!rows.length) return;
+      const actions = [];
+      for (let i = 0; i < rows.length; i += 200) {
+        const chunk = rows.slice(i, i + 200);
+        const colValues = {};
+        Object.keys(chunk[0]).forEach(col => {
+          colValues[col] = chunk.map(row => row[col]);
+        });
+        actions.push(['BulkAddRecord', tableName, chunk.map(() => null), colValues]);
+      }
+      await grist.docApi.applyUserActions(actions);
+    }
+
+    async function syncPlanningCharge() {
+      const cfg = getConfig();
+      setBusy(true);
+      setStatus('Synchronisation en cours...');
+
+      try {
+        const phaseData = await grist.docApi.fetchTable(cfg.sourceTable);
+        const phases = convertTable(phaseData);
+        const rows = [];
+        const seen = new Set();
+        const personIdsForGraph = new Set();
+        const monthsForGraph = [];
+        const operationSetsByPersonMonth = new Map();
+        const personOperations = new Map();
+        const activeOperationValues = new Map();
+        const operationMonthBounds = new Map();
+        let skipped = 0;
+
+        phases.forEach(phase => {
+          const operationId = phase[cfg.srcOperation];
+          const personIds = refListIds(phase[cfg.srcResponsables]);
+          const start = parseGristDate(phase[cfg.srcStart]);
+          const end = parseGristDate(phase[cfg.srcEnd]);
+
+          if (!operationId || !personIds.length || !start || !end) {
+            skipped++;
+            return;
+          }
+
+          monthStartsBetween(start, end).forEach(month => {
+            personIds.forEach(personId => {
+              const key = [phase.id, operationId, personId, month.getFullYear(), month.getMonth()].join('|');
+              if (seen.has(key)) return;
+              seen.add(key);
+              personIdsForGraph.add(personId);
+              monthsForGraph.push(month);
+              rememberOperation(operationSetsByPersonMonth, personId, month, operationId);
+              rememberPersonOperation(personOperations, personId, operationId);
+              rememberActiveOperationValue(activeOperationValues, personId, operationId, month, 1);
+              rememberOperationMonthBounds(operationMonthBounds, personId, operationId, month);
+            });
+          });
+        });
+
+        const graphStats = addGraphRows(rows, cfg, personIdsForGraph, monthsForGraph, operationSetsByPersonMonth);
+        const graphRowsCount = graphStats.count;
+        const areaStats = addOperationAreaRows(rows, cfg, personOperations, operationMonthBounds, activeOperationValues);
+
+        const removed = await clearTargetTable(cfg.targetTable);
+        await addRows(cfg.targetTable, rows);
+        await saveConfig();
+
+        setStatus(
+          'Synchronisation terminée.\n' +
+          'Lignes supprimées : ' + removed + '\n' +
+          'Lignes graph générées : ' + graphRowsCount + '\n' +
+          'Lignes operation_area générées : ' + areaStats.total + '\n' +
+          'Operation_area actives/inactives : ' + areaStats.active + ' / ' + areaStats.inactive + '\n' +
+          'Trous operation_area lissés : ' + areaStats.smoothed + '\n' +
+          'Valeurs graph non nulles : ' + graphStats.nonZero + '\n' +
+          'Min/Max graph : ' + graphStats.min + ' / ' + graphStats.max + '\n' +
+          'Total lignes générées : ' + rows.length + '\n' +
+          'Phases ignorées faute de données complètes : ' + skipped,
+          'success'
+        );
+      } catch (e) {
+        setStatus('Erreur pendant la synchronisation : ' + (e.message || e), 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function init() {
+      try {
+        grist.ready({ requiredAccess: 'full', hasCustomOptions: true });
+        const options = await grist.getOptions();
+        applyConfig(options && options.planningChargeSync);
+      } catch (e) {
+        setStatus('Widget chargé hors Grist ou API indisponible.', 'error');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
